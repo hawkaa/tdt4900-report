@@ -3,8 +3,12 @@
     {\Huge Abstract}
     \vspace{1cm}
     
-    \lipsum[3-5]
+    With the advent of Big Data and \bd~products, database technology for high-performance analysis of data has become increasingly more popular. Data is commonly stored as columns for easy aggregation of data, better compression, and better CPU and cache performance. \mdd~has been around for decades, but has not gained particular traction until now. \genusSoftware~is one such framework. This system has evolved for roughly twenty years into becoming a powerful tool for rapid application development. Although most of the data in \genusSoftware~are persisted in relational databases (like \oracle, \mssql, \mysql), the data processing happens in-memory. No particular attention has been paid to storage formats and structures, data has been stored in whichever structures that are the most convenient for the developes of \genusSoftware. This research investigates which technologies from the research field of databases that can be applied to the field of \mdd, and which techniques from \mdd that are promising for the data field.
 
+    In this research, we implement \cs~and \de~in \genusSoftware. We establish several test cases which are representative for workloads and use cases in a \mdd~tool and measure performance in terms of time and memory usage. We identify common operations that can exploit the new storage format, and measure the performance impact of that particular operation. In addition to this, we find which model metadata that can be used to select the correct storage format.
+
+    Column storage alone has lead to a memory reduction of about 70\% in certain test cases. In addition to this, several operations have had performance improvements of 100X-1000X, including filter operations and index generation. We have been able to isolate a small set of operations that can be used as tools for efficient programs.
+    
 
 }
 \clearpage

@@ -125,5 +125,8 @@ sympy-plots-for-*.tex/
 *.bak
 *.sav
 
+# vim
+*.swp
+
 # specific files
 main.pdf
