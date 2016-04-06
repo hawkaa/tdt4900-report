@@ -1,4 +1,51 @@
 \chapter{Introduction}
 \label{chap:introduction}
+hehe
 
-this topic is very interesting!
+\section{Background and Motivation}
+\label{sec:Background and Motivation}
+hehe
+
+\section{Problem Statement, Goals, and Deliverables}
+\label{sec:Problem Statement, Goals, and Deliverables}
+hehe
+
+\section{Methodology}
+\label{sec:Methodology}
+hehe
+
+\section{Deliverables}
+\label{sec:Deliverables}
+hehe
+
+\section{Definitions}
+\label{sec:Definitions}
+This section presents terms, definitions, and important products that are relevant to understanding the content of this report.
+
+\paragraph{Online Analytical Processing (OLAP)}
+\label{par:Online Analytical Processing (OLAP)}
+  We use the term Online Analytical Processing (OLAP) extensively in this report. By OLAP, we mean systems that enable users to analyze multidimensional data interactively from multiple perspectives \cite{Wikipedia_contributors2015-hw}. OLAP is usually dominated by ad-hoc, complex queries that group, aggregate and summarize over large datasets \cite{Bjorklund2011-wh}. OLAP systems can be both disk and memory based. Column storage is considered to be an attractive solution for OLAP systems, a technique we study further in Chapter \ref{chap:Data Layout}.
+
+
+\paragraph{Online Transactional Processing (OLTP)}
+\label{par:Online Transactional Processing (OLTP)}
+Online Transactional Processing (OLTP) is a class of database systems that manage transaction-oriented applications \cite{Wikipedia_contributors2015-cw}. Transactional workloads are typically referred to as insertion of new records, as well as updates and deletes of single records in the database. An OLTP system normally uses row storage for its data.
+
+\paragraph{Database Management System (DBMS)}
+\label{par:Database Management System (DBMS)}
+A Database Management System (DBMS) is a computer software application for storage and analysis of data \cite{Wikipedia_contributors2015-pb}. The most common way to interface with a database is through SQL, although other methods exist. Regarding performance, DBMSes can focus on analytical workloads (OLAP), transactional performance (OLTP), or both. DMBSes do not come with user interfaces for \bd~but is designed such that other applications can be built on top of them. In this report, we look at \oracle, \ibm, \saph, \sapnw, \mssql, \cstore, \vertica, \blink, \exasol, \oracle, \hyper, and \hyrise.
+
+\paragraph{\bd}
+\label{par:Business Discovery}
+\bd~is a term introduced by a \qlikview~whitepaper \cite{Qlik2014-vd}. \bd~products differ from traditional \bi~systems by focusing more on the end user. \bd~products do not rely on aggregated data such that the user can follow his "information scent" and click his way through the data. \bd~platforms often provide an architecture that enables panels and dashboards to be shared with multiple clients, both on desktops and mobile devices. Current \bd~products typically build on tailored storage systems that are specifically designed for \bd~workloads, but some of them integrate directly with read-optimized DBMSes. \bd~products include \tableau, \qlikview, \powerpivot, and more. \bd~is explained in greater detail is Section~\ref{sec:Business Discovery}.
+
+\paragraph{Reference products}
+\label{par:Reference products}
+We will occasionally use the term \textit{reference products} in this report. By reference products we mean \bd~products pointed out by \genus~that \bd~capabilities in \genusSoftware~will be compared to. In this report, we study \qlikview~and \tableau.
+
+
+\section{Report Outline}
+\label{sec:Report Outline}
+
+
+
