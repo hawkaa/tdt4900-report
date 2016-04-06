@@ -1,0 +1,37 @@
+\newenvironment{secex}
+{
+  \color{blue}
+  \begin{itshape}
+}
+{
+  \end{itshape}
+  ~\\
+}
+
+\newcommand{\term}[1]{\textit{#1}}
+\newcommand{\algmet}[1]{\textit{#1}}
+\newcommand{\pn}[1]{\textit{#1}}
+
+\newcommand{\ffigure}[3]{
+  \begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{#1}
+    \caption{#2}
+    \label{#3}
+  \end{figure}
+}
+\newcommand{\afigure}[4]{
+  \begin{figure}
+    \centering
+    \includegraphics[width=#4\textwidth]{#1}
+    \caption{#2}
+    \label{#3}
+  \end{figure}
+}
+
+\newcommand{\blankpage}{
+    \clearpage
+    \mbox{}
+    \thispagestyle{empty}
+    \newpage
+}

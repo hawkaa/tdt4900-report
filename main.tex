@@ -1,0 +1,47 @@
+\documentclass[10pt,b5paper,twoside]{book}
+
+\input{misc/packages}
+\input{misc/misc}
+\input{misc/metadata}
+\input{misc/environments}
+\input{misc/vars}
+
+\begin{document}
+
+    % English abstract
+    \thispagestyle{empty}
+    \include{abstract/abstract} 
+    \blankpage
+
+    % Norwegian abstract
+    \thispagestyle{empty}
+    \include{abstract/abstract-norwegian} 
+    \blankpage
+
+    % Acknowledgements
+    \thispagestyle{empty}
+    \include{acknowledgements/acknowledgements} 
+    \blankpage
+    
+    % Table of contents, figure list
+    \setcounter{page}{1}
+    \pagenumbering{roman}
+    \tableofcontents \thispagestyle{empty}
+    \listoffigures \thispagestyle{empty} 
+
+    % Start main content
+    \cleardoublepage
+    \setcounter{page}{1}
+    \pagenumbering{arabic}
+    
+    % chapters
+    \include{introduction/introduction}
+    \include{background/background}
+
+
+
+    % bibliography
+    \bibliographystyle{plain}
+    \bibliography{bibliography/bibliography}
+
+\end{document}
