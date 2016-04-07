@@ -1,22 +1,61 @@
 \chapter{Introduction}
 \label{chap:introduction}
-hehe
 
 \section{Background and Motivation}
 \label{sec:Background and Motivation}
-hehe
+% Paragraph about database technology and OLAP solutions.
+Database technology have had much progress in the last couple of years. The traditional OLTP systems with row stores are being supplemented with high-performance column stores for quick data analysis. Not only does column store improve performance aggregation performance, but it also reduces memory footprint as aggressive compression can be applied.
+
+% Paragraph about MDD
+\mdd~has gained much more traction recently. Although one may think that an extra level of abstraction will reduce overall performance, this technique allows for highly optimized implementations underneath. 
+
+% Paragraph about the intersection of these two fields.
+Database technology and column store is one such implementation that can be changed out and applied to the whole framework. We therefore implement column store within \genusSoftware to see which aspects of this technique are beneficial for \mdd.
+
+% Paragraph of what we will investigate (GENUS specific)
+
+% Paragraph about how we got the idea to the research
+Our original research was focusing on business discovery optimalizations. However, we came up with the idea to use the techniques learnt from the database techonolgy dircectly as base structures within \genusSoftware.
 
 \section{Problem Statement, Goals, and Deliverables}
 \label{sec:Problem Statement, Goals, and Deliverables}
-hehe
+Based on our motivation, we define the goal of the project as following: 
+
+\textbf{G1: Improve performance and reduce memory consumption in \genusSoftware~for all the major use cases in the framework by applying state-of-the-art database technology in the core.}
+
+We focus primarily on three major tasks:
+\begin{itemize}
+    \item \bd~capabilities.
+    \item Batch operations.
+    \item Filtering tasks.
+\end{itemize}
+
+We define \textit{state-of-the-art etc.} as following:
+\begin{itemize}
+    \item It's super new and the best!
+\end{itemize}
+
+We have defined this goal because we know that for certain tasks \genusSoftware~are too slow and use too much memory.
+
+As a step towards reaching \textbf{G1}, we address the following research question:
+
+\textbf{RQ1: Which benefits will a column store give a model driven development framework?} 
+
+For \textbf{RQ1}, not only do we study the benefits, we also try to define a set of operations that can be used by other parts of the application to create efficient code.
+
+\textbf{RQ2: Which metadata should be used to decide on the storage format?} 
 
 \section{Methodology}
 \label{sec:Methodology}
-hehe
+We implement column store in \genusSoftware and measure every change we do to get an overview over what affects the total performance.
 
-\section{Deliverables}
-\label{sec:Deliverables}
-hehe
+\section{Deliverables and Contributions}
+\label{sec:Deliverables and Contributions}
+The main deliverable from this research is this report containing implementation details and test results.
+
+Our contributions of this research are two-fold. First, we plan on \textit{introduce new evidence} for the intersection of \mdd~and database technology, something we claim has not been done before. We see several papers on \mdd, but none of them have explicitly studied the storage format within such systems.
+
+Secondly, we contribute to an \textit{improved computer-based product}. We hope the users of \genusSoftware~will be excited about the results.
 
 \section{Definitions}
 \label{sec:Definitions}
