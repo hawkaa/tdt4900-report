@@ -1,0 +1,25 @@
+\chapter{Conclusion}
+\label{chap:Conclusion}
+bla bla bla
+
+\section{Evaluation}
+\label{sec:Evaluation}
+We are confident that \mdd~can learn a lot from the database world.
+
+\section{Discussion}
+\label{sec:Discussion}
+Although we have theoretical proof and indications that the approach is fruitful, however we are aware of the limitations. First of all, we have omitted some of the functionality in \gaf, like for instance the security functionality. In the original implementation, applications may define a row-wise security layer per user or user group. We are confident that our column store approach will work in these settings.
+
+We have chosen to implement column storage; however a an efficient row-wise storage might also have given much of the benefits that column storage do. However, as we have seen, data update operations are dominated by other operations, like integrety checks and database persistence. However, as we have seen, most operations work on an entire column at a time, rather than an entire row. 
+
+\section{Contributions}
+\label{sec:Contributions}
+We have successfully introduced new evidence for the performance benefits of combining \mdd~and database technology.
+
+\section{Future Work}
+\label{sec:Future Work}
+There are still several issues that needs to be addressed. First, we have only briefly used the metadata to select the correct algorithm. There are several indications of which format is the correct one (code domain or object domain). One may even imagine a system that choses the correct storage format for different tasks.
+
+For now, we have treated user level data and data structures differently. However, these aspects are conceptually the same. One might imagine an implementation where all the pointers also are stored in columns.
+
+Last, but not least, we may look back at the issue that inspired the whole research: \bd. For now, \bd~capabilities have only been improved implicitly by reducing memory usage during runtime. In addition, we have improved load time by providing methods for generating required data arrays and indexes. However, most of the work still happens in a separate module without exploiting the data structures implemented in this research. Future work should implement joining, grouping, and aggregation directly within the columns, such that the proper techniques are used for the various implementations.

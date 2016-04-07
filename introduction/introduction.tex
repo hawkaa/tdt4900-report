@@ -1,5 +1,6 @@
 \chapter{Introduction}
 \label{chap:introduction}
+There should be something here! Welcome to this awesome master thesis.
 
 \section{Background and Motivation}
 \label{sec:Background and Motivation}
@@ -17,8 +18,8 @@ Database technology and column store is one such implementation that can be chan
 % Paragraph about how we got the idea to the research
 Our original research was focusing on business discovery optimalizations. However, we came up with the idea to use the techniques learnt from the database techonolgy dircectly as base structures within \genusSoftware.
 
-\section{Problem Statement, Goals, and Deliverables}
-\label{sec:Problem Statement, Goals, and Deliverables}
+\section{Problem Statement, Goals, and Research Questions}
+\label{sec:Problem Statement, Goals, and Research Questions}
 Based on our motivation, we define the goal of the project as following: 
 
 \textbf{G1: Improve performance and reduce memory consumption in \genusSoftware~for all the major use cases in the framework by applying state-of-the-art database technology in the core.}
@@ -47,7 +48,15 @@ For \textbf{RQ1}, not only do we study the benefits, we also try to define a set
 
 \section{Methodology}
 \label{sec:Methodology}
+The main part of the literature review was conducted using a method known as \term{Snowballing}, which is convenient if the scope of the project is uncertain \cite{Ang2014-nm}. The Snowballing method is the process whereby you start with a few number of authoritative papers, and based on these you expand your list of readings by relevant work that the papers have cited. The identification of papers can also happen in the other direction, where you look for papers that have used the current one as a reference. Either way, this method is known to generate a large number of papers, so the researcher must be very strict and objective in which papers to read.
+
+The initial papers, theses, and books used in this research were found in collaboration with department staff and regarded in-memory databases, columnar storage, and online analytical processing (OLAP) workloads. Both forward and backward searching was performed, and each paper was considered by reading the abstract, and conclusion and introduction if needed, to be put on the reading list. During the search process, we picked articles that could help us reach \textbf{G1} and answer \textbf{RQ1}. Also, articles must have been published by a known digital library, journal, or conference. When the field felt properly understood, we concluded the \term{Snowball} literature study.
+
 We implement column store in \genusSoftware and measure every change we do to get an overview over what affects the total performance.
+
+% theoretic/analytic
+% model/abstraction
+% design/experiment
 
 \section{Deliverables and Contributions}
 \label{sec:Deliverables and Contributions}
@@ -56,6 +65,8 @@ The main deliverable from this research is this report containing implementation
 Our contributions of this research are two-fold. First, we plan on \textit{introduce new evidence} for the intersection of \mdd~and database technology, something we claim has not been done before. We see several papers on \mdd, but none of them have explicitly studied the storage format within such systems.
 
 Secondly, we contribute to an \textit{improved computer-based product}. We hope the users of \genusSoftware~will be excited about the results.
+
+% could be a list
 
 \section{Definitions}
 \label{sec:Definitions}
@@ -83,8 +94,16 @@ A Database Management System (DBMS) is a computer software application for stora
 We will occasionally use the term \textit{reference products} in this report. By reference products we mean \bd~products pointed out by \genus~that \bd~capabilities in \genusSoftware~will be compared to. In this report, we study \qlikview~and \tableau.
 
 
-\section{Report Outline}
-\label{sec:Report Outline}
+\section{Thesis Structure}
+\label{sec:Thesis Structure}
+We structure our thesis as following:
+\begin{itemize}
+  \item \textbf{Chapter 2} introduces background material relevant to this report. 
+  \item \textbf{Chapter 3} introductes \genusSoftware.
+  \item \textbf{Chapter 4} shows how column store is implemented.
+  \item \textbf{Chapter 5} presents the test results.
+  \item \textbf{Chapter 6} concludes this research and points at interesting directions for future work.
+\end{itemize}
 
 
 
