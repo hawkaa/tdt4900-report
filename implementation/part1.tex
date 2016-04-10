@@ -1,0 +1,30 @@
+\chapter{Implementation Part I: The Column Store}
+\label{chap:Implementation Part I: The Column Store}
+
+This chapter explains the implementation of what we have done.
+
+\section{The Column Store}
+\label{sec:The CompositionComObjValueCollection}
+For the column store to work, a new value collection class was created. This class will, for each composition, keep a list of all fields (\cn{FieldDescriptor}) belonging to a composition and a corresponding column (\cn{FieldValueCollection}).
+
+\subsection{\cn{FieldValueCollection} growth strategy}
+\label{sub:FieldValueCollection growth strategy}
+We run a doubling, then a consolidate function after.
+
+
+
+\section{The Datasource Index}
+\label{sec:The Datasource Index}
+All CompositionObjects were assigned a new attribute, namely a datasource index. The CompositionObject constructor would call the DatasourceCompositionComObject
+
+\afigure{img/gaf-old-value-store.png}{Old value storage in \genusSoftware}{fig:gaf-old-value-store}{0.8}
+\afigure{img/gaf-column-store.png}{Proposed solution.}{fig:gaf-column-store}{0.8}
+
+
+\section{Assigning and }
+\label{sec:Assigning and }
+
+\section{Test results}
+\label{sec:Test results}
+To test the new implementation, we ran the TPC-H benchmark Q1.
+
