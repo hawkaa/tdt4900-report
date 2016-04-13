@@ -1,0 +1,49 @@
+\chapter{Discussion}
+\label{chap:Discussion}
+We hereby discuss our results
+
+\section{Limitations}
+\label{sec:Limitations}
+Although we have theoretical proof and indications that the approach is fruitful, however we are aware of the limitations. First of all, we have omitted some of the functionality in \gap, like for instance the security functionality. In the original implementation, applications may define a row-wise security layer per user or user group. We are confident that our column store approach will work in these settings.
+
+\section{Row storage}
+\label{sec:Row storage}
+We have chosen to implement column storage; however a an efficient row-wise storage might also have given much of the benefits that column storage do. However, as we have seen, data update operations are dominated by other operations, like integrety checks and database persistence. However, as we have seen, most operations work on an entire column at a time, rather than an entire row. 
+
+\section{Relation to Normal Programming Languages}
+\label{sec:Relation to Normal Programming Languages}
+We see that we have drastically improved end-user performance without affecting the information system development layer. However, most programming languages do not offer the same functionality. Regular developers would need something that is: i) rapid development, ii) readable, maintainable and debuggable code, and iii) occasionally control over data structures. Implementing column store in a regular application would sacrifice all of these three points. We wonder if this need not be the case.
+
+For instance, the Python programming language has something called \textit{decorators} \cite{noauthor_undated-aq}. A decorator is a software design pattern that dynamically changes the source code of a function or attribute. We believe that a similar pattern can be used to define the storage engine for class properties.
+
+\begin{lstlisting}
+class Person:
+    @storage(type='column')
+    first_name = null
+
+    @storage(type='column')
+    last_name = null
+
+    @storage(type='dictcolumn')
+    gender = nulgenderl
+\end{lstlisting}
+
+
+\section{Other room for improvement}
+\label{sec: Other room for improvement}
+More effort should be put into the loading strategy. For instance, they should be put at the correct size immediately.
+
+\subsection{Communication with the server}
+\label{sub:Compressing data at the server}
+Now, data are sent in an inefficient XML stream, and it is the work of the client to parse and load this data into proper memory structures. This causes uneccesary network traffic and data type conversions to and from string data, which reduces response time and cripples scalability.
+
+First, and the XML data format is by far outdated, is very unpragmatic and hard to parse. There are several conversions to and from strings. In addition, XML size are large compared to other formats. A solution would be to transfer the memory structures with alternative formats, like \pn{protocol buffers}, \pn{BSON}, or \pn{JSON}. This would reduce network footprint and simplify parsing. \todo{sources}
+
+Second, since we already have algorithms for data compression, why not compress the columns at the server and transfer the compressed versions to the client. This would reduce network traffic, and generally reduce the hardware requirements of a client.
+
+\subsection{Introducing server state}
+\label{sub:Introducing server state}
+For now, the server does not hold any state. This greatly simplifies the design. However, there are many befefits from putting state on the server. For instance, data can proactively be loaded, analysed, and compressed into memory before it is needed. In addition, most of the state the client would need would be the state of the graphical user interface. This will greatly reduce load time. 
+
+As stated above, there is an option to send compressed columns directly. Introducing server state would help solve this problem.
+

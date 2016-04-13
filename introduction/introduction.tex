@@ -5,25 +5,32 @@ There should be something here! Welcome to this awesome master thesis.
 
 \section{Background and Motivation}
 \label{sec:Background and Motivation}
+% Paragraph about MDD
+\mdd~has gained much more traction recently. Although one may think that an extra level of abstraction will reduce overall performance, this technique allows for highly optimized implementations underneath. A model abtracts away.
+
+However, several challenges with \mdd~exist, including performance \cite{Selic2003-qa}. However it is common knowledge that compiler optimization can outperform human creativity, and more recently: \mdd~tools generate code or systems that are faster and more reliable due to years of experimentation and experience. However, there are still problems left which leads developers to ditch the MDD approach all-together.
+
+One such problem is memory usage and tasks that affect a large amount of the data simultaneously. In this thesis, we explain and implement a column store in a model-driven development tool that will, without affecting the system developers, store data in highly optimized and compressed columns, such that memory usage can be improved. We apply technology from the recent database research and apply it to a development framework to allow for optimizations.
+
 % Paragraph about database technology and OLAP solutions.
 Database technology have had much progress in the last couple of years. The traditional OLTP systems with row stores are being supplemented with high-performance column stores for quick data analysis. Not only does column store improve performance aggregation performance, but it also reduces memory footprint as aggressive compression can be applied.
 
-% Paragraph about MDD
-\mdd~has gained much more traction recently. Although one may think that an extra level of abstraction will reduce overall performance, this technique allows for highly optimized implementations underneath. 
 
 % Paragraph about the intersection of these two fields.
-Database technology and column store is one such implementation that can be changed out and applied to the whole framework. We therefore implement column store within \genusSoftware to see which aspects of this technique are beneficial for \mdd.
+Database technology and column store is one such implementation that can be changed out and applied to the whole framework. We therefore implement column store within \gap to see which aspects of this technique are beneficial for \mdd.
 
 % Paragraph of what we will investigate (GENUS specific)
 
 % Paragraph about how we got the idea to the research
-Our original research was focusing on business discovery optimalizations. However, we came up with the idea to use the techniques learnt from the database techonolgy dircectly as base structures within \genusSoftware.
+Our original research was focusing on business discovery optimalizations. However, we came up with the idea to use the techniques learnt from the database techonolgy dircectly as base structures within \gap.
 
 \section{Problem Statement, Goals, and Research Questions}
 \label{sec:Problem Statement, Goals, and Research Questions}
 Based on our motivation, we define the goal of the project as following: 
 
-\textbf{G1: Improve performance and reduce memory consumption in \genusSoftware~for all the major use cases in the framework by applying state-of-the-art database technology in the core.}
+\textbf{G1: Improve performance and reduce memory consumption in \gap~for all the major use cases in the framework by applying state-of-the-art database technology in the core.}
+
+According to France \ea~, there is a large gap between the business problem and the actual implementation \cite{France2007-ae}. \mdd~aims to close the gap, or at least make it a little smaller. According to these authors, closing this gap requires a deep understanding of the problems which we do through experimentation and systematic acumulation of experience. We plan to gain exacly that experience in solving high memory usage and poor performance on certain operations. 
 
 We focus primarily on three major tasks:
 \begin{itemize}
@@ -37,7 +44,7 @@ We define \textit{state-of-the-art etc.} as following:
     \item It's super new and the best!
 \end{itemize}
 
-We have defined this goal because we know that for certain tasks \genusSoftware~are too slow and use too much memory.
+We have defined this goal because we know that for certain tasks \gap~are too slow and use too much memory.
 
 As a step towards reaching \textbf{G1}, we address the following research question:
 
@@ -53,7 +60,7 @@ The main part of the literature review was conducted using a method known as \te
 
 The initial papers, theses, and books used in this research were found in collaboration with department staff and regarded in-memory databases, columnar storage, and online analytical processing (OLAP) workloads. Both forward and backward searching was performed, and each paper was considered by reading the abstract, and conclusion and introduction if needed, to be put on the reading list. During the search process, we picked articles that could help us reach \textbf{G1} and answer \textbf{RQ1}. Also, articles must have been published by a known digital library, journal, or conference. When the field felt properly understood, we concluded the \term{Snowball} literature study.
 
-We implement column store in \genusSoftware and measure every change we do to get an overview over what affects the total performance.
+We implement column store in \gap and measure every change we do to get an overview over what affects the total performance.
 
 % theoretic/analytic
 % model/abstraction
@@ -65,7 +72,7 @@ The main deliverable from this research is this report containing implementation
 
 Our contributions of this research are two-fold. First, we plan on \textit{introduce new evidence} for the intersection of \mdd~and database technology, something we claim has not been done before. We see several papers on \mdd, but none of them have explicitly studied the storage format within such systems.
 
-Secondly, we contribute to an \textit{improved computer-based product}. We hope the users of \genusSoftware~will be excited about the results.
+Secondly, we contribute to an \textit{improved computer-based product}. We hope the users of \gap~will be excited about the results.
 
 % could be a list
 
@@ -92,7 +99,7 @@ A Database Management System (DBMS) is a computer software application for stora
 
 \paragraph{Reference products}
 \label{par:Reference products}
-We will occasionally use the term \textit{reference products} in this report. By reference products we mean \bd~products pointed out by \genus~that \bd~capabilities in \genusSoftware~will be compared to. In this report, we study \qlikview~and \tableau.
+We will occasionally use the term \textit{reference products} in this report. By reference products we mean \bd~products pointed out by \genus~that \bd~capabilities in \gap~will be compared to. In this report, we study \qlikview~and \tableau.
 
 
 \section{Thesis Structure}
@@ -101,7 +108,7 @@ We will occasionally use the term \textit{reference products} in this report. By
 We structure our thesis as following:
 \begin{itemize}
   \item \textbf{Chapter 2} introduces background material relevant to this report. 
-  \item \textbf{Chapter 3} outlines \genusSoftware.
+  \item \textbf{Chapter 3} outlines \gap.
   \item \textbf{Chapter 4} shows how column store is implemented.
   \item \textbf{Chapter 5} presents the test results.
   \item \textbf{Chapter 6} concludes this research and points at interesting directions for future work.

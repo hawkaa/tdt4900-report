@@ -1,0 +1,58 @@
+\chapter{Genus App Platform}
+\label{chap:Genus App Platform}
+According to a technical brief, \gap increase developer productivity and simplifies change management \cite{tech-brief-gap}. By modelling the applications instead of programming them, collaboration between business and IT becomes easier, life cycle cost is reduced, and lets the developers focus on the business logic.
+
+To achieve our goal, we realized that we had to invent generic software concepts and mechanisms on a higher level of abstraction than any traditional computational terms used by programming languages \cite{noauthor_undated-qy}. These concepts and mechanisms needed to be precise and non-ambiguous, using terms close to the user.
+ 
+We used the concepts and mechanisms as modeling constructs to solve problems specific for our customer’s applications. Step-by-step we refined the concepts and mechanisms to reach the point where we are today – a mature, feature-rich application model technology, running large real life applications for our customers. The application models are composed of our customers' business objects and logic with sufficient detail to let Genus run from the model itself.
+ 
+Genus handles all integrety.
+
+\section{Architecture}
+\label{sec:Architecture}
+\afigure{img/gap-components.png}{The components in \gap.}{fig:gap-components}{0.8}
+As seen in Figure \ref{fig:gap-components}, the architecture is coposed of several parts. First, we see that the \gap~backend is comprised of a server installation that integrates with several database providers, including \pn{Oracle Database}, \pn{Microsoft SQL Server}, \pn{IBM DB2} and more. The front-end consists of three parts.
+
+\begin{itemize}
+    \item \pn{Genus Studio}, used to define the customers application model.
+    \item \pn{Genus Desktop}, a \pn{Windows} client for the application.
+    \item \pn{Genus Apps}, a cross-platform client for smartphones, tablets, and web browsers.
+\end{itemize}
+
+The server instance is stateless, so on program and form load, the required data are transferred from the database via the server and to the client, where it is kept in-memory.
+
+In this research, we only look at \pn{Genus Desktop}.
+
+\section{Graphical User Interface}
+\label{sec:Graphical User Interface}
+\afigure{img/gap-definition-layers.png}{The definition layers in \gap.}{fig:gap-definition-layers}{0.8}
+\afigure{img/gap-data-layer.png}{The data layers in \gap. There is built-in security in the framework, in addition to integrity, data validation, and calculation.}{fig:gap-data-layer}{0.8}
+Genus Studio is composed of bla bla bla.
+
+\section{Customer use cases and problems}
+\label{sec:Customer use cases and problems}
+
+\section{Behind the scenes: Genus App Platform Source Code}
+\label{sec:Original Implementation}
+
+% important
+The way \genus~has chosen to implement their software is actually an in-memory database that are persisted to database backends supporting SQL. 
+
+\section{Genus App Platform and Model-Driven Development}
+\label{sec:Genus App Platform and Model-Driven Development}
+We round up the discussion by linking \gap~with \mdd, and the different layers of languages.
+
+\begin{itemize}
+    \item \bf{Information system layer} for end-users. They use \pn{Genus Desktop} and \pn{Genus Apps} to add, modify and delete data in their business application.
+    \item \bf{Information Systed Development Layer} for \gap~expert users. They use \pn{Genus Studio} to develop business applications for end users.
+    \item \bf{Method Engineering Layer} for \gap~developers. 
+\end{itemize}
+
+In this thesis, we focus on the method engineering layer to improve performance for the end-users. We plan to implement our changes such that it affects the information system development layer as little as possible.
+
+
+\section{The intersection between database technology and MDD}
+\label{sec:The intersection between database technology and MDD}
+Our main motivation for the research is to investigate the intersection between the two field. 
+
+Lets start writing!
