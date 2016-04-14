@@ -13,6 +13,10 @@ Genus handles all integrety.
 \afigure{img/gap-components.png}{The components in \gap.}{fig:gap-components}{0.8}
 As seen in Figure \ref{fig:gap-components}, the architecture is coposed of several parts. First, we see that the \gap~backend is comprised of a server installation that integrates with several database providers, including \pn{Oracle Database}, \pn{Microsoft SQL Server}, \pn{IBM DB2} and more. The front-end consists of three parts.
 
+Consistency checks in the database does not need to be enabled at the database level. \gap~will take care of logical connections, duplicates, validations, and triggers.
+
+Additionally, \gap~has more data types than an average database.
+
 \begin{itemize}
     \item \pn{Genus Studio}, used to define the customers application model.
     \item \pn{Genus Desktop}, a \pn{Windows} client for the application.
@@ -32,11 +36,6 @@ Genus Studio is composed of bla bla bla.
 \section{Customer use cases and problems}
 \label{sec:Customer use cases and problems}
 
-\section{Behind the scenes: Genus App Platform Source Code}
-\label{sec:Original Implementation}
-
-% important
-The way \genus~has chosen to implement their software is actually an in-memory database that are persisted to database backends supporting SQL. 
 
 \section{Genus App Platform and Model-Driven Development}
 \label{sec:Genus App Platform and Model-Driven Development}
@@ -56,3 +55,93 @@ In this thesis, we focus on the method engineering layer to improve performance 
 Our main motivation for the research is to investigate the intersection between the two field. 
 
 Lets start writing!
+
+\section{Behind the scenes: Genus App Platform Source Code}
+\label{sec:Original Implementation}
+
+% important
+The way \genus~has chosen to implement their software is actually an in-memory database that are persisted to database backends supporting SQL. 
+
+\subsection{Concepts}
+\label{sub:Concepts}
+In this section we list some important concepts that are used in \gap.
+
+\paragraph{Composition}
+A composition is more or less a class definition. A composition include several properties and other settings, like security.. A composition can either be based on one or more tables in a database (\textit{object domain}), or they may only exist in \gap~(\textit{code domain}). Users are expsod to the models through tables and forms combined with tasks, search, etc.
+
+\paragraph{Data Source}
+Tasks and graphical user interfaces normally contain one or more data sources. A data source is a collection of objects for a given composition, and can be brought up from the database if needed. In addition, a data source can contain either one object instance or multiple instances. Data sources belong to forms, tables, and tasks. Data are normally brought up from the database at load time or moved from one data source to another.
+
+
+\section{Classes}
+\label{sec:Classes}
+\afigure{img/gap-original-class-diagram.png}{\gap~class diagram}{fig:gap-original-class-diagram}{0.7}
+In this section we enumerate some of the most important classes in the \gap~source code. All of the classes are from the \delphi~core of the system. A class diagram of the relevant classes is depicted in Figure \ref{fig:gap-original-class-diagram}.
+
+\subsection{GValue}
+\label{sub:GValue}
+The \cn{GValue} class, short for \textit{Genus Value} is a base class that can contain any value of any type that is supported in the platform. These types include integers, floating point numbers, strings, object handles, dates, and more. 
+
+Since Delphi is a strict type-safe language, the \cn{GValue} has functions accessors for all the supported types, like the \fn{GetAsReal} function. If the value is not a real, an exception is thrown. There exists factory methods for all the value types. In addition, there are comparison methods and utilities for class conversion.
+
+% memory handling
+A \cn{GValue} is a class type and not a record type, hence is allocated on the heap. The \cn{GValue} has built-in reference counting such that \fn{Clone} will not make an actual copy, only increment.
+
+The \cn{GValue} class is a necessity in \gap~to omit the \delphi~rigid type system and to handle all values the same way.
+
+The different \cn{GValue} types inherit from from the base class and override methods that make sense. All inn all, it contains a refcount and the actual value.
+
+
+\subsection{CompositionDescriptor and CompositionObject}
+\label{sub:CompositionDescriptor}
+As mentioned in Section \ref{sub:Concepts}, there is a notion of a \textit{composition} in \gap. Since the platform is developed in one layer of abstraction above, we need two classes to support compositions, as we see in Figure \ref{fig:Linguistic-metamodeling}. The relationship between the descriptor and the object is normally built into the language as classes and objects, but in a model-driven framework, there exists two explicit constructs.
+
+The first one, that describes a composition is the \cn{CompositionDescriptor} class. This is conceptually the same as a class in a programming language. It contains a list of all attributes in a class, in addition to several other things like screen tip and sub-composition handling.\todo{Need help here}
+
+The second class, \cn{CompositionObject}, is instantiations of compositions. Each object has a reference to its descriptor (class type) and the actual data (stored in a \cn{CompositionObjectValueCollection}, see next section). In addition, each object contain several other variables to handle state, validation errors, formatting, and more.
+
+\subsection{DataDescriptor}
+\label{sub:DataDescriptor}
+The \cn{DataDescriptor} class is describes an attribute in a composition. It can be as simple as an integer, or a complex foreign key data type with constraints and formatting rules.
+
+\subsection{CompositionObjectValueCollection}
+\label{sub:CompositionObjectValueCollection}
+A \cn{CompositionObjectValueCollection} can be thought of as a row in a database. Every \cn{CompositionObject} owns one of these. The class contains a list of \cn{GValue} and a list of \cn{DataDescriptor}. This class has get and set methods that accept \cn{DataDescriptor} and \cn{GValue}.
+
+\section{Challenges with the current solution}
+\label{sec:Challenges with the current solution}
+
+\subsection{Excessive amount of pointers}
+\label{sub:Excessive amount of pointers}
+\afigure{img/gap-original-instantiation.png}{Many pointers in the original implementation of \gap}{fig:gap-original-instantiation}{0.7}
+The current implementation has a large amount of pointers, as seen in Figure \ref{fig:gap-original-instantiation}. On a 64 bit architecture, which is the case for \gap, each pointer is 8 bytes, which can be sufficient to drastically increase the memory usage.
+
+Lets take a simplified example. We have a data source with a composition. The composition has 15 fields, and in the data source there are 1,000,000 million elements.
+\begin{itemize}
+    \item \textbf{3 pointers} For the Data source, composition and a pointer to the list of data descriptors.
+    \item \textbf{15 pointers} For the composition data descriptors
+    \item \textbf{1 + 15 + 15 = 31 pointers} per composition object. One for value collection, the rest is all the data descriptors and all the values.
+\end{itemize}
+
+This results in 31,000,018 pointers, which is roughly 236mb. And this is only pointers, not including the data itself. If each element is a 4 byte integer, the total data size is only 57mb which in this example only comprise 20\% of the total storage.
+
+\subsection{Ineficcient data access and memory locality}
+\label{sub:Ineficcient data access and memory locality}
+Data in a \cn{GValue} are inefficiently accessed. Say, if you have a list of \cn{GValue} integers that you want to sum, for every element:
+\begin{itemize}
+    \item The \cn{GValue} has to be dereferenced.
+    \item The correct \fn{GetAsInteger} method would have to be looked up in the dispatch table.
+    \item A new stack frame is put on the stack to run the \fn{GetAsInteger} method.
+\end{itemize}
+Since the method is virtual, the compiler is unable to inline the function, hence, a new stack frame and register flush is required on every access. This differs dramatically from a normal loop iteration where a pointer is increased for every operation.
+
+Secondly, data locality degrades as we have lost control over the memory and handed it over to the memory manager. On every constructor call, memory is allocated on the heap, on a position we must assume is arbitrary. As we read in Chapter \ref{chap:Background}, cache locality is one of the key ingredients in database performance.
+
+\subsection{Inefficient storage usage}
+\label{sub:Inefficient storage usage}
+This is related to the previous sections, but for each value that is stored, an 8 byte pointer, a 4 byte ref-count and the actual value itself is stored. Depending on the data size, the overhead is commonly larger than the value itself.
+
+In the wort case, a boolean needs only a bit to be stored. In the \cn{GValue} class, a boolean takes 8 + 4 + 1 = 13 bytes = 104bits. Hence, the theoretical space saving for such value is roughly 100 times smaller.
+potential of b
+
+
