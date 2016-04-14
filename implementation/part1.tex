@@ -1,11 +1,19 @@
 \chapter{Implementation Part I: The Column Store}
 \label{chap:Implementation Part I: The Column Store}
+Inspired by the challenges with the current solution which we saw in Section \ref{sec:Challenges with the current solution}, we proceed to use techniques from the field of Database Technology to reduce memory footprint and increase data locality, which in turn will increase performance. 
 
-This chapter explains the implementation of what we have done.
+We choose to implement a column store. The reason for this is two-fold. First, there are several advantages with columns rather than rows: They are compressible. Second, the cases where \genus~has experienced performance issues are in situations where a column store is better suited than a row store. Since the entire implementation run in-memory, stiching together rows are not as costly as if they were stored on disk. In addition, Create, Update and Delete operations contains much other code for constraint checking, validation, allocation, etc. We, therefore, hypethetize that a column store is better suited than a row store.
+
+Let us go back to our previous example: A data source with 1,000,000 object with 15 attributes each. For this setup, the original implementation needed roughly 31 million pointers. The large amount of pointers is due to each object storing pointers to all fields in addition to their data.
+
+In our column store, we plan to replace the \cn{CompositionObjectValueCollection} pointer in each CompositionObject with one \cn{CompositionValueCollection} and an integer \vn{
+DatasourceIndex} that indicaties which position in the data source it has. Hence, each CompositionObject will only have one pointer (8 bytes) and one integer (4 bytes), irrespective of how many attributes the Composition has. The \cn{CompositionValueCollection} will require a data descriptor and/or \vn{DatasourceIndex} to access and modify rows, columns, or single values. This reduces the amount of memory needed to be stored per \cn{CompositionObject} to 2 direct pointers and only data pointers within the \cn{CompositionValueCollection} 15 pointers, which results in roughly 17 million pointers. This, disregarding overhead, is a memory reduction of roughly 50\%.
+
 
 \section{The Column Store}
 \label{sec:The CompositionComObjValueCollection}
-For the column store to work, a new value collection class was created. This class will, for each composition, keep a list of all fields (\cn{FieldDescriptor}) belonging to a composition and a corresponding column (\cn{FieldValueCollection}).
+
+For the column store to work, a new value collection class was created. This class will, for each composition, keep a list of all fields (\cn{FieldDescriptor}) belonging to a composition and a corresponding column (\cn{CompositionComObjValueCollection}).
 
 \subsection{\cn{FieldValueCollection} growth strategy}
 \label{sub:FieldValueCollection growth strategy}
