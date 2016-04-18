@@ -1,4 +1,30 @@
 \chapter{Implementation Part II: Data Compression}
 \label{chap:Implementation Part II: Data Compression}
+In this chapter, we explain how more performance is acheived by introducing native data types and dictionary compression.
 
+\section{Replacing GValues with Native Data Types}
+\label{sec:Replacing GValues with Native Data Types}
+One of the challenges with the current implementation, was that for each \cn{GValue}, there was a 12 byte overhead, which is pretty significant. That seems pretty unecessary to store a boolean, which generally takes up only one byte. 
+
+In Chapter \ref{chap:Background}, we saw that \delphi~has several simple data types, including \vn{Integer}, \vn{Boolean}, \vn{Double}, etc. We propose to not store \cn{GValue} instances within the columns, but rather such simple data types. However, since the column operations still uses \cn{GValue} in its access methods, the data has to be extracted from these instances on its way in, and new \cn{GValues} must be created on the way out. In this research, we refer to these simple data types an \textit{Native Data Types}.
+
+The implementation was straight forward. We create another implementation of the \cn{FieldValueCollection} interface with sub-classes for each data type. 
+
+\section{Dictionary Encoding}
+\label{sec:Dictionary Encoding}
+We read in the background section that dictionary encoding is commonly used to store data in a database. Such encoding has several benefits, with the main being compression. Some operations also benefit from integer comparisons which are cheap compared to for instance string coparisons.
+
+In a dictionary encoded column, the dictionary could be optimized for insert operations or for read optimizations. We chose the latter, where the dictionary is implemented as a simple list of elements.
+
+
+We chose to implement the dictionary for read performance.
+
+
+\section{Bitpacking}
+\label{sec:Bitpacking}
+In the background section, we see that dictionary encoding and bitpacking goes hand in hand. We implement a simple version to save more memory. 
+
+The bitpacking dictionary works very much like the ordinary dictionary encoding. We chose to use a growth strategy where each value takes 1, 2, 4, 8, 16.. bits to avoid extracting values across word boundaries. Hence, the number of distinct values a column can contain is $2^{2^n}$.
+
+The value buffer is implemented as an array of 64-bit values which we denote an \textit{cells}. A cell is added one at a time as the buffer fills up. If the dictionary fills up, a \fn{IncreaseDictionaryCapasity} function is called. This allocates a new value cell array of double size and moves all values from the old cells into the new one, except extra padding is added.
 

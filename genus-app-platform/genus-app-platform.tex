@@ -137,6 +137,8 @@ Since the method is virtual, the compiler is unable to inline the function, henc
 
 Secondly, data locality degrades as we have lost control over the memory and handed it over to the memory manager. On every constructor call, memory is allocated on the heap, on a position we must assume is arbitrary. As we read in Chapter \ref{chap:Background}, cache locality is one of the key ingredients in database performance.
 
+Third, a linear search is performed in the value collection every time. In terms of computational complexity, a linear search is still contant, but this adds to the overhead on looking up a single attribute.
+
 \subsection{Inefficient storage usage}
 \label{sub:Inefficient storage usage}
 This is related to the previous sections, but for each value that is stored, an 8 byte pointer, a 4 byte ref-count and the actual value itself is stored. Depending on the data size, the overhead is commonly larger than the value itself.

@@ -249,3 +249,38 @@ Although there are many ways to define these levels, we list the levels defined 
     \item Higest level is to make intances on feth B level, how to make different formalisms.
 \end{itemize}
 
+\section{Joining}
+\label{sec:Joining}
+Joining is a common database operation that combines records from two or more tables. In our research, we have studied several DBMSes, and seen how their join algorithms work. As we saw in Section \ref{sub:Business Discovery, Queries, and SQL}, joining is also needed for a \bd~application such that interaction with one table can affect the selection, filters, or aggregations in other tables.
+
+For joining two tables, three main methods exist \cite{Bratbergsengen2015-ed}: 
+\begin{itemize}
+  \item \textit{Partition-based approach}, where records of both tables are split into groups based on the hash value of the keys. This technique is most effective on data volumes that are too large to fit in main memory.
+  \item \textit{Sort-merge approach}, where both tables are sorted and then merge results by concatenating records with equal key values. This approach is most effective when one or both operands are sorted in advance.
+  \item \textit{Nested loop approach}, which compares all rows in both tables.
+\end{itemize}
+
+We find the \textit{nested loop} approach to be the most popular joining algorithm for in-memory and parallel databases \cite{Boncz2002-yj}. The rest of Section \ref{sec:Joining} will therefore only discuss this method.
+
+\subsection{Nested Loop Algorithms}
+\label{sub:Nested Loop Algorithms}
+
+% Basic nested join functionality
+In its simplest form, the \textit{nested loop} method compares the join key in all rows directly using a double loop. This simple algorithm has a runtime of $O(n*m)$ where $n$ and $m$ is the size of tables A and B respectively. However, to improve performance in a \textit{nested loop} algorithm, hashmaps are commonly used. Usually, the join is performed by hashing the smaller (inner) relation first, then probe the hashmap by scanning the larger (outer) relation. 
+
+In a star or snowflake schema, dimension tables are usually considered as the inner relations \cite{Barber2012-xt, Raman2013-em}. In other words, the keys of these tables will be used to create the hashmaps in the join. In the second phase of the algorithm, the fact table will probe the generated hashmaps to complete the join. 
+
+\ffigure{img/nested-loop.png}{An example nested loop join structure. Records are first tested against a Bloom filter. If found in the filter, the join key is searched in the join structure. Records are first hashed, and then each entry in the hash table is the root of a binary tree. Courtesy of \cite{Bratbergsengen2015-ed}.}{fig:nested-loop}
+
+Kjell Bratbergsengen shows how a combination of hash tables, bloom filters, and binary trees can be used in a \textit{nested join} algorithm. In the probe phase, keys are first checked towards a Bloom filter (Section \ref{sub:Bloom Filter}). Bloom filters never return false negatives and is an efficient way of reducing the numbers of keys entering the join. If the key is found in the Bloom filter lookup, it is hashed and checked up against a hybrid hashmap/binary-tree structure. In this structure, each entry in the hashmap is the root node of a binary tree which are used to efficiently look up values. The join algorithm is illustrated in Figure \ref{fig:nested-loop}.
+
+% Modifications
+In the nested loop approach, one of the operands might be partitioned \cite{Bratbergsengen2015-ed}. For example, a join might be partitioned by only hashing a subset of the inner relation at a time. The entire join algorithm will then include several probe passes over the outer relation, one for each subset. Historically, this technique has been applied to ensure the whole hash structure fits in RAM. We conclude that a similar concept can be applied to CPU caches and that the join algorithm might benefit from partitioning the inner relation such that each subset fits in the CPU cache.
+
+We see that several DBMSes in this research use a \textit{nested loop} join variant with Bloom filters, including \oracle~\cite{Lahiri2015-mz}, \ibm~\cite{Raman2013-em} and \blink~\cite{Raman2008-gi}. Barber \ea~explains how Bloom filters are effective in eliminating non-matching join outers before they enter the join \cite{Barber2014-ey}.
+
+Our research has shown that one of the key design goals for efficient joining using the \textit{nested loop} approach with hashmaps, is to keep the hash tables collision free \cite{Raman2008-gi, Raman2013-em}. One way to ensure this is to use the dictionary keys in \de~as a perfect hashing function. If a table is joined on several keys, a minimal perfect hash can be calculated.
+
+Regarding implementation, it is important that the algorithm and the hash table are \textit{cache-aware}. One way to improve cache performance in a \textit{nested loop} join, is to use linear probing instead of open-chain addressing for the hashmap \cite{Raman2008-gi}. Open-chain addressing should only be used for overflow buckets.
+
+Joining should be done in parallel for ultimate performance. For instance, the hash tables can be built using multiple threads \cite{Barber2014-ey}. We see that some \textit{nested loop} based algorithms partition the input to improve cache performance. However, this decision might as well be a parallelization decision \cite{Neumann2011-uq}. A system studied in our research that employs high-performance parallel joining is \ibm~\cite{Raman2013-em}.

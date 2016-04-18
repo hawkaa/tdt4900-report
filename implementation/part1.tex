@@ -12,12 +12,17 @@ DatasourceIndex} that indicaties which position in the data source it has. Hence
 
 \section{The Column Store}
 \label{sec:The CompositionComObjValueCollection}
-
+\ffigure{img/gap-original-rows.png}{Original implementation with Data Descriptor pointers for ever row}{fig:gap-original-rows}
+\ffigure{img/gap-bb-columns.png}{Proposed implementation. Only one set of data descriptors per pointer, data accessed using \vn{DatasourceIndex} on every \cn{CompositionObject}. The Composition Objects does not hold pointers to the data directly, but a cell can be accessed using a data descriptor and a datasource index.}{fig:gap-bb-columns}
 For the column store to work, a new value collection class was created. This class will, for each composition, keep a list of all fields (\cn{FieldDescriptor}) belonging to a composition and a corresponding column (\cn{CompositionComObjValueCollection}).
 
 \subsection{\cn{FieldValueCollection} growth strategy}
 \label{sub:FieldValueCollection growth strategy}
-We run a doubling, then a consolidate function after.
+Since we used native dynamic arrays, we control the array allocation size. For every reallocation, we risk that the entire array needs to be copied from one part of the memory to another. For this reason, one should be generous when allocating, ideally allocate the correct size immediately. However, since we read a stream of data objects, we are not sure how large our buffers should until the very end. 
+
+\afigure{img/gap-growth-strategy.png}{Growth strategy for buffers. In the load phase, the buffer doubles every time more space is needed. After the load phase, a consolidation is performed which reduces the buffer size to the exact number which are contained in a column.}{fig:gap-growth-strategy}{0.6}
+Therefore, we chose a tactic where we double the buffer size every time we need more space. This way, the number of reallocation operations are kept at a minimum. However, this strategy might result in lots of unused buffer space. We, therefore, add a \fn{consolidate} function to our column store that resizes all buffers to fit its data. The strategy is depicted in \ref{gap-growth-strategy}.
+
 
 
 
