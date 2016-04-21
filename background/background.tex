@@ -284,3 +284,70 @@ Our research has shown that one of the key design goals for efficient joining us
 Regarding implementation, it is important that the algorithm and the hash table are \textit{cache-aware}. One way to improve cache performance in a \textit{nested loop} join, is to use linear probing instead of open-chain addressing for the hashmap \cite{Raman2008-gi}. Open-chain addressing should only be used for overflow buckets.
 
 Joining should be done in parallel for ultimate performance. For instance, the hash tables can be built using multiple threads \cite{Barber2014-ey}. We see that some \textit{nested loop} based algorithms partition the input to improve cache performance. However, this decision might as well be a parallelization decision \cite{Neumann2011-uq}. A system studied in our research that employs high-performance parallel joining is \ibm~\cite{Raman2013-em}.
+
+
+\section{The Delphi Programming Language}
+\label{sec:The Delphi Programming Language}
+Since the system we will study in this thesis, the \gap, we need to study some background theory of how this language works. \delphi~is both a programming language and an integrated development environment \cite{Wikipedia_contributors2016-jk}, but we will only consider the programming language in this section. The language is an \name{Object Pascal} dialect and compiles into native code for several platforms, including \name{OSX} 32-bit architecture and \name{Windows} 32- and 64-bit architectures. It has a more efficient compiler than most languages. Delphi is classified as a strongly typed high-level language. Delphi supports object oriented design with polymorphism and interfaces.
+
+Delphi support strings with reference counting \cite{Wikipedia_contributors2016-jk}, and the memory for such is managed without programmer intervention. It supports unicode strings.
+
+In 2009, generics and full unicode support was introduced.
+
+A program in \delphi~is composed of different units, with two mandatory parts: The interface, much like a header in C, that declares constants, types, variables, and functions that are available from the outside, and the implementation, that contains the actual code \cite{noauthor_undated-pl}. Types, variables, etc. that are declared in the implentation part only are inaccesible outside the unit. In addition, each unit might specify an initialization and finalization code chunk to run on unit load and unit unload respectively. One unit may depend on other units by specifying the dependencies in the \texttt{uses}. Hence, the dependency graph is automatically created and no makefiles are needed. Cricular dependencies cause compilation error, and are not resolved automatically \cite{noauthor_undated-sp}.
+
+It supports preprocessing directives, but not macros.
+
+\delphi~has operators for referencing and dereferencing values, and supports basic pointer arithmetic \cite{noauthor_undated-cn}.
+
+\subsection{Delphi Types}
+\label{sub:Delphi Types}
+
+Simple types can be divided into two categories: Ordinal and real \cite{noauthor_undated-st}. Integer types is one of the ordinal value types, and have both platform-dependend and platform-independent implementations. Platform-dependent is always encouraged due to performance benefits.
+
+\subsubsection{String Types}
+\label{ssub:String Types}
+\afigure{img/delphi-strings.png}{Strings in \delphi}{fig:delphi-strings}{0.8}
+There are two major character implementations, \cn{AnsiChar} and \cn{WideChar}, with 1 or 2 bytes each respectively. The latter is default.
+
+There is support for both single and double precision floating point numbers.
+
+There are both Ansi and Unicode strings, where the default is Unicode \cite{noauthor_undated-cp}. There is support for both UTF-8 and UTF-16 encodings. The latter is default. Both strings are dynamically allocated, and is limited by the available memory. They are allocated on the heap. A string variable is a pointer with reference counting, length, data length and code page. The compiler tries to exploit the nature of the reference counting, and it has copy-on-write semantics if one reference changes the string. Unicode strings defaults to UTF-16. These string types are not null-terminated. Unicode strings are also managed automatically by the compiler.
+
+In other words, the ref-count and the not-null terminated strings costs one extra level of indirection. See figure \ref{fig:delphi-strings}. Languages that uses null-terminated strings, like C and C++, does not have this artifact.
+
+\subsubsection{Structured Types}
+\label{ssub:Structured Types}
+Commonly used in \delphi. A structured type can be a set, array, record, file, class, and more \cite{noauthor_undated-vu}. A structure is by default byte-aligned.
+
+One such structured type, is the array. An array can be static or dynamic. The static arrays are allocated with a certain length, and will take all the space, even if values are not assigned to all indexes. The dynamic arrays are reallocated when you assign a value that is not yet been assigned or you call the \fn{SetLength} method on them. The arrays are ref-counted the same way as a string, but they are not copy-on-write.
+
+Another type, the \cn{record} type, commonly represents a heterogenous set of values. A record might also have a variant part, which is not allowed in classes. Records are allocated on the stack by default and has value semantics, like copy on assignment, passed by value etc.
+
+\subsubsection{Pointer Types}
+\label{ssub:Pointer Types}
+A pointer is a 64-bit value on a 64-bit architecture. Pointers are typed to indicate which type they hold, much like C and C++.
+
+Both function and method pointers are supported.
+
+Delphi supports variant types for types that cannot be determined at compile time \cite{noauthor_undated-mx}. Althogh variants are powerful, they consume more memory and are slower than statically bound data types, and errors that earlier were caught compile time, will now happen at run-time.
+
+Variables are allocated on the stack by default, but can also be dynamically created on the heap \cite{noauthor_undated-lw}.
+
+\subsection{Memory Management}
+\label{sub:Memory Management}
+The memory manager is different for different platforms \cite{noauthor_undated-ys}. On Windows, which is the platform used by \gap, the \name{FastMM} memory manager is used. This memory manager is optimized for programs that allocate small to medium size blocks. Block size are rounded up to the nearest 16 bytes. It anticipates future block reallocations which reduces address space fragmentation.
+
+Arrays are also ref-counted.
+
+Classes are 64-bit pointers. Variables are held in the same order which they are declared on the stack. On a 64-bit platform, the first 8 bytes are pointers to a virtual method table.
+
+\subsection{Functions and Methods}
+\label{sub:Functions and Methods}
+The default calling convention is \texttt{register}, which uses three registers and puts the rest on the stack \cite{noauthor_undated-xi}. This is most efficient, because it does not need to create a stack frame on every function invocation. In addition, all properties contain either none, one, or two parameters, hence are quite efficient. 
+
+Function overloading is supported.
+
+\subsection{Inlining}
+\label{sub:Inlining}
+The compiler supports inlining of methods using the \texttt{inline} directive. However, this does not work for virtual methods, across package boundaries \cite{noauthor_undated-rx} \todo{finne mer her}

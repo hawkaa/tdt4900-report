@@ -9,6 +9,7 @@
 }
 
 \newcommand{\term}[1]{\textit{#1}}
+\newcommand{\name}[1]{\textit{#1}}
 \newcommand{\algmet}[1]{\textit{#1}}
 \newcommand{\pn}[1]{\textit{#1}}
 \newcommand{\cn}[1]{\texttt{#1}}
@@ -38,3 +39,13 @@
     \thispagestyle{empty}
     \newpage
 }
+
+\lstnewenvironment{delphicode}[2]
+{
+    \lstset{
+        caption=#1,
+        label=#2,
+        language=Delphi,
+        basicstyle=\small
+    }
+}{}

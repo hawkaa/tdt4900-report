@@ -11,26 +11,80 @@ Our observation is simple: If the value buffer is stored in a native column stru
 \subsection{Creating the Array Anyway}
 \label{sub:Creating the Array Anyway}
 As seen in Table X, there are drastic differences between native floating point columns and everything else. For instance, the quantity-column, which is an integer, it takes \~ 1500ms to create a source measure index. The same is the case for tax, which is floating point but dictionary encoded. We hypothetize that the reason for this is the large amount of memory allocations for \cn{GValue}s and access patterns, and that we can do better by operating on the whole column in a batch.
-\begin{lstlisting}
+
+\begin{delphicode}{Passing double array pointers}{lst:double-array-pointers}
 function CNativeRealFieldValueCollection.GetDoubleArray
-: TArray<double> ;
+: TArray<double>;
 begin
   Result := m_arrValues;
 end;
-\end{lstlisting}
+\end{delphicode}
 We proceed to implement \fn{GetDoubleArray} in integer and dictionary columns. This is seen in the code above. As we see in Table X, this gives magnificent results.
 
 \section{Lookup Index Creation}
 \label{sec:Lookup Index Creation}
 A common operation in \bd~is to create a lookup index from one table to another, that maps data source indexes from one table to data source indexes in another table. This could be considered as a join operation.
 
-For a database, a typical to such function input is two columns. As we have read in the background section, one such algorithm, the \textit{nested loop algorithm}, will first create a dictionary on the smallest column and then iterate the largest column and insert indexes. However, in \gap, such dictionary already exists as an \textit{identifier index}. This is used several places in the application, like blablabla \todo{Find out where this dictionary is used}. This dictionary either exists already, or is created by another mechanism in the application
+For a database, a typical to such function input is two columns. As we have read in the background section, one such algorithm, the \textit{nested loop algorithm}, will first create a dictionary on the smallest column and then iterate the largest column and insert indexes. However, in \gap, such dictionary already exists as an \textit{identifier index}. This is used several places in the application, like blablabla \todo{Find out where this dictionary is used}. This dictionary either exists already, or is created by another mechanism in the application.
 
 We may, therefore, use this dictionary as an input to the column.
 
 \section{Identifier Index}
 \label{sec:Identifier Index}
-In the previous section, we saw that an identifier index is used in a join algorithm. However, in certain circumstances, this index is not created, and takes a while to generate. We implement such function in our columns. The results are shown in Table X.
+In the previous section, we saw that an identifier index is used in a join algorithm. However, in certain circumstances, this index is not created, and takes a while to generate. We implement such function in our columns. As we have seen in Section \ref{sec:Lookup Index Creation}, an identifier index maps an identifier to a composition object. Previously, the mechanism has worked such that.
+
+\begin{delphicode}{Creating an identifier index. It accepts a list of objects and maps the object's data source indexes to values}{lst:create-identifier-index}
+function CNativeFieldValueCollectionBase<TDataType>.CreateIdentifierIndex
+( i_oComObjCollection : CCompositionObjectCollection )
+: TDictionary<string, CCompositionObject>;
+var
+  l_oComObj : CCompositionObject;
+begin
+  Result := TDictionary<string, CCompositionObject>.Create(i_oComObjCollection.Count);
+  for l_oComObj in i_oComObjCollection do
+  begin
+    Result.Add(m_oNativeValueHelper.ValueToString(m_arrValues[l_oComObj.DatasourceIndex]), l_oComObj);
+  end;
+end;
+\end{delphicode}
+
+Since all identifiers in \gap~are strings, we expand the Native Value Helper with a \fn{ValueToString} method that converts any native value to a string. For instance, the integer 13 is converted to "13". Although objects might come in arbitrary order, that is data source indexes might not be consecutive, in most cases they do. In other words, cache locality will be maximized.
+
+\subsection{Results}
+\label{sub:Results}
+The results are shown in table X
+
+\subsection{Discussion}
+\label{sub:Discussion}
+Even though this optimization was motivated by \bd~functionality, we still observe that the \fn{CreateIdentifierIndex} is used other places in the appliaction.
+
+\section{Predicate Evaluation}
+\label{sec:Predicate Evaluation}
+Inspired to look into other places in \gap~to utilize our new storage structure, we look at the filter mechanisms in the task execution unit. One common operation is to add objects to a data source and then do something with a subset of these. This subset is defined by a filter. Previously, the entire data source was enumerated and each object was compared. For each object.
+\begin{enumerate}
+    \item The \cn{GValue} for the Data Descriptor is fetched. Depending on the implementation, this is either a search through pointers or a memory allocation.
+    \item The \cn{GValue} is compared using the comparison methods in the class.
+    \item This is repeated for every predicated that is evaluated. \todo{Figure out what happened on different predicates}
+\end{enumerate}
+
+\begin{delphicode}{Creating a bitmap for the Equal operator.}{lst:create-equal-bitmap}
+function CNativeFieldValueCollectionBase<TDataType>.GetEqualBitmap
+( i_oValue : CGValue )
+: CBasicBitArray;
+var
+  l_i : integer;
+  l_oNativeValue : TDataType;
+begin
+  Result := CBasicBitArray.Create(m_iMaxDatasourceIndex + 1);
+  l_oNativeValue := m_oNativeValueHelper.ExtractValue(i_oValue);
+  for l_i := 0 to m_iMaxDatasourceIndex do
+    Result[l_i] := m_oNativeValueHelper.ValueEqual(m_arrValues[l_i], l_oNativeValue);
+end;
+\end{delphicode}
+
+We propose a new approach to data filtering to avoid all function invokations and/or memory allocations. By introducting filter methods on columns that accepts an operator and a \cn{GValue} and return a bitmap the process can be speeded up. On multiple predicates, the resulting bitmaps are combined (\texttt{AND}, \texttt{OR}) using highly optimized CPU instructions. An example of creating such a bitmap is shown in Listing \ref{lst:create-equal-bitmap}.
+
+
 
 \section{Column Selection}
 \label{sec:Column Selection}
@@ -67,6 +121,10 @@ For obvious reasons, we may assume that the statistics are mere estimates. Howev
 \label{sub:Special Cases}
 
 
+\section{Chapter Conclusion}
+\label{sec:Chapter Conclusion}
+
+In this chapter, we have seen that.
 
 
 

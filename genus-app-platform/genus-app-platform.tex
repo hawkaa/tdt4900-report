@@ -54,23 +54,39 @@ In this thesis, we focus on the method engineering layer to improve performance 
 \label{sec:The intersection between database technology and MDD}
 Our main motivation for the research is to investigate the intersection between the two field. 
 
-Lets start writing!
-
-\section{Behind the scenes: Genus App Platform Source Code}
-\label{sec:Original Implementation}
 
 % important
 The way \genus~has chosen to implement their software is actually an in-memory database that are persisted to database backends supporting SQL. 
 
-\subsection{Concepts}
-\label{sub:Concepts}
+\section{Concepts}
+\label{sec:Concepts}
 In this section we list some important concepts that are used in \gap.
 
-\paragraph{Composition}
-A composition is more or less a class definition. A composition include several properties and other settings, like security.. A composition can either be based on one or more tables in a database (\textit{object domain}), or they may only exist in \gap~(\textit{code domain}). Users are expsod to the models through tables and forms combined with tasks, search, etc.
+\subsection{Object Classes}
+\afigure{img/gap-class-diagram.png}{Class diagram in \gap for the \tpch. Blue units represent object domain compositions which means they are mapped to a database table, and white units represent code domain compositions that are part of the application.}{fig:gap-class-diagram}{1.0}
+An object class is more or less a class definition. A composition include several properties and other settings, like security. A composition can either be based on one or more tables in a database (\textit{object domain}), or they may only exist in \gap~(\textit{code domain}). Users are expsod to the models through tables and forms combined with tasks, search, etc. See figure \ref{fig:gap-class-diagram}.
 
-\paragraph{Data Source}
-Tasks and graphical user interfaces normally contain one or more data sources. A data source is a collection of objects for a given composition, and can be brought up from the database if needed. In addition, a data source can contain either one object instance or multiple instances. Data sources belong to forms, tables, and tasks. Data are normally brought up from the database at load time or moved from one data source to another.
+\subsection{Object Class Property}
+\label{sec:Object Class Property}
+As stated in the previous section, composition might have different properties. A composition can be a data type or a function type, have a large number of different types that are normally supported by the database vendors. In addition to this, additional information about layer of data interpretation, like "file", "date format", "email", and more which extends the basic functionality for a database which is typically agnostic about data interpretation. A data interpretation can also be another object class, which practise are used on foreign key fields in the database
+
+\subsection{Data Source}
+\label{sub:Data Source}
+Tasks and graphical user interfaces normally contain one or more data sources. A data source is a collection of objects for a given object class, and can be brought up from the database if needed. In addition, a data source can contain either one object instance or multiple instances. Data sources belong to forms, tables, and tasks. Data are normally brought up from the database at load time or moved from one data source to another. 
+
+A data source is defined with an object class and a filter. If a task, table, or a form is loaded, their respective data sources are queried from the database with filters and loaded into memory. In other words, a data source is an in-memory storage for object classes.
+
+We will see later in this thesis that data sources used many places in \gap~and its implementation is important for overall performance and memory usage.
+
+\subsection{Task}
+\label{sub:Task}
+\afigure{img/gap-task.png}{A task definition in \gap. A task may read from and to data sources, enumerate using for or while loops, consume services, import, export, etc. This specific task enumerates lineitems in the \tpch~and modifies some properties.}{fig:gap-task}{1.0}
+A task in \gap~is similar to a function in a programming language. As seen in Figure \ref{fig:gap-task}, the users might specify specific steps that loads data sources, filters, modifies attributes, imports, exports, and more. One such task is to read a specific subset from a data source and modify these values.
+
+\subsection{Data Mart}
+\label{sub:Data Mart}
+\afigure{img/gap-data-mart.png}{Data mart for Q1 in \tpch. It does only contain the necessary attributes to answer the query, and it conforms to a snowflake schema.}{fig:gap-data-mart}{0.6}
+A data mart is a data extract that may be used in analyses and other \bd~functionality. It is defined by a set of data sources and per data source, a list of published fields.  Except from the filtering, the major difference between the object class diagram shown in Figure \ref{fig:gap-class-diagram} and a data mart, is that there might only exist one path through the class diagram (snowflake schema). For instance, the Nation table in the \tpch~is refered to by both customer and supplier, which is a violation of this rule. In other words, the \texttt{NATION} would have two entities, \texttt{CUSTOMER\_NATION} and \texttt{SUPPLIER\_NATION}. Figure \ref{fig:gap-data-mart} depicts the data mart for Q1 in \tpch.
 
 
 \section{Classes}
@@ -108,6 +124,22 @@ The \cn{DataDescriptor} class is describes an attribute in a composition. It can
 \label{sub:CompositionObjectValueCollection}
 A \cn{CompositionObjectValueCollection} can be thought of as a row in a database. Every \cn{CompositionObject} owns one of these. The class contains a list of \cn{GValue} and a list of \cn{DataDescriptor}. This class has get and set methods that accept \cn{DataDescriptor} and \cn{GValue}.
 
+\begin{table}
+    \begin{tabularx}{\textwidth}{ X | X }
+        Concepts & Class Names \\
+        \hline
+        Class Object & \texttt{CompositionDescriptor} represents the class definition. \texttt{CompositionObject} represents individual instances of that class.\\
+        \hline
+        Class Object Property & \texttt{DataDescriptor} \\
+        \hline
+        Data Source & \texttt{DataSource} \\
+    \end{tabularx}
+    \caption{A mapping from concepts to class names}
+    \label{tab:concept-class-mapping}
+\end{table}
+
+A mapping from concepts to class names can be found in Table \ref{tab:concept-class-mapping}.
+
 \section{Challenges with the current solution}
 \label{sec:Challenges with the current solution}
 
@@ -143,7 +175,6 @@ Third, a linear search is performed in the value collection every time. In terms
 \label{sub:Inefficient storage usage}
 This is related to the previous sections, but for each value that is stored, an 8 byte pointer, a 4 byte ref-count and the actual value itself is stored. Depending on the data size, the overhead is commonly larger than the value itself.
 
-In the wort case, a boolean needs only a bit to be stored. In the \cn{GValue} class, a boolean takes 8 + 4 + 1 = 13 bytes = 104bits. Hence, the theoretical space saving for such value is roughly 100 times smaller.
-potential of b
+Theoretically, a boolean needs only a bit to be stored. In the \cn{GValue} class, a boolean takes 8 + 4 + 1 = 13 bytes = 104bits. Hence, the theoretical space saving for such value is roughly 100 times smaller.
 
 

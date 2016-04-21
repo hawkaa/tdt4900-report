@@ -10,6 +10,16 @@ In Chapter \ref{chap:Background}, we saw that \delphi~has several simple data ty
 
 The implementation was straight forward. We create another implementation of the \cn{FieldValueCollection} interface with sub-classes for each data type. 
 
+\subsection{Native Value Helper}
+\label{sub:Native Value Helper}
+As a part of the native value column implementation, we create a helper class we call \cn{NativeValueHelper}. This class is a generic class and is owned by the \cn{NativeFieldValueCollection} base class. This class has the current core functionality:
+\begin{itemize}
+    \item \fn{ExtractValue} - Inputs an \cn{GValue} and outputs the native value.
+    \item \fn{CreateGValue} - Creates a \cn{GValue} from a native value.
+    \item \fn{ValueEquals} - Compares two native values without creating \cn{GValues}.
+\end{itemize}
+The base class is inherited by one subclass per data type supported.
+
 \section{Dictionary Encoding}
 \label{sec:Dictionary Encoding}
 We read in the background section that dictionary encoding is commonly used to store data in a database. Such encoding has several benefits, with the main being compression. Some operations also benefit from integer comparisons which are cheap compared to for instance string coparisons.
