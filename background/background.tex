@@ -314,8 +314,6 @@ There is support for both single and double precision floating point numbers.
 
 There are both Ansi and Unicode strings, where the default is Unicode \cite{noauthor_undated-cp}. There is support for both UTF-8 and UTF-16 encodings. The latter is default. Both strings are dynamically allocated, and is limited by the available memory. They are allocated on the heap. A string variable is a pointer with reference counting, length, data length and code page. The compiler tries to exploit the nature of the reference counting, and it has copy-on-write semantics if one reference changes the string. Unicode strings defaults to UTF-16. These string types are not null-terminated. Unicode strings are also managed automatically by the compiler.
 
-In other words, the ref-count and the not-null terminated strings costs one extra level of indirection. See figure \ref{fig:delphi-strings}. Languages that uses null-terminated strings, like C and C++, does not have this artifact.
-
 \subsubsection{Structured Types}
 \label{ssub:Structured Types}
 Commonly used in \delphi. A structured type can be a set, array, record, file, class, and more \cite{noauthor_undated-vu}. A structure is by default byte-aligned.
@@ -351,3 +349,13 @@ Function overloading is supported.
 \subsection{Inlining}
 \label{sub:Inlining}
 The compiler supports inlining of methods using the \texttt{inline} directive. However, this does not work for virtual methods, across package boundaries \cite{noauthor_undated-rx} \todo{finne mer her}
+
+\subsection{Program Control}
+\label{sub:Program Control}
+Value and constant parameters to a method call is either passed by reference or by value, depending on the size of the variable \cite{noauthor_undated-ae}. By default, the \fn{register} calling convention is used, which means up to three parameters can be stored in registers. Some types, including doubles and 64-bit integers, are always pushed on the stack.
+
+\subsection{Misc}
+\label{sec:Misc}
+\delphi~is object oriented, and supports interfaces, inheritance, polymorphism and generics. In addition, inline assembly is supported, where \delphi~identifiers are allowed \cite{noauthor_undated-px}.
+
+There is support for Generics, where things can be parameterized by type \cite{noauthor_undated-sx}. Used to decouple an algorithm from its data structure. On an instantiation, it results in a code duplication.

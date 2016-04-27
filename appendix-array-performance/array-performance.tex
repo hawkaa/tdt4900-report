@@ -1,0 +1,68 @@
+\chapter{Array and Data Type Performance in Delphi}
+\label{app:array-performance}
+
+\section{Introduction}
+\label{sec:Introduction}
+In this microbenchmark, we test the performance and memory usage of different numeric data types in \delphi. We also study the performance of different array types found in the programming laungage and the standard library. We will assess \cn{integer}, \cn{Int64}, and \cn{double} data types and \cn{array of *}, \cn{TArray}, and \cn{TList} array types.
+
+The motivation for this microbenchmark is to find the most efficient data types for column storage in \gap, both in terms of memory usage and performance.
+
+\begin{minipage}{\linewidth}
+\begin{delphicode}{Array Performance Benchmark}{lst:array-performance}
+  SetLength(l_arrNumbers, 4000000 * 10);
+  for l_i := 1 to 4000000 do
+    for l_j := 0 to 9 do
+      l_arrNumbers[l_i * 10 + l_j] := l_j;
+  l_oMeasurer.After('List', 4000000*10);
+
+  for l_i := 1 to 10 do
+  begin
+    l_dSum := 0.0;
+    l_oTimer.Start('Sum ' + IntToStr(l_i));
+    for l_j := 0 to (4000000 * 10) - 1 do
+      l_dSum := l_dSum + l_arrNumbers[l_j];
+    l_oTimer.Stop('Sum ' + IntToStr(l_i));
+  end;
+\end{delphicode}
+\end{minipage}
+\section{Test Setup}
+\label{sec:Test Setup}
+For this microbenchmark, we write a small program that fills the array with numbers from 0 to 9 $n$ times. Then, we sum all numbers into an accumulator variable. We measure memory usage before and after array allocation and population. Then, we measure average time it takes to sum all numbers. We chose $n = 4000000$ for this benchmark. The program is shown in Listing \ref{lst:array-performance}.
+
+The test was run on a Windows 10 Dell workstation with a 64-bit, 2.40 GHz Intel\textregistered Xeon\textregistered E5620 processor and 8.00 GB RAM. The \delphi~version that was used is 23.0.21418.4207. Memory usage was measured for various program states by querying the built-in \name{FastMM} memory manager.
+
+\clearpage
+
+\section{Results}
+\label{sec:Results}
+\begin{table}
+\begin{tabular}{c | c | c | c}
+    Array type \textbackslash~Data type & \cn{integer} & \cn{Int64} & \cn{double} \\
+    \hline
+    \hline
+    \cn{array of} & $4.00$ bytes & $8.00$ bytes & $8.00$ bytes \\
+    \cn{TArray} & $4.00$ bytes & $8.00$ bytes & $8.00$ bytes \\
+    \cn{TList} & $4.00$ bytes & $8.00$ bytes & $8.00$ bytes \\
+\end{tabular}
+\caption{A table showing the bytes per element for 32- and 64-bit integers, and 64-bit double precision numbers.}
+\label{tab:array-performance-memory}
+\end{table}
+The memory benchmark shows no difference in memory consumption for the three different implementations. For all three array structures, the overhead is negilible. The results are presented in Table~\ref{tab:array-performance-memory}.
+
+\begin{table}
+\begin{tabular}{c | c | c | c}
+    Array type \textbackslash~Data type & \cn{integer} & \cn{Int64} & \cn{double} \\
+    \hline
+    \hline
+    \cn{array of} & 131 ms & 134 ms & 157 ms\\
+    \cn{TArray} & 130 ms & 134 ms & 157 ms\\
+    \cn{TList} & 215 ms & 221 ms & 237 ms\\
+\end{tabular}
+\caption{The time it takes to summarize all numbers in the benchmark for 32- and 64-bit integers and 64-bit double precision numbers.}
+\label{tab:array-performance}
+\end{table}
+We find that \cn{array of} and \cn{TArray} is equal in terms of performance. \cn{TList} is 1.5X - 2X as slow as the other implementations. In addition, integer addition is faster than floating point addition. Last, 64-bit integer addition is only slightly slower than 32-bit. The results are presented in Table \ref{tab:array-performance}.
+
+\section{Conclusion}
+\label{sec:Conclusion}
+We conclude that either \cn{array of} or \cn{TArray} should be used to store column data. In addition, the \cn{integer} data type should be used whenever possible.
