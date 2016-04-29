@@ -1,147 +1,149 @@
 \chapter{Genus App Platform}
 \label{chap:Genus App Platform}
-According to a technical brief, \gap increase developer productivity and simplifies change management \cite{tech-brief-gap}. By modelling the applications instead of programming them, collaboration between business and IT becomes easier, life cycle cost is reduced, and lets the developers focus on the business logic.
 
-To achieve our goal, we realized that we had to invent generic software concepts and mechanisms on a higher level of abstraction than any traditional computational terms used by programming languages \cite{noauthor_undated-qy}. These concepts and mechanisms needed to be precise and non-ambiguous, using terms close to the user.
- 
-We used the concepts and mechanisms as modeling constructs to solve problems specific for our customer’s applications. Step-by-step we refined the concepts and mechanisms to reach the point where we are today – a mature, feature-rich application model technology, running large real life applications for our customers. The application models are composed of our customers' business objects and logic with sufficient detail to let Genus run from the model itself.
- 
-Genus handles all integrety.
-
-\section{Architecture}
-\label{sec:Architecture}
-\afigure{img/gap-components.png}{The components in \gap.}{fig:gap-components}{0.8}
-As seen in Figure \ref{fig:gap-components}, the architecture is coposed of several parts. First, we see that the \gap~backend is comprised of a server installation that integrates with several database providers, including \pn{Oracle Database}, \pn{Microsoft SQL Server}, \pn{IBM DB2} and more. The front-end consists of three parts.
-
-Consistency checks in the database does not need to be enabled at the database level. \gap~will take care of logical connections, duplicates, validations, and triggers.
-
-Additionally, \gap~has more data types than an average database.
-
-\begin{itemize}
-    \item \pn{Genus Studio}, used to define the customers application model.
-    \item \pn{Genus Desktop}, a \pn{Windows} client for the application.
-    \item \pn{Genus Apps}, a cross-platform client for smartphones, tablets, and web browsers.
-\end{itemize}
-
-The server instance is stateless, so on program and form load, the required data are transferred from the database via the server and to the client, where it is kept in-memory.
-
-In this research, we only look at \pn{Genus Desktop}.
-
-\section{Graphical User Interface}
-\label{sec:Graphical User Interface}
-\afigure{img/gap-definition-layers.png}{The definition layers in \gap.}{fig:gap-definition-layers}{0.8}
-\afigure{img/gap-data-layer.png}{The data layers in \gap. There is built-in security in the framework, in addition to integrity, data validation, and calculation.}{fig:gap-data-layer}{0.8}
-Genus Studio is composed of bla bla bla.
-
-\section{Customer use cases and problems}
-\label{sec:Customer use cases and problems}
+\gap~is a platform for software development that aims to increase developer productivity and simplyfy change management through model-driven development \cite{Genus_AS2016-kt}. End user applications are modeled using a modeling tool instead of being programmed. This enhances collaboration between business and IT, reduces life cycle costs, and lets the application developers focus on business logic instead of implementation details. \gap~uses generic software concepts on a higher level of abstraction than regular programming languages that are precise and non-ambigous \cite{noauthor_undated-qy}. These concepts, and the underlying implementation, have been refined and improved through years of trial and error on real customer use cases. The model contains enough detail to let \gap~run the application.
 
 
-\section{Genus App Platform and Model-Driven Development}
-\label{sec:Genus App Platform and Model-Driven Development}
-We round up the discussion by linking \gap~with \mdd, and the different layers of languages.
+\section{Components and Architecture}
+\label{sec:Components and Architecture}
+\afigure{img/gap-components.png}{The components in \gap.}{fig:gap-components}{0.7}
+A system developed with \gap~consists of four major components, as seen in Figure~\ref{fig:gap-components}.
 
-\begin{itemize}
-    \item \bf{Information system layer} for end-users. They use \pn{Genus Desktop} and \pn{Genus Apps} to add, modify and delete data in their business application.
-    \item \bf{Information Systed Development Layer} for \gap~expert users. They use \pn{Genus Studio} to develop business applications for end users.
-    \item \bf{Method Engineering Layer} for \gap~developers. 
-\end{itemize}
+\paragraph{Database Server}
+\label{par:Database Server}
+\gap~stores both the application models and the data used by such these models in one or more database servers. The platform can extend existing systems by building on top of existing database relations used in other applications, or define new tables. Since \gap~handles all integrety checks, validation rules, triggers, duplicates, and foreign keys, these constraints do not need to be defined at the database layer. \genus~has developed adapters for most major database vendors, including \pn{Oracle Database}, \pn{Microsoft SQL Server}, \pn{IBM DB2}, and \pn{MySQL}. 
 
-In this thesis, we focus on the method engineering layer to improve performance for the end-users. We plan to implement our changes such that it affects the information system development layer as little as possible.
+\paragraph{Genus Server}
+\label{par:Genus Server}
+\pn{Genus Server} is the back-end in \gap. It facilitates communication between the client and the database server by multiplexing on application model, different data sets, and language \todo{Remove language, as it is irrelevant for all discussion?}. It also handles authentication and session management. For simplicity and scalability, all \pn{Genus Server} are stateless. Even though caching is used to improve performance, all servers may handle all responses. 
+
+\paragraph{Genus Studio}
+\label{par:Genus Studio}
+\pn{Genus Studio} is the designer tool used by expert \gap~users. This is, in model-driven development terminology, the information system development layer. In \pn{Genus Studio}, the customer's application is modelled with business logig using generic software concepts. The software runs on the \pn{Windows} platform. We study \pn{Genus Studio} in greater detail later in this chapter.
+
+\paragraph{Genus Desktop and Genus Apps}
+\label{par:Genus Desktop and Genus Apps}
+These are the end user clients for \pn{Windows} and mobile platforms respectively. In model-driven development terminology, this is the information system layer. End users access their applications with its respective data set through these clients. One running instance of these clients points to an application model and a dataset. They query \pn{Genus Studio} for data, and when the data arrives at the client, it is kept in-memory.
+
+In our research, we focus on \pn{Genus Client} and \pn{Genus Studio}.
 
 
-\section{The intersection between database technology and MDD}
-\label{sec:The intersection between database technology and MDD}
-Our main motivation for the research is to investigate the intersection between the two field. 
+\section{Application Development}
+\label{sec:Application Development}
+In this section we study how an application is developed using \gap. \genus~define three different layers: User interface, logic, and data layer. The applications are modelled using \pn{Genus Studio}.
 
+\subsection{Data Layer}
+\label{sub:Data Layer}
+\afigure{img/gap-data-layer.png}{The data layers in \gap. There is built-in security in the framework, in addition to integrity, data validation, and calculation. Courtesy of \cite{Genus_AS2016-kt}.}{fig:gap-data-layer}{0.65}
+In Figure \ref{fig:gap-data-layer}, we see how \gap~handles the data layer. The data layer in an application created using \gap~consists of classes and properties, hierarchies (inheritance) and connections (relations). Schema is \todo{Hva er et schema?}... Data flows through the system using an integrety, validation, and calculation engine. In addition, events and rules is supported. The entire data layer is protected by a security layer that gives access to only certain properties or certain objects. Data is modelled in a class diagram, which we will discuss in greater detail in Section \ref{sec:Concepts}.
 
 % important
-The way \genus~has chosen to implement their software is actually an in-memory database that are persisted to database backends supporting SQL. 
+We observe that the way \genus~has chosen to implement their software is actually an in-memory database that are persisted to database backends supporting SQL. This is an important observation in our research.
+
+\subsection{Logic Layer}
+\label{sub:Logic Layer}
+\afigure{img/gap-logic-layer.png}{Courtesy of \cite{Genus_AS2016-kt}.}{fig:gap-logic-layer}{1.0}
+The main component in the logic layer is the action orchestration, where the logic is defined, or orchestrated, through programming launguage-like constructs, like loops, ifs,  and exceptions. There is a number of different actions, including object create, object delete, modify objects, file creation, and IO operations like files and REST services. The Web Service \todo{Hva gjør Web Service i figuren?}... A task, defined by an action orchestration, can be run manually, but more commonly triggered by elements in the user interface level, or by other events like recurring time events. The logic layer is depicted in Figure \ref{fig:gap-logic-layer}.
+
+For our research, the most important parts of the logic layer is the object fetching and manipulation, as well as the data aggregate generation. We study this later in the thesis.
+
+\subsection{User Interface Layer}
+\label{sub:User Interface Layer}
+\afigure{img/gap-user-interface-layer.png}{Courtesy of \cite{Genus_AS2016-kt}.}{fig:gap-user-interface-layer}{1.0}
+The user interface layer, shown in Figure \cite{fig:gap-user-interface-layer}, defines a number of UI components to design an application. The two major components are form views and tables. A view interacts with the logic layer through invoking tasks. One form is designed for either \pn{Genus Desktop} or \pn{Genus Apps}.
 
 \section{Concepts}
 \label{sec:Concepts}
-In this section we list some important concepts that are used in \gap.
+In this section we enumerate some important concepts that are used in \gap.
 
 \subsection{Object Classes}
+\label{sub:Object Classes}
 \afigure{img/gap-class-diagram.png}{Class diagram in \gap for the \tpch. Blue units represent object domain compositions which means they are mapped to a database table, and white units represent code domain compositions that are part of the application.}{fig:gap-class-diagram}{1.0}
-An object class is more or less a class definition. A composition include several properties and other settings, like security. A composition can either be based on one or more tables in a database (\textit{object domain}), or they may only exist in \gap~(\textit{code domain}). Users are expsod to the models through tables and forms combined with tasks, search, etc. See figure \ref{fig:gap-class-diagram}.
+An object class in \gap~is the hybrid between a table definition in a database and a class in a programming language, and is defined in the data layer. An object class, or a composition, includes several properties (see Section \ref{sec:Object Class Properties}), information on where the data is provided, integrety constraints, security settings, and other display options. An object class can either be based on one or more tables in a database, which we refer to as the \textit{object domain}, or based on a set of values modelled into the application, which is the \textit{code domain}. The objects are defined in a class diagram, which is illustrated in Figure \ref{fig:gap-class-diagram}.
 
-\subsection{Object Class Property}
-\label{sec:Object Class Property}
-As stated in the previous section, composition might have different properties. A composition can be a data type or a function type, have a large number of different types that are normally supported by the database vendors. In addition to this, additional information about layer of data interpretation, like "file", "date format", "email", and more which extends the basic functionality for a database which is typically agnostic about data interpretation. A data interpretation can also be another object class, which practise are used on foreign key fields in the database
+\subsection{Object Class Properties}
+\label{sec:Object Class Properties}
+An object class is composed of one or more properties. Such properties can be simple data types, like integers and strings, or a function type, which calculates their value based on other properties in the class. In addition to the type definition, all properties also define a data interpretation. Such interpretations include \textit{file}, \textit{password}, \textit{date format}, and \textit{color}. A data interpretation can also be another object class, commonly used on foreign key fields, which creates a relation between the object classes.
+
+An object class property defines its own set of security rules, as well as validation and display options.
 
 \subsection{Data Source}
 \label{sub:Data Source}
-Tasks and graphical user interfaces normally contain one or more data sources. A data source is a collection of objects for a given object class, and can be brought up from the database if needed. In addition, a data source can contain either one object instance or multiple instances. Data sources belong to forms, tables, and tasks. Data are normally brought up from the database at load time or moved from one data source to another. 
+A data source is an important concept in \gap, as it is used by tasks and user interface components to define which data should be accessible. Tasks and user interface components define one or more data sources that will provide data from the database, if needed. A data source contains either one object instance or multiple instances of an object class. Data from the database are normally brought up from the database at load time for the specific task or form. A data source stores its data in-memory. Empty data sources might also be defined such that objects can be moved from one source to another during a task or on a form.
 
-A data source is defined with an object class and a filter. If a task, table, or a form is loaded, their respective data sources are queried from the database with filters and loaded into memory. In other words, a data source is an in-memory storage for object classes.
+A data source might define a filter on which objects that should be loaded. This is directly translated to SQL, such that a data source will only receive objects that conforms to the filter.
 
-We will see later in this thesis that data sources used many places in \gap~and its implementation is important for overall performance and memory usage.
+\subsection{Data Mart}
+\label{sub:Data Mart}
+\afigure{img/gap-data-mart.png}{Data mart for Q1 in \tpch, which contains only the object classes and fields needed to answer that particular query. The mart conforms to a snowfalke schema.}{fig:gap-data-mart}{0.7}
+A data mart defines a data extract that are used in analyses and \bd~panels in \gap. A data mart is defined by a set of data sources, and per data source, a list of published fields. Like always, a data source might specify a filter, such that the analyses access only a particular subset of the data.
+
+Besides from the field and data source filtering, a data mart looks very much like like an object diagram, like seen in Figure \ref{fig:gap-data-mart}. Still, there is one important distinction: A data mart must conform to a snowflake schema, that is there can only exist one path through the class diagram. For instance, in Figure \ref{fig:gap-class-diagram}, both customer and suppliers refer to the nation table. In a data mart, there would two nation entitities, a \texttt{CUSTOMER\_NATION} and a \texttt{SUPPLIER\_NATION} table.
 
 \subsection{Task}
 \label{sub:Task}
 \afigure{img/gap-task.png}{A task definition in \gap. A task may read from and to data sources, enumerate using for or while loops, consume services, import, export, etc. This specific task enumerates lineitems in the \tpch~and modifies some properties.}{fig:gap-task}{1.0}
-A task in \gap~is similar to a function in a programming language. As seen in Figure \ref{fig:gap-task}, the users might specify specific steps that loads data sources, filters, modifies attributes, imports, exports, and more. One such task is to read a specific subset from a data source and modify these values.
+A task in \gap~is similar to a procedure or a function in a programming language, and is defined at the logic layer. A task might be triggered manually, or through user interaction in the user interface, or by agents that trigger tasks periodically.
 
-\subsection{Data Mart}
-\label{sub:Data Mart}
-\afigure{img/gap-data-mart.png}{Data mart for Q1 in \tpch. It does only contain the necessary attributes to answer the query, and it conforms to a snowflake schema.}{fig:gap-data-mart}{0.6}
-A data mart is a data extract that may be used in analyses and other \bd~functionality. It is defined by a set of data sources and per data source, a list of published fields.  Except from the filtering, the major difference between the object class diagram shown in Figure \ref{fig:gap-class-diagram} and a data mart, is that there might only exist one path through the class diagram (snowflake schema). For instance, the Nation table in the \tpch~is refered to by both customer and supplier, which is a violation of this rule. In other words, the \texttt{NATION} would have two entities, \texttt{CUSTOMER\_NATION} and \texttt{SUPPLIER\_NATION}. Figure \ref{fig:gap-data-mart} depicts the data mart for Q1 in \tpch.
+As seen in Figure \ref{fig:gap-task}, the users might specify specific steps that loads data sources, filters, modifies attributes, imports, exports, and more.
 
-
-\section{Classes}
-\label{sec:Classes}
-\afigure{img/gap-original-class-diagram.png}{\gap~class diagram}{fig:gap-original-class-diagram}{0.7}
-In this section we enumerate some of the most important classes in the \gap~source code. All of the classes are from the \delphi~core of the system. A class diagram of the relevant classes is depicted in Figure \ref{fig:gap-original-class-diagram}.
+\section{Source Code and Classes}
+\label{sec:Source Code and Classes}
+\afigure{img/gap-original-class-diagram.png}{\gap~class diagram}{fig:gap-original-class-diagram}{0.8}
+The \gap~core is written in Delphi, a programming language we discussed in Section \ref{sec:The Delphi Programming Language}. In this section we enumerate the most important classes in the source code, and how it relates to the concepts from Section \ref{sec:Concepts}. A simplified class diagram is shown in \ref{fig:gap-original-class-diagram}.
 
 \subsection{GValue}
 \label{sub:GValue}
-The \cn{GValue} class, short for \textit{Genus Value} is a base class that can contain any value of any type that is supported in the platform. These types include integers, floating point numbers, strings, object handles, dates, and more. 
+The \cn{GValue} class, short for \textit{Genus Value} is a base class that can contain any value of any type that is supported in the platform. These types include integers, floating point numbers, strings, object handles, dates, and more. The \cn{GValue} class is a necessity in \gap~to omit the \delphi~rigid type system and to handle all values the same way. In addition, there are comparison methods and utilities for class conversion.
 
-Since Delphi is a strict type-safe language, the \cn{GValue} has functions accessors for all the supported types, like the \fn{GetAsReal} function. If the value is not a real, an exception is thrown. There exists factory methods for all the value types. In addition, there are comparison methods and utilities for class conversion.
+For ever value type supported in the system, there exists accessor methods for that value type, that throws an exception by default. For instance, \fn{GetAsInteger} is implemented in \cn{GValue} class, but it throws an exception. There exists a \cn{IntegerValue} that overrides this function and returns the actual value.
 
 % memory handling
 A \cn{GValue} is a class type and not a record type, hence is allocated on the heap. The \cn{GValue} has built-in reference counting such that \fn{Clone} will not make an actual copy, only increment.
 
-The \cn{GValue} class is a necessity in \gap~to omit the \delphi~rigid type system and to handle all values the same way.
-
-The different \cn{GValue} types inherit from from the base class and override methods that make sense. All inn all, it contains a refcount and the actual value.
-
+% The different \cn{GValue} types inherit from from the base class and override methods that make sense. All inn all, it contains a refcount and the actual value.
 
 \subsection{CompositionDescriptor and CompositionObject}
 \label{sub:CompositionDescriptor}
-As mentioned in Section \ref{sub:Concepts}, there is a notion of a \textit{composition} in \gap. Since the platform is developed in one layer of abstraction above, we need two classes to support compositions, as we see in Figure \ref{fig:Linguistic-metamodeling}. The relationship between the descriptor and the object is normally built into the language as classes and objects, but in a model-driven framework, there exists two explicit constructs.
+The object class, or composition, which we discussed in Section \ref{sub:Object Classes}, is represented through the \cn{CompositionDescriptor} and \cn{CompositionObject} classes. Since \gap~source code is developed in one layer of abstraction above a regular programming language, we need two classes to support compositions, as we see in Figure \ref{fig:linguistic-metamodeling}. The relationship between the descriptor and the object is normally built into the language as classes and objects, but in a model-driven framework, there must be two explicit constructs.
 
-The first one, that describes a composition is the \cn{CompositionDescriptor} class. This is conceptually the same as a class in a programming language. It contains a list of all attributes in a class, in addition to several other things like screen tip and sub-composition handling.\todo{Need help here}
+The \cn{CompositionDescriptor} class describes a composition, and represents an object class. Conceptually, such descriptor is the same as a class in a programming language. As described Section \ref{sec:Object Classes}, a composition descriptor contains a list of data descriptors as well as ... \todo{Trenger hjelp her}. A composition descriptor contains data from the information system delevopment layer.
 
-The second class, \cn{CompositionObject}, is instantiations of compositions. Each object has a reference to its descriptor (class type) and the actual data (stored in a \cn{CompositionObjectValueCollection}, see next section). In addition, each object contain several other variables to handle state, validation errors, formatting, and more.
+The \cn{CompositionObject} class represents object instances for object classes. Each object has a reference to its composition descriptor, and in addition, there are other variables that store object state, validation errors, formatting, and more. The data belonging to a composition object is stored in a \cn{CompositionObjectValueCollection} class (Section \ref{sub:CompositionObjectValueCollection}).
+
 
 \subsection{DataDescriptor}
 \label{sub:DataDescriptor}
-The \cn{DataDescriptor} class is describes an attribute in a composition. It can be as simple as an integer, or a complex foreign key data type with constraints and formatting rules.
+The \cn{DataDescriptor} class describes an attribute in a composition, which is the object class property we studied in Section \ref{sub:Object Class Properties}. It holds all revelant data about a property, mainly type and representation, but also constraints and formatting rules. Instances of the \cn{DataDescriptor} class exist in the information system development layer.
 
 \subsection{CompositionObjectValueCollection}
 \label{sub:CompositionObjectValueCollection}
-A \cn{CompositionObjectValueCollection} can be thought of as a row in a database. Every \cn{CompositionObject} owns one of these. The class contains a list of \cn{GValue} and a list of \cn{DataDescriptor}. This class has get and set methods that accept \cn{DataDescriptor} and \cn{GValue}.
+The \cn{CompositionObjectValueCollection} class holds the data for composition objects, and is equivalent to the data stored in class properties in a regular programming language. Alternatively, this collection class can be thought of as a row in a DBMS. The class contains a list of \cn{GValue} and a list of \cn{DataDescriptor}. Values are accessed through querying the \cn{CompositionObjectValueCollection} with a \cn{DataDescriptor}.
 
 \begin{table}
-    \begin{tabularx}{\textwidth}{ X | X }
-        Concepts & Class Names \\
+    \begin{tabularx}{\textwidth}{X | X | X}
+        Class Name & Concept & Model-driven development layer \\
         \hline
-        Class Object & \texttt{CompositionDescriptor} represents the class definition. \texttt{CompositionObject} represents individual instances of that class.\\
         \hline
-        Class Object Property & \texttt{DataDescriptor} \\
+        \cn{GValue} & - & Method engineering layer \\
         \hline
-        Data Source & \texttt{DataSource} \\
+        \cn{CompositionDescriptor} & Object Class & Information system development layer \\
+        \hline
+        \cn{CompositionObject} & Instance of Object Class & Information system layer \\
+        \hline
+        \cn{DataDescriptor} & Object Class Property & Information system development layer \\
+        \hline
+        \cn{CompositionObject- ValueCollection} & Values of Object Class Property & Information system layer
     \end{tabularx}
-    \caption{A mapping from concepts to class names}
+    \caption{Classes and layers}
     \label{tab:concept-class-mapping}
 \end{table}
 
-A mapping from concepts to class names can be found in Table \ref{tab:concept-class-mapping}.
+An overview over classes, and how they relate to \gap~concepts and model-driven engineering layers is found in Table \ref{tab:concept-class-mapping}.
 
-\section{Challenges with the current solution}
-\label{sec:Challenges with the current solution}
+\section{Challenges in Genus App Platform}
+\label{sec:Challenges in Genus App Platform}
+There is a number of challenges in \gap~in the way it is designed. In this section, we discuss some of these challenges, which are related to memory usage and memory access.
 
 \subsection{Excessive amount of pointers}
 \label{sub:Excessive amount of pointers}
@@ -177,4 +179,20 @@ This is related to the previous sections, but for each value that is stored, an 
 
 Theoretically, a boolean needs only a bit to be stored. In the \cn{GValue} class, a boolean takes 8 + 4 + 1 = 13 bytes = 104bits. Hence, the theoretical space saving for such value is roughly 100 times smaller.
 
+\section{Chapter Conclusion}
+\label{sec:Chapter Conclusion}
+To recap, we see three layers of model-driven development in the \gap~architecture:
+\begin{itemize}
+    \item \bf{Information system layer} for end-users. They use \pn{Genus Desktop} and \pn{Genus Apps} to add, modify and delete data in their business application.
+    \item \bf{Information Systed Development Layer} for \gap~expert users. They use \pn{Genus Studio} to develop business applications for end users.
+    \item \bf{Method Engineering Layer} for \gap~developers. 
+\end{itemize}
+In this thesis, we focus on the method engineering layer to improve performance for the end-users. We plan to implement our changes such that it affects the information system development layer as little as possible.
 
+Our main motivation for the research is to investigate the intersection between the two fields: Database technology and model-driven development.
+
+\gap~knows more about the data than a regular database using the data interpretation, which databases are normally agnostic.
+
+In other words, a data source is an in-memory storage for object classes.
+
+We will see later in this thesis that data sources used many places in \gap~and its implementation is important for overall performance and memory usage.
