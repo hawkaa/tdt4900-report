@@ -1,16 +1,15 @@
-\chapter{Test Setup}
-\label{app:test-setup}
-In this appendix, we elaborate on the tests run to measure performance. There is a total of five tests, all aiming to test different parts of the application where the memory or time usage might have been affected. The two last test cases, test case X and X, are based on real customer data from one of \genus's customers.
+\chapter{Benchmarks}
+\label{app:Benchmarks}
+In this appendix, we elaborate on the benchmarks run to measure performance. There is a total of five tests, all aiming to test different parts of the application where the memory or time usage might have been affected. The two last benchmarks, Benchmark \ref{bm:odin-load} and Benchmark \ref{bm:odin-crud}, are run on real customer data from one of \genus' customers.
 
 All tests are run on a Windows 10 Dell workstation with a 64-bit, 2.40 GHz Intel\textregistered Xeon\textregistered E5620 processor and 8.00 GB RAM. The \delphi~version used is 23.0.21418.4207. 
 
-Memory usage is measured for various states in the program by querying the built-in \name{FastMM} memory manager, and is commonly used to measure deltas in memory allocation. To measure the entire application footprint, including the .NET layer and the GUI, the built-in memory manager for Windows 10 is used.
+Memory usage is measured for various states in the program by querying the built-in \name{FastMM} memory manager, and the values returned are used to measure memory deltas. To measure the entire application footprint, including the .NET layer and the graphical user interface, the built-in memory manager in Windows 10 is used.
 
-We run all tests in \textit{Genus Desktop} in \delphi~debugger mode. Test output and debugging statements is extracted through \textit{Trace Log}, a log tool developed by \genus~for their applications.
+We run all benchmarks in \textit{Genus Desktop} in \delphi~debugger mode. Test output and debugging statements is extracted through \textit{Trace Log}, a log tool developed by \genus~for their applications.
 
-
-\section{TPC-H Q1 Benchmark Data Load}
-\label{sec:TPC-H Q1 Benchmark Data Load}
+\section{TPC-H Q1 Data Load Benchmark}
+\label{bm:q1}
 In this benchmark, we measure analytical performance in \gap~using Q1 in the TPC-H Q1 benchmark. As we saw in \ref{sec:Testing}, the TPC-H benchmark is made for decision support workloads and consists of a suite of business oriented ad-hoc queries. The schema for the TPC-H benchmark consists of eight separate tables, as seen in Figure \ref{fig:tpc-h}. The table columns have a variety of different data types, including integers, floating points, variable and fixed width strings, identifiers, and booleans. 
 
 \afigure{img/tpc-h-q1.png}{TPC-H Q1 query. Courtesy of \cite{Transaction_Processing_Performance_Council_TPC2014-ux}.}{fig:tpc-h-q1}{0.75}
@@ -49,20 +48,20 @@ In \gd, all calculations and aggregations are performed on arrays of double prec
 \label{par:Total Memory Footprint}
 We measure the total memory footprint of the TPC-H Q1 \gd~application by using the Windows 10 memory manager such that all overhead in the .NET and user interface layers is included. The \textit{In Use} memory metric is recorded before the \gd~instance is loaded and when the UI is shown to the user. 
 
-\section{TPC-H Write Test}
-\label{test:write-test}
+\section{Write Benchmark}
+\label{bm:write}
 \afigure{img/lineitem.png}{\texttt{LINEITEM} table layout. Courtesy of \cite{Transaction_Processing_Performance_Council_TPC2014-ux}.}{fig:lineitem}{0.8}
-Since write performance might be sacrificed when optimizing for read performance, we establish a test that measures impact. For simplicity reasons, this test is based on the \texttt{LINEITEM} table in the TPC-H benchmark. The main reason for using this table was the different data types, which we see in Figure \ref{fig:lineitem}.
+Since write performance might be sacrificed when optimizing for read performance, we establish a benchmark that measures this impact. For simplicity reasons, the benchmark is based on the \texttt{LINEITEM} table in the TPC-H benchmark. The main reason for using this table was availability of  different data types, which we see in Figure \ref{fig:lineitem}.
 
-The test reads $N$ items into a data source, for all items, the following fields are modified:
+The benchmark reads $N$ items into a data source, for all items, the following fields are modified:
 \begin{itemize}
-    \item \texttt{QUANTITY = QUANTITY + 1} to test integer performance.
-    \item \texttt{EXTENDEDPRICE = EXTENDEDPRICE + 1.0} to test floating point performance.
-    \item \texttt{COMMENT = COMMENT + "1"} to test string performance.
-    \item \texttt{SHIPDATE = SHIPDATE PLUS 1 DAYS} to test date performance.
+    \item \texttt{QUANTITY = QUANTITY + 1} to measure integer performance.
+    \item \texttt{EXTENDEDPRICE = EXTENDEDPRICE + 1.0} to measure floating point performance.
+    \item \texttt{COMMENT = COMMENT + "1"} to measure string performance.
+    \item \texttt{SHIPDATE = SHIPDATE PLUS 1 DAYS} to measure date performance.
 \end{itemize}
-\afigure{img/write-test-definition.png}{The task definition for the Write Test. For every attribute, the data source is enumerated.}{fig:write-test-definition}{0.4}
-One field is modified per iteration, so there is a total of four iterations in this task. The full task definition is seen in Figure \ref{fig:write-test-definition}.
+\afigure{img/write-test-definition.png}{The task definition for the Write Benchmark. There is one loop per attribute.}{fig:write-test-definition}{0.4}
+One property is modified per iteration, so there is a total of four iterations in this task. The full task definition is seen in Figure \ref{fig:write-test-definition}.
 
 \subsection{Test Input}
 \label{sub:Test Input}
@@ -70,14 +69,12 @@ The number of \texttt{LINEITEM}s loaded into the data source and modified. The n
 
 \subsection{Test Output}
 \label{sub:Test Output}
-For each property modified, the time it took to enumerate the entire data source is measured. The results are reported in milliseconds.
+For each property modified, the time it took to enumerate the entire data source is measured. In addition to this, the average time per modification is listed.
 
-\section{Filter Test}
-\label{sec:Filter Test}
-
-
-Since write performance might be sacrificed when optimizing for read performance, we establish a test that measures impact. For simplicity reasons, this test is based on the \texttt{LINEITEM} table in the TPC-H benchmark. The main reason for using this table was the different data types, which we see in Figure \ref{fig:lineitem}.
+\section{Filter Benchmark}
+\label{bm:filter}
 \begin{table}
+    \centering
     \begin{tabular}{c | c}
         Predicate & Selects (of 100,000) \\
         \hline
@@ -89,45 +86,62 @@ Since write performance might be sacrificed when optimizing for read performance
         \texttt{EXTENDEDPRICE < 1000} & 44 \\
         \texttt{EXTENDEDPRICE = 42995.94} & 1 \\
         \texttt{SHIPDATE IN 1995} & 15,435 \\
-        \texttt{SHIPINSTRUCT HAS VALUE} & - \\
+        \texttt{SHIPINSTRUCT\_NULL HAS VALUE} & 74,991 \\
     \end{tabular}
-    \caption{Predicates and selectivity for the Filter Test}
+    \caption{Predicates Filter Benchmark. The second column indicated selectivity by showing the number of selected rows if an input size of 100,000 is used.}
     \label{tab:Filter Test}
 \end{table}
-\genus~has experienced that some filter operations in tasks takes a while to perform. We, therefore, define a test that filters items in one data source into another. This test is based on data from the TPC-H benchmark. For each test, a field and a predicate is set. See table \ref{tab:Filter Test}
+To test \gap's ability to move data from one data source to another based on a filter, we create a benchmark based on the \texttt{LINEITEM} table from the TPC-H benchmark. This table is used for the same reason as for Benchmark \ref{bm:write}; there are several different data types available. 
 
-For all tests, except for SHIPINSTRUCT HAS VALUE, the original values were used. For this one, a new column was created that set all \texttt{NONE} values to \texttt{null}.
-
-\section{OLTP Test}
-\label{sec:OLTP Test}
-Testing creating, updates, deletes, and everything.
+The benchmark is composed by a list of predicates, where every object that satisfies the predicate are moved from the original data source to the filtered data source. The predicates are selected to span a variety of data types, selectivities, and operators. Since there are no null-columns in \texttt{LINEITEM}, a new column \texttt{SHIPINSTRUCT\_NULL} was created where all \texttt{NONE} values were set to \texttt{null}.
 
 \subsection{Test Input}
 \label{sub:Test Input}
+The number of \texttt{LINEITEM}s loaded into the original data source.
 
 \subsection{Test Output}
 \label{sub:Test Output}
-The time it takes to blabla bla
+The timing result for the filter operation for each predicate; the time it takes to move the objects from the original data source to the filtered data source. Reproted in milliseconds.
+
+\section{Real Customer Data Benchmark I: Data Mart Load}
+\label{bm:odin-load}
+The same benchmark as \ref{bm:q1} is run on real customer data.
+
+\section{Real Customer Data Benchmark II: Create, Update, and Delete}
+\label{bm:odin-crud}
 
 
-\section{Real Customer Test: Shareholder Analysis}
-\label{sec:Real Customer Test: Shareholder Analysis}
-We also run some tests on some real test cases proposed by \genus. This motivated the entire research.
 
-Both test cases will be run and presented to the respective customers.
-
-Due to confidential information, the names and the specific product are not available in this report, and the respective companies are held anonymous.
-
-The first test case tests memory usage and load time for an analysis on stock ownership.
-\begin{itemize}
-    \item Distributor and Customer Reporting
-    \item Operations, Settlements and Fund Management Support
-    \item Payments and Payment matching
-    \item Commissions Management
-    \item Customer Relationship Management (CRM)
-    \item Portfolio and Company Management
-    \item Order processing
-\end{itemize}
+%\section{OLTP Test}
+%\label{sec:OLTP Test}
+%Testing creating, updates, deletes, and everything.
+%
+%\subsection{Test Input}
+%\label{sub:Test Input}
+%
+%\subsection{Test Output}
+%\label{sub:Test Output}
+%The time it takes to blabla bla
+%
+%
+%\section{Real Customer Test: Shareholder Analysis}
+%\label{sec:Real Customer Test: Shareholder Analysis}
+%We also run some tests on some real test cases proposed by \genus. This motivated the entire research.
+%
+%Both test cases will be run and presented to the respective customers.
+%
+%Due to confidential information, the names and the specific product are not available in this report, and the respective companies are held anonymous.
+%
+%The first test case tests memory usage and load time for an analysis on stock ownership.
+%\begin{itemize}
+%    \item Distributor and Customer Reporting
+%    \item Operations, Settlements and Fund Management Support
+%    \item Payments and Payment matching
+%    \item Commissions Management
+%    \item Customer Relationship Management (CRM)
+%    \item Portfolio and Company Management
+%    \item Order processing
+%\end{itemize}
 
 
 %\subsection{Real Customer Data Test Case II: A Retail Chain}
