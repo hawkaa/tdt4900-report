@@ -1,0 +1,139 @@
+\chapter{Test Setup}
+\label{app:test-setup}
+In this appendix, we elaborate on the tests run to assess performance.
+
+All tests were run on a Windows 10 Dell workstation with a 64-bit, 2.40 GHz Intel\textregistered Xeon\textregistered E5620 processor and 8.00 GB RAM. The \delphi~version that was used is 23.0.21418.4207. Memory usage was measured for various program states by querying the built-in \name{FastMM} memory manager.
+
+All tests are run in \textit{Genus Desktop}, and all, except for xxx, are run in debugger mode.
+
+
+\section{TPC-H Q1 Benchmark Data Load}
+\label{sec:TPC-H Q1 Benchmark Data Load}
+In this benchmark, we measure relevant data for the TPC-H Q1 bencmark. We use the data mart and business discovery functionality to test this.
+
+\afigure{img/tpc-h.png}{The TPC-H schema. Courtesy of \cite{Transaction_Processing_Performance_Council_TPC2014-ux}.}{fig:tpc-h}{0.8}
+The schema for the TPC-H benchmark consists of eight separate tables, as seen in Figure \ref{fig:tpc-h}. The table columns have a variety of different data types, including integers, floating points, variable and fixed width strings, identifiers, and booleans. 
+
+The TPC-H data was loaded using a tool from the web-site.
+
+\subsection{Test Input}
+\label{sub:Test Input}
+For the tests, we use a scaling-factor of SF0.1. Although this does not conform to the TPC-H standard \cite{Transaction_Processing_Performance_Council_TPC2014}, the data has been properly thinned out by removing 90\% of the line items rows, then all related and unecessary other rows has been removed. We may also use a scaling factor of SF0.01. 
+
+Although we have a SF1 benchmark available.
+
+\subsection{Test Output}
+\label{sub:Test Output}
+
+\paragraph{Bytes per Lineitem}
+\label{par:Bytes per Lineitem}
+Measured by the memory-manager, it returns the bytes per line-item. Memory usage is measured before and after an entire data mart load, and then divided by the number of loaded items.
+
+\paragraph{Load Time}
+\label{par:Load Time}
+Load time is measured. Here, per record, a timer alternates between Create, purge, load, and move, and measures the time it takes to actually load the XML data into the composition objects.
+
+\paragraph{Creation of Lookup Indexes}
+\label{par:Creation of Lookup Indexes}
+This output shows how many milliseconds are used to create lookup-indexes between the tables in the data mart. A lookup index is considered a join operation. A lookup is created for \texttt{LINESTATUS}, \texttt{RETURNFLAG}, and \texttt{SHIPDATE}. The output represents the number of milliseconds it took to create each of the mentioned lookups.
+
+\paragraph{Generation of Source Measure Lookups}
+\label{par:Generation of Source Measure Lookups}
+In a data mart, all data that are used in calculations are extracted as an array of double precision floating point values. Hence, after all data for a given data source has been loaded, such array is created. Timing results for this operation is reported for integer values \texttt{QUANTITY} and floating point values \texttt{EXTENDEDPRICE}, \texttt{DISCOUNT}, and \texttt{TAX}.
+
+\paragraph{Total Memory Footprint}
+\label{par:Total Memory Footprint}
+There is much overhead in the applications, especially in .NET. We do have accurate data on the memory used by the delphi layer of the code. However, from an end user perspective, the memory is measured in the windows memory manager. We have, therefore, used this tool to measure the memory footprint of our application.
+
+
+\section{Write Test}
+\label{sec:Write Test}
+Since column storage is optimized for read access and aggregation, we curious whether this affects write performance. We, therefore, establish a test that checks write performance. 
+
+Based on the TPC-H benchmark, we define a test that reads rows from the database into a data source. It the modifies the following:
+\begin{itemize}
+    \item \texttt{QUANTITY = QUANTITY + 1} to test integer performance.
+    \item \texttt{EXTENDEDPRICE = EXTENDEDPRICE + 1.0} to test floating point performance.
+    \item \texttt{COMMENT = COMMENT + "1"} to test string performance.
+    \item \texttt{SHIPDATE = SHIPDATE PLUS 1 DAYS} to test date performance.
+\end{itemize}
+
+The changes are not persisted, only modified in-memory. Once the task is done, the new values are discarded.
+
+\subsection{Test Input}
+\label{sub:Test Input}
+The number of rows modified.
+
+\subsection{Test Output}
+\label{sub:Test Output}
+The test outputs one timing result for each attribute that was changed in milliseconds.
+
+
+\section{Filter Test}
+\label{sec:Filter Test}
+\begin{table}
+    \begin{tabular}{c | c}
+        Predicate & Selects (of 100,000) \\
+        \hline
+        \hline
+        \texttt{LINESTATUS = F} & 49,864 \\
+        \texttt{TAX >= 0.02} & 66,851 \\
+        \texttt{EXTENDEDPRICE >= 1000} & 99,956 \\
+        \texttt{EXTENDEDPRICE >= 40000} & 45,408\\
+        \texttt{EXTENDEDPRICE < 1000} & 44 \\
+        \texttt{EXTENDEDPRICE = 42995.94} & 1 \\
+        \texttt{SHIPDATE IN 1995} & 15,435 \\
+        \texttt{SHIPINSTRUCT HAS VALUE} & - \\
+    \end{tabular}
+    \caption{Predicates and selectivity for the Filter Test}
+    \label{tab:Filter Test}
+\end{table}
+\genus~has experienced that some filter operations in tasks takes a while to perform. We, therefore, define a test that filters items in one data source into another. This test is based on data from the TPC-H benchmark. For each test, a field and a predicate is set. See table \ref{tab:Filter Test}
+
+For all tests, except for SHIPINSTRUCT HAS VALUE, the original values were used. For this one, a new column was created that set all \texttt{NONE} values to \texttt{null}.
+
+\section{OLTP Test}
+\label{sec:OLTP Test}
+Testing creating, updates, deletes, and everything.
+
+\subsection{Test Input}
+\label{sub:Test Input}
+
+\subsection{Test Output}
+\label{sub:Test Output}
+The time it takes to blabla bla
+
+
+\section{Real Customer Test: Shareholder Analysis}
+\label{sec:Real Customer Test: Shareholder Analysis}
+We also run some tests on some real test cases proposed by \genus. This motivated the entire research.
+
+Both test cases will be run and presented to the respective customers.
+
+Due to confidential information, the names and the specific product are not available in this report, and the respective companies are held anonymous.
+
+The first test case tests memory usage and load time for an analysis on stock ownership.
+\begin{itemize}
+    \item Distributor and Customer Reporting
+    \item Operations, Settlements and Fund Management Support
+    \item Payments and Payment matching
+    \item Commissions Management
+    \item Customer Relationship Management (CRM)
+    \item Portfolio and Company Management
+    \item Order processing
+\end{itemize}
+
+
+%\subsection{Real Customer Data Test Case II: A Retail Chain}
+%\label{sub:Real Customer Data Test Case II: A Retail Chain}
+%\begin{itemize}
+%    \item Manage operations for 2200 grocery stores
+%    \item Corporate Performance Management (CPM)
+%    \item Apps for Operational Control \& Monitoring
+%    \item Employee- and customer surveys
+%    \item Food Safety and Risk Management
+%\end{itemize}
+%Like above, this is tested for memory usage and load time.
+
+
+

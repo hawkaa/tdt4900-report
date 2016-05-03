@@ -2,16 +2,16 @@
 \label{chap:Implementation Part I: The Column Store}
 Inspired by the challenges with the current solution which we saw in Section \ref{sec:Challenges with the current solution}, we proceed to use techniques from the field of Database Technology to reduce memory footprint and increase data locality, which in turn will increase performance. 
 
-We choose to implement a column store. The reason for this is two-fold. First, there are several advantages with columns rather than rows: They are compressible. Second, the cases where \genus~has experienced performance issues are in situations where a column store is better suited than a row store. Since the entire implementation run in-memory, stiching together rows are not as costly as if they were stored on disk. In addition, Create, Update and Delete operations contains much other code for constraint checking, validation, allocation, etc. We, therefore, hypethetize that a column store is better suited than a row store.
+We choose to implement a column store. The reason for this is two-fold. First, there are several advantages with columns rather than rows: They are compressible. Second, the cases where \genus~has experienced performance issues are in situations where a column store is better suited than a row store. Since the entire implementation run in-memory, stiching together rows are not as costly as if they were stored on disk. In addition, Create, Update and Delete operations contains much other code for constraint checking, validation, allocation, etc. We, therefore, hypothetize that a column store is better suited than a row store.
 
-Let us go back to our previous example: A data source with 1,000,000 object with 15 attributes each. For this setup, the original implementation needed roughly 31 million pointers. The large amount of pointers is due to each object storing pointers to all fields in addition to their data.
+\section{Column Store Implementation}
+\label{sec:Column Store Implementation}
+In the example from Section \ref{sub:Excessive Amount of Pointers}, we saw how a data source with 1,000,000 objects and 15 attributes each needed roughly 32 million pointers. Nearly half of these pointers origin from the data descriptor pointers stored within each object.
 
 In our column store, we plan to replace the \cn{CompositionObjectValueCollection} pointer in each CompositionObject with one \cn{CompositionValueCollection} and an integer \vn{
 DatasourceIndex} that indicaties which position in the data source it has. Hence, each CompositionObject will only have one pointer (8 bytes) and one integer (4 bytes), irrespective of how many attributes the Composition has. The \cn{CompositionValueCollection} will require a data descriptor and/or \vn{DatasourceIndex} to access and modify rows, columns, or single values. This reduces the amount of memory needed to be stored per \cn{CompositionObject} to 2 direct pointers and only data pointers within the \cn{CompositionValueCollection} 15 pointers, which results in roughly 17 million pointers. This, disregarding overhead, is a memory reduction of roughly 50\%.
 
 
-\section{The Column Store}
-\label{sec:The CompositionComObjValueCollection}
 \ffigure{img/gap-original-rows.png}{Original implementation with Data Descriptor pointers for ever row}{fig:gap-original-rows}
 \ffigure{img/gap-bb-columns.png}{Proposed implementation. Only one set of data descriptors per pointer, data accessed using \vn{DatasourceIndex} on every \cn{CompositionObject}. The Composition Objects does not hold pointers to the data directly, but a cell can be accessed using a data descriptor and a datasource index.}{fig:gap-bb-columns}
 For the column store to work, a new value collection class was created. This class will, for each composition, keep a list of all fields (\cn{FieldDescriptor}) belonging to a composition and a corresponding column (\cn{CompositionComObjValueCollection}).
@@ -24,15 +24,9 @@ Since we used native dynamic arrays, we control the array allocation size. For e
 Therefore, we chose a tactic where we double the buffer size every time we need more space. This way, the number of reallocation operations are kept at a minimum. However, this strategy might result in lots of unused buffer space. We, therefore, add a \fn{consolidate} function to our column store that resizes all buffers to fit its data. The strategy is depicted in \ref{gap-growth-strategy}.
 
 
-
-
 \section{The Datasource Index}
 \label{sec:The Datasource Index}
 All CompositionObjects were assigned a new attribute, namely a datasource index. The CompositionObject constructor would call the DatasourceCompositionComObject
-
-\afigure{img/gap-old-value-store.png}{Old value storage in \gap}{fig:gap-old-value-store}{0.8}
-\afigure{img/gap-column-store.png}{Proposed solution.}{fig:gap-column-store}{0.8}
-
 
 \section{Assigning and }
 \label{sec:Assigning and }

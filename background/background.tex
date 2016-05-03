@@ -80,6 +80,49 @@ For systems that do not keep columns sorted, stitching together rows is pretty s
 
 Stitching together columns with different sort orders is a very expensive operation. \cstore~uses join indexes for this operation, which we study in Section \ref{sec:Join Indexes}. \vertica~only allows a query to access columns belonging to the same projection. In other words, a query must use a projection that contains all the columns needed for the query.
 
+\section{Compression}
+\label{sec:Compression}
+Historically, compression has been thought of a measure for reducing disk usage and memory footprint. However, in our case, compression of data also comes with the benefit of increased performance. A study conducted by Abadi \ea~looked into database compression for in-memory databases, and concluded compression increases performance by a factor of two on average \cite{Abadi2008-dd}.
+
+Among systems we have studied in this research, we have identified several that applies compression for performance reasons. Among these systems are \ibm~\cite{Raman2013-em}, \cstore~\cite{Stonebraker2005-qz}, \vertica~\cite{Lamb2012-kg}, \oracle~\cite{Oracle2015-fs}, and \gorilla~\cite{Pelkonen2015-ko}. In addition to this, our reference products \tableau~and \qlikview~also use compression extensively to achieve good performance \cite{Kamkolkar2015-iq, Qlik2014-vd}. Last, but not least, \exasol, the top performing DBMS in the TPC-H benchmark, applies compression to its data, and uses structures that are designed for rapid retrieval \cite{Exasol2014-xh}.
+
+
+Compression is beneficial for performance due to:
+\begin{itemize}
+  \item Cache locality is improved \cite{Exasol2014-xh}. More values from a single column (or record) fit in the cache at the same time.
+  \item Memory traffic is reduced. Compression can help turning a program from memory-bound to CPU bound \cite{Willhalm2009-hu}.
+  \item Compression can reduce CPU cycles \cite{Stonebraker2005-qz}. First of all, as stated above, it reduces memory latency and improves cache locality, such that more cycles can be used for calculations and not waiting for memory. Besides, compression enables working on multiple values in parallel using SIMD instructions, as we see in Section \ref{sec:SIMD}.
+\end{itemize}
+
+Still, even though compression is used to increase database performance, the fact that compression reduces memory usage is also important. Even though DRAM is cheap, it is rarely over-provisioned and unused \cite{Barber2014-ey}. Also, compressed data frees up space for other things, like indexes and result caches. For instance, \oracle~justifies their dual format by using the space freed up by compressing the columns \cite{Lahiri2015-mz, Lamb2012-kg}.
+
+\subsection{Compression Types and Light-Weight Compression}
+\label{sub:Compression Types and Light-Weight Compression}
+A study performed by Westmann \ea~investigates database compression, and concludes that that the compression must be \textit{light-weight} for maximum performance \cite{Westmann2000-mz}. In other words, the real benefit of compression can only be leveraged if the decompression effort can be minimized \cite{Lemke2010-is}. Light-weight compression has been defined by Holloway \ea~as \bp, \de, \dele, and \rle~\cite{Holloway2008-rr}. Holloway \ea~also conclude that \de~and \rle~are the best compression schemes for column stores. These compression techniques are fast and fine-grained, which is important for performance.
+
+Zukowski \ea~conclude that a compression algorithm should care about super-scalar processors. This implies that the algorithm should be able to pipeline loops, support out-of-order execution, and avoid if-then-else in inner loops \cite{Zukowski2006-oz}. We study these techniques in greater detail in the chapter about hardware utilization (Chapter \ref{chap:Hardware Utilization}). 
+
+A database can use multiple compression schemes. First, most of the light-weight compression techniques can be combined, where the most common combination is \de~and \bp. We study this idea in Section \ref{sec:Dictionary Encoding}. Second, different compression schemes can be used for different columns. In Section \ref{sub:Sorting}, we saw that \cstore~and \vertica~allow for multiple column projections (a subset of the columns), where each projection is sorted based on one of the columns in the subset. This results in each projection having one \textit{self-order} column and several \textit{foreign-order} columns.  \cstore~and \vertica~use the following guidelines when deciding which encoding to use \cite{Stonebraker2005-qz}: 
+
+\begin{itemize}
+  \item \textbf{Self-order, few distinct values:} \rle~are used for these columns, where each value is stored once together with how many times the value occurs. We study \rle~in Section \ref{sec:Run-Length Encoding}.
+  \item \textbf{Foreign-order, few distinct values:} For each distinct value in a column, a bitmap is stored indicating which rows that contain that value. We study this technique in Section \ref{sec:Compression Using Bitmaps}.
+  \item \textbf{Self-order, many distinct values:} \dele~is used. The idea of this scheme is to save the values as a delta from the previous value in the column. We study \dele~in Section \ref{sec:Delta Encoding}.
+  \item \textbf{Foreign-order, many distinct values:} Columns are left uncompressed.
+\end{itemize}
+
+Later in this chapter, we elaborate on the situations where the various compression schemes are beneficial.
+
+\subsection{Working Directly on Compressed Data}
+\label{sub:Working Directly on Compressed Data}
+
+\afigure{img/ram-cache-decompression.png}{I/O-RAM vs RAM-CPU compression. In the left sub-figure, data is decompressed before it is put in the buffer manager (RAM). In the right sub-figure, data is kept compressed in the buffer manager and only decompressed when it is brought into the CPU cache. Courtesy of \cite{Zukowski2006-oz}.}{fig:ram-cache-decompression}{0.6}
+
+In earlier database systems with compression, the data was decompressed when brought up to RAM. In 2006, Zukowski \ea~suggested that data should not be decompressed when moved from disk to RAM, but when brought from RAM to cache \cite{Zukowski2006-oz}, as depicted in Figure \ref{fig:ram-cache-decompression}. \monetx~is a system that decompresses when data is moved from RAM to cache \cite{Johnson2008-cp}.
+
+However, the most performance benefit of compression is seen when the system works on the compressed data directly \cite{Lemke2010-is}. This implies that data should not be decompressed until it is materialized and sent to the user. This principle is backed by the creators of \blink, who says data should never be decompressed before absolutely needed \cite{Barber2012-xt}. \oracle~claims one of the main performance benefits is to work directly on the compressed data \cite{Oracle2015-fs}. Not decompressing data before it is needed relates to a technique known as \textit{late materialization}, a technique we study in Section \ref{sec:Late Materialization}.
+
+
 \section{Bitpacking}
 \label{sec:Bitpacking}
 
@@ -235,7 +278,7 @@ We investigate \gap in the following chapter.
 
 \subsection{Model levels}
 \label{sub:Model levels}
-\afigure{img/linguistic-metamodeling.png}{Linguistic metamodeling view. Courtesy of \cite{Atkinson2003-wr}}{fig:Linguistic-metamodeling}{0.8}
+\afigure{img/linguistic-metamodeling.png}{Linguistic metamodeling view. Courtesy of \cite{Atkinson2003-wr}}{fig:linguistic-metamodeling}{0.8}
 According to Leppänen M, a model is a thing that is used to help the understanding of some other things \cite{Leppanen2006-ay}. In his framework, he describe three different levels of models: The instance model, the type model, and the meta model. A meta model is something used to help the understanding and communication analysis and design of type models. A model on a higher level describes/ prescirbes models on teh next lower level.
 
 % Ønsker å bruke disse nivåene, kanskje med eksempler fra Bergheim.
@@ -359,3 +402,20 @@ Value and constant parameters to a method call is either passed by reference or 
 \delphi~is object oriented, and supports interfaces, inheritance, polymorphism and generics. In addition, inline assembly is supported, where \delphi~identifiers are allowed \cite{noauthor_undated-px}.
 
 There is support for Generics, where things can be parameterized by type \cite{noauthor_undated-sx}. Used to decouple an algorithm from its data structure. On an instantiation, it results in a code duplication.
+
+\section{Testing}
+\label{sec:Testing}
+The TPC-H benchmark is commonly used to test analytical workloads. The benchmark is made for decision support workloads and consists of a suite of business oriented ad-hoc queries \cite{Transaction_Processing_Performance_Council_TPC2014-ux}. The benchmark has 22 complex read-only queries, which are both memory and CPU bound \cite{Boncz2005-wj}, and two update queries for data refresh. The TPC-H specification says the benchmark illustrates a decision support system that:
+\begin{itemize}
+  \item Examine large volumes of data.
+  \item Execute queries with a high degree of complexity.
+  \item Give answers to critical business questions.
+\end{itemize}
+
+\afigure{img/tpc-h.png}{The TPC-H schema. Courtesy of \cite{Transaction_Processing_Performance_Council_TPC2014-ux}.}{fig:tpc-h}{0.8}
+The schema for the TPC-H benchmark consists of eight separate tables, as seen in Figure \ref{fig:tpc-h}. The table columns have a variety of different data types, including integers, floating points, variable and fixed width strings, identifiers, and booleans. 
+
+\afigure{img/tpc-h-population.png}{TPC-H database size and cardinalities. Courtesy of \cite{Transaction_Processing_Performance_Council_TPC2014-ux}.}{fig:tpc-h-population}{0.8}
+Figure \ref{fig:tpc-h-population} shows the minimum population for the TPC-H benchmark, which is a database of 10,000 suppliers and roughly 6 million line-items (items per order). The minimum population corresponds to roughly 1 GB. To test larger data sizes, a scaling factor is commonly applied to increase the size of the dataset. According to the specification, data in the tables should be uniformly distributed.
+
+The TPC-H benchmark tests uniformly distributed data, but, in reality, it is quite common that data is skewed. For instance, a retailer might expect that 99\% of the sales are performed on weekdays, and around 40\% of the total sales for a year is done around Christmas \cite{Raman2008-gi}. Tests on data with non-uniform distributions should be performed to see how the algorithms and data structures in the database handle outliers. Data skew can be modelled with a \term{Zipfian} distribution \cite{Holloway2008-rr}. 
