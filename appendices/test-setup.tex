@@ -1,76 +1,82 @@
 \chapter{Test Setup}
 \label{app:test-setup}
-In this appendix, we elaborate on the tests run to assess performance.
+In this appendix, we elaborate on the tests run to measure performance. There is a total of five tests, all aiming to test different parts of the application where the memory or time usage might have been affected. The two last test cases, test case X and X, are based on real customer data from one of \genus's customers.
 
-All tests were run on a Windows 10 Dell workstation with a 64-bit, 2.40 GHz Intel\textregistered Xeon\textregistered E5620 processor and 8.00 GB RAM. The \delphi~version that was used is 23.0.21418.4207. Memory usage was measured for various program states by querying the built-in \name{FastMM} memory manager.
+All tests are run on a Windows 10 Dell workstation with a 64-bit, 2.40 GHz Intel\textregistered Xeon\textregistered E5620 processor and 8.00 GB RAM. The \delphi~version used is 23.0.21418.4207. 
 
-All tests are run in \textit{Genus Desktop}, and all, except for xxx, are run in debugger mode.
+Memory usage is measured for various states in the program by querying the built-in \name{FastMM} memory manager, and is commonly used to measure deltas in memory allocation. To measure the entire application footprint, including the .NET layer and the GUI, the built-in memory manager for Windows 10 is used.
+
+We run all tests in \textit{Genus Desktop} in \delphi~debugger mode. Test output and debugging statements is extracted through \textit{Trace Log}, a log tool developed by \genus~for their applications.
 
 
 \section{TPC-H Q1 Benchmark Data Load}
 \label{sec:TPC-H Q1 Benchmark Data Load}
-In this benchmark, we measure relevant data for the TPC-H Q1 bencmark. We use the data mart and business discovery functionality to test this.
+In this benchmark, we measure analytical performance in \gap~using Q1 in the TPC-H Q1 benchmark. As we saw in \ref{sec:Testing}, the TPC-H benchmark is made for decision support workloads and consists of a suite of business oriented ad-hoc queries. The schema for the TPC-H benchmark consists of eight separate tables, as seen in Figure \ref{fig:tpc-h}. The table columns have a variety of different data types, including integers, floating points, variable and fixed width strings, identifiers, and booleans. 
 
-\afigure{img/tpc-h.png}{The TPC-H schema. Courtesy of \cite{Transaction_Processing_Performance_Council_TPC2014-ux}.}{fig:tpc-h}{0.8}
-The schema for the TPC-H benchmark consists of eight separate tables, as seen in Figure \ref{fig:tpc-h}. The table columns have a variety of different data types, including integers, floating points, variable and fixed width strings, identifiers, and booleans. 
+\afigure{img/tpc-h-q1.png}{TPC-H Q1 query. Courtesy of \cite{Transaction_Processing_Performance_Council_TPC2014-ux}.}{fig:tpc-h-q1}{0.75}
+Q1, or the \textit{Pricing Summary Report Query}, provides a summary of all items shipped within a date range \cite{Transaction_Processing_Performance_Council_TPC2014-ux}. It aggregates price with and without discount, and with and without tax, as well as average quantity, price, and discount. The results are grouped by \texttt{RETURNFLAG} and \texttt{LINESTATUS}. The original query is shown in Figure \ref{fig:tpc-h-q1}.
 
-The TPC-H data was loaded using a tool from the web-site.
+\afigure{img/gap-data-mart.png}{Data mart for Q1 in \tpch.}{fig:gap-data-mart}{0.7}
+\afigure{img/tpc-h-q1-ui.png}{TPC-H Q1 query user interface in \gd.}{fig:tpc-h-q1-ui}{1.0}
+Some adjustments were made to the query to fit \gap~and \gd. First, \texttt{RETURNFLAG}, \texttt{LINESTATUS}, and \texttt{SHIPDATE} had to be extracted as code domains such that they could be used as dimensions in the data mart. Additionally, the mart only contains the relevant object class properties that are required to answer the query. The resulting data mart is shown in Figure \ref{fig:gap-data-mart}. Second, since \gd~does not work with SQL, but rather an user interface with graphs and boxes, the query had to be translated into an user interface. The numbers returned by the query was displayed as bar charts grouped by \texttt{RETURNFLAG}. In this view, the user might select \texttt{SHIPDATE}, \texttt{LINESTATUS}, and \texttt{RETURNFLAG} to get the relevant data. The UI is shown in Figure \ref{fig:tpc-h-q1-ui}
+
+Data for the benchmark was loaded using the \texttt{dbgen} tool provided by the \name{Transaction Processing Performance Council}. This tool populates the database with the amount of data that corresponds to scaling factor 1 (SF1), as seen in Figure \ref{fig:tpc-h-population}. However, this data size is too large for \gap~to handle, so two data sets with SF0.1 and SF0.01 were generated for this benchmark. The data reduction was performed by keeping every 10th or 100th row in \texttt{LINEITEM} and removing all orders, supppliers, customers, and parts that no longer was connected to any lineitems. Scaling factors less than 1 invalidates the TPC-H benchmark \cite{Transaction_Processing_Performance_Council_TPC2014-ux}, but this setup is still useful for us.
+
+We focus our measurements on time and memory footprint used to load the TPC-H Q1 \gd~instance rather than the time it takes to answer the query. The reason for this is because of the scope of this research. We have not looked at \gd~specific optimizations, only operations that \gd~may use in load time to generate necessary structures and indexes. Load time takes the majority of the time, and once the mart is loaded, the application answers queries efficiently.
 
 \subsection{Test Input}
 \label{sub:Test Input}
-For the tests, we use a scaling-factor of SF0.1. Although this does not conform to the TPC-H standard \cite{Transaction_Processing_Performance_Council_TPC2014}, the data has been properly thinned out by removing 90\% of the line items rows, then all related and unecessary other rows has been removed. We may also use a scaling factor of SF0.01. 
-
-Although we have a SF1 benchmark available.
+SF0.01, SF0.1, and SF1 size data sets. Only SF0.01 and SF0.1 are used in this research.
 
 \subsection{Test Output}
 \label{sub:Test Output}
+The benchmark's output is listed below. The output is recorded in the time between the shortcut button for the TPC-H Q1 \gd~instance is pressed until the user interface (Figure \ref{fig:tpc-h-q1-ui}) is displayed on the screen.
 
-\paragraph{Bytes per Lineitem}
-\label{par:Bytes per Lineitem}
-Measured by the memory-manager, it returns the bytes per line-item. Memory usage is measured before and after an entire data mart load, and then divided by the number of loaded items.
+\paragraph{Bytes Per LINEITEM}
+The number of bytes allocated per \texttt{LINEITEM} in the memory-manager is reported. Memory usage is measured before and after the \texttt{LINEITEM} data source load, and then divided by the number of loaded items.
 
 \paragraph{Load Time}
 \label{par:Load Time}
-Load time is measured. Here, per record, a timer alternates between Create, purge, load, and move, and measures the time it takes to actually load the XML data into the composition objects.
+Load time for the \texttt{LINEITEM} data source is reported. This output only reports the time it takes to load data into composition objects, hence it disregards the overhead in creating composition objects and parsing XML files from the database backend. The result is reported in milliseconds.
 
 \paragraph{Creation of Lookup Indexes}
-\label{par:Creation of Lookup Indexes}
-This output shows how many milliseconds are used to create lookup-indexes between the tables in the data mart. A lookup index is considered a join operation. A lookup is created for \texttt{LINESTATUS}, \texttt{RETURNFLAG}, and \texttt{SHIPDATE}. The output represents the number of milliseconds it took to create each of the mentioned lookups.
+This output shows how many milliseconds it takes to create lookup-indexes, or join the tables in the data mart. A join is performed all relations in the mart, which is \texttt{LINESTATUS}, \texttt{RETURNFLAG}, and \texttt{SHIPDATE}. The output represents the number of milliseconds it took to create each of the mentioned lookups.
 
-\paragraph{Generation of Source Measure Lookups}
-\label{par:Generation of Source Measure Lookups}
-In a data mart, all data that are used in calculations are extracted as an array of double precision floating point values. Hence, after all data for a given data source has been loaded, such array is created. Timing results for this operation is reported for integer values \texttt{QUANTITY} and floating point values \texttt{EXTENDEDPRICE}, \texttt{DISCOUNT}, and \texttt{TAX}.
+\paragraph{Source Measure Lookup Generation}
+In \gd, all calculations and aggregations are performed on arrays of double precision floating point values. Hence, after all data for a given data source has been loaded, such array is extracted. In this benchmark, such arrays are created for integer column \texttt{QUANTITY} and floating point columns \texttt{EXTENDEDPRICE}, \texttt{DISCOUNT}, and \texttt{TAX}. For each column, the number of milliseconds used to create this lookup is measured.
 
 \paragraph{Total Memory Footprint}
 \label{par:Total Memory Footprint}
-There is much overhead in the applications, especially in .NET. We do have accurate data on the memory used by the delphi layer of the code. However, from an end user perspective, the memory is measured in the windows memory manager. We have, therefore, used this tool to measure the memory footprint of our application.
+We measure the total memory footprint of the TPC-H Q1 \gd~application by using the Windows 10 memory manager such that all overhead in the .NET and user interface layers is included. The \textit{In Use} memory metric is recorded before the \gd~instance is loaded and when the UI is shown to the user. 
 
+\section{TPC-H Write Test}
+\label{test:write-test}
+\afigure{img/lineitem.png}{\texttt{LINEITEM} table layout. Courtesy of \cite{Transaction_Processing_Performance_Council_TPC2014-ux}.}{fig:lineitem}{0.8}
+Since write performance might be sacrificed when optimizing for read performance, we establish a test that measures impact. For simplicity reasons, this test is based on the \texttt{LINEITEM} table in the TPC-H benchmark. The main reason for using this table was the different data types, which we see in Figure \ref{fig:lineitem}.
 
-\section{Write Test}
-\label{sec:Write Test}
-Since column storage is optimized for read access and aggregation, we curious whether this affects write performance. We, therefore, establish a test that checks write performance. 
-
-Based on the TPC-H benchmark, we define a test that reads rows from the database into a data source. It the modifies the following:
+The test reads $N$ items into a data source, for all items, the following fields are modified:
 \begin{itemize}
     \item \texttt{QUANTITY = QUANTITY + 1} to test integer performance.
     \item \texttt{EXTENDEDPRICE = EXTENDEDPRICE + 1.0} to test floating point performance.
     \item \texttt{COMMENT = COMMENT + "1"} to test string performance.
     \item \texttt{SHIPDATE = SHIPDATE PLUS 1 DAYS} to test date performance.
 \end{itemize}
-
-The changes are not persisted, only modified in-memory. Once the task is done, the new values are discarded.
+\afigure{img/write-test-definition.png}{The task definition for the Write Test. For every attribute, the data source is enumerated.}{fig:write-test-definition}{0.4}
+One field is modified per iteration, so there is a total of four iterations in this task. The full task definition is seen in Figure \ref{fig:write-test-definition}.
 
 \subsection{Test Input}
 \label{sub:Test Input}
-The number of rows modified.
+The number of \texttt{LINEITEM}s loaded into the data source and modified. The number is specified before the task is run.
 
 \subsection{Test Output}
 \label{sub:Test Output}
-The test outputs one timing result for each attribute that was changed in milliseconds.
-
+For each property modified, the time it took to enumerate the entire data source is measured. The results are reported in milliseconds.
 
 \section{Filter Test}
 \label{sec:Filter Test}
+
+
+Since write performance might be sacrificed when optimizing for read performance, we establish a test that measures impact. For simplicity reasons, this test is based on the \texttt{LINEITEM} table in the TPC-H benchmark. The main reason for using this table was the different data types, which we see in Figure \ref{fig:lineitem}.
 \begin{table}
     \begin{tabular}{c | c}
         Predicate & Selects (of 100,000) \\
