@@ -70,9 +70,14 @@ A data source might define a filter on which objects that should be loaded. This
 \subsection{Data Mart}
 \label{sub:Data Mart}
 \afigure{img/gap-data-mart.png}{Data mart for Q1 in \tpch, which contains only the object classes and fields needed to answer that particular query. The mart conforms to a snowfalke schema.}{fig:gap-data-mart}{0.7}
-A data mart defines a data extract that are used in analyses and \bd~panels in \gap. A data mart is defined by a set of data sources, and per data source, a list of published fields. Like always, a data source might specify a filter, such that the analyses access only a particular subset of the data.
+A data mart defines a data extract that are used by \pn{Genus Discovery}, the integrated \bd~soulution within \gap. A data mart is defined by a set of data sources, and per data source, a list of published fields. Like always, a data source might specify a filter, such that the analyses access only a particular subset of the data.
 
 Besides from the field and data source filtering, a data mart looks very much like like an object diagram, like seen in Figure \ref{fig:gap-data-mart}. Still, there is one important distinction: A data mart must conform to a snowflake schema, that is there can only exist one path through the class diagram. For instance, in Figure \ref{fig:gap-class-diagram}, both customer and suppliers refer to the nation table. In a data mart, there would two nation entitities, a \texttt{CUSTOMER\_NATION} and a \texttt{SUPPLIER\_NATION} table.
+
+\subsection{Genus Discovery}
+\label{sub:Genus Discovery}
+\missingfigure{Genus discovery screenshot}
+\pn{Genus Discovery} is the built-in \bd~solution in the platform. It is a graphical user interface component that builds on a data mart. Like most similar products, \pn{Genus Discovery} does not rely on aggregated data such that the user can follow his "information scent" and click his way through the data. An example user interface is seen in Figure \ref{fig:genus-discovery}.
 
 \subsection{Task}
 \label{sub:Task}

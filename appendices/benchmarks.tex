@@ -6,7 +6,7 @@ All tests are run on a Windows 10 Dell workstation with a 64-bit, 2.40 GHz Intel
 
 Memory usage is measured for various states in the program by querying the built-in \name{FastMM} memory manager, and the values returned are used to measure memory deltas. To measure the entire application footprint, including the .NET layer and the graphical user interface, the built-in memory manager in Windows 10 is used.
 
-We run all benchmarks in \textit{Genus Desktop} in \delphi~debugger mode. Test output and debugging statements is extracted through \textit{Trace Log}, a log tool developed by \genus~for their applications.
+We run all benchmarks in \textit{Genus Desktop} in \delphi~debugger mode. Test output and debugging statements is extracted through \textit{Trace Log}, a log tool developed by \genus~for their applications. For all benchmarks, a restart of the application is performed prior to running the test. This way, we minimize any effects caused by caching.
 
 \section{TPC-H Q1 Data Load Benchmark}
 \label{bm:q1}

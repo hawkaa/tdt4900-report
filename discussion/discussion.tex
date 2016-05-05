@@ -10,6 +10,8 @@ Although we have theoretical proof and indications that the approach is fruitful
 \label{sec:Row storage}
 We have chosen to implement column storage; however a an efficient row-wise storage might also have given much of the benefits that column storage do. However, as we have seen, data update operations are dominated by other operations, like integrety checks and database persistence. However, as we have seen, most operations work on an entire column at a time, rather than an entire row. 
 
+According to our results, no operations have been hurt by the column store. We do, however, believe that there are operations that would benefit from a row store.
+
 \section{Relation to Normal Programming Languages}
 \label{sec:Relation to Normal Programming Languages}
 We see that we have drastically improved end-user performance without affecting the information system development layer. However, most programming languages do not offer the same functionality. Regular developers would need something that is: i) rapid development, ii) readable, maintainable and debuggable code, and iii) occasionally control over data structures. Implementing column store in a regular application would sacrifice all of these three points. We wonder if this need not be the case.

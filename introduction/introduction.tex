@@ -24,6 +24,16 @@ Database technology and column store is one such implementation that can be chan
 % Paragraph about how we got the idea to the research
 Our original research was focusing on business discovery optimalizations. However, we came up with the idea to use the techniques learnt from the database techonolgy dircectly as base structures within \gap.
 
+\subsection{Motivation}
+\label{sub:Motivation}
+One of \genus' main issues with \gap~is that it uses too much memory. The clients normally run in virtual environments with little RAM available. It is commonplace that a client runs out of memory and starts paging, which leads to drastically reduced performance. In addition, the hypothesis is that reduced memory consumption increases performance because memory management is expensione. In addition, there are several operations in \gap~that are slow, including \pn{Genus Discovery} load and filter operations.
+
+Therefore, we implement database techniques in order to:
+\begin{enumerate}
+    \item Reduce memory consumption to relax memory requirements for clients and improve performance by reducing expensive memory management.
+    \item See how a model-driven development tool benefits from database technology, and see which operations can be speeded up
+\end{enumerate}
+
 \section{Problem Statement, Goals, and Research Questions}
 \label{sec:Problem Statement, Goals, and Research Questions}
 Based on our motivation, we define the goal of the project as following: 
@@ -97,20 +107,24 @@ A Database Management System (DBMS) is a computer software application for stora
 \label{par:Business Discovery}
 \bd~is a term introduced by a \qlikview~whitepaper \cite{Qlik2014-vd}. \bd~products differ from traditional \bi~systems by focusing more on the end user. \bd~products do not rely on aggregated data such that the user can follow his "information scent" and click his way through the data. \bd~platforms often provide an architecture that enables panels and dashboards to be shared with multiple clients, both on desktops and mobile devices. Current \bd~products typically build on tailored storage systems that are specifically designed for \bd~workloads, but some of them integrate directly with read-optimized DBMSes. \bd~products include \tableau, \qlikview, \powerpivot, and more. \bd~is explained in greater detail is Section~\ref{sec:Business Discovery}.
 
-\paragraph{Reference products}
-\label{par:Reference products}
-We will occasionally use the term \textit{reference products} in this report. By reference products we mean \bd~products pointed out by \genus~that \bd~capabilities in \gap~will be compared to. In this report, we study \qlikview~and \tableau.
+%\paragraph{Reference products}
+%\label{par:Reference products}
+%We will occasionally use the term \textit{reference products} in this report. By reference products we mean \bd~products pointed out by \genus~that \bd~capabilities in \gap~will be compared to. In this report, we study \qlikview~and \tableau.
 
 
 \section{Thesis Structure}
 \label{sec:Thesis Structure}
 % some examples in english matters
+We use the two first implementation chapters to focus on reducing memory footprint, then the last one to improve the performance of certain operations.
+
 We structure our thesis as following:
 \begin{itemize}
   \item \textbf{Chapter 2} introduces background material relevant to this report. 
   \item \textbf{Chapter 3} outlines \gap.
   \item \textbf{Chapter 4} shows how column store is implemented.
-  \item \textbf{Chapter 5} presents the test results.
+  \item \textbf{Chapter 5} shows how simple data types and compression techniques are used to reduce memory footprint.
+  \item \textbf{Chapter 6} elaborates on techniques that speeds up certain operations.
+  \item \textbf{Chapter 7} discuss the results.
   \item \textbf{Chapter 6} concludes this research and points at interesting directions for future work.
 \end{itemize}
 
