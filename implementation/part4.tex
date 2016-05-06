@@ -1,0 +1,130 @@
+\chapter{Implementation Part III: Column Operations and Other Cool Stuff}
+\label{chap:part3}
+So far, we have seen that our implementation has given drastical reduction in memory usage and load time. In general, reduced memory usage normally results in higher program performance. However, we have not yet utilized our new column structure.
+
+\section{Pointer Exposure}
+\label{sec:Pointer Exposure}
+The \bd~functionality in \gap~works strictly on arrays of floating point values (\cn{TArray<double>}). This buffer is created with a \cn{SourceMeasureProvider} class which is linked to a data descriptor. For every composition object in the data source, it calls the \fn{GetValue} method, which returns a \cn{GValue}. The buffer is then filled by calling \fn{GetAsFloat} on all values. 
+
+Our observation is simple: If the value buffer is stored in a native column structure, the buffers already exist and its pointer can be passed to the \cn{SourceMeasureProvider} directly. As seen in Table X, the time it takes to generate source measure lookup is drastically reduced, or in fact removed.
+
+\subsection{Creating the Array Anyway}
+\label{sub:Creating the Array Anyway}
+As seen in Table X, there are drastic differences between native floating point columns and everything else. For instance, the quantity-column, which is an integer, it takes \~ 1500ms to create a source measure index. The same is the case for tax, which is floating point but dictionary encoded. We hypothetize that the reason for this is the large amount of memory allocations for \cn{GValue}s and access patterns, and that we can do better by operating on the whole column in a batch.
+
+\begin{delphicode}{Passing double array pointers}{lst:double-array-pointers}
+function CNativeRealFieldValueCollection.GetDoubleArray
+: TArray<double>;
+begin
+  Result := m_arrValues;
+end;
+\end{delphicode}
+We proceed to implement \fn{GetDoubleArray} in integer and dictionary columns. This is seen in the code above. As we see in Table X, this gives magnificent results.
+
+\section{Lookup Index Creation}
+\label{sec:Lookup Index Creation}
+A common operation in \bd~is to create a lookup index from one table to another, that maps data source indexes from one table to data source indexes in another table. This could be considered as a join operation.
+
+For a database, a typical to such function input is two columns. As we have read in the background section, one such algorithm, the \textit{nested loop algorithm}, will first create a dictionary on the smallest column and then iterate the largest column and insert indexes. However, in \gap, such dictionary already exists as an \textit{identifier index}. This is used several places in the application, like blablabla \todo{Find out where this dictionary is used}. This dictionary either exists already, or is created by another mechanism in the application.
+
+We may, therefore, use this dictionary as an input to the column.
+
+\section{Identifier Index}
+\label{sec:Identifier Index}
+In the previous section, we saw that an identifier index is used in a join algorithm. However, in certain circumstances, this index is not created, and takes a while to generate. We implement such function in our columns. As we have seen in Section \ref{sec:Lookup Index Creation}, an identifier index maps an identifier to a composition object. Previously, the mechanism has worked such that.
+
+\begin{delphicode}{Creating an identifier index. It accepts a list of objects and maps the object's data source indexes to values}{lst:create-identifier-index}
+function CNativeFieldValueCollectionBase<TDataType>.CreateIdentifierIndex
+( i_oComObjCollection : CCompositionObjectCollection )
+: TDictionary<string, CCompositionObject>;
+var
+  l_oComObj : CCompositionObject;
+begin
+  Result := TDictionary<string, CCompositionObject>.Create(i_oComObjCollection.Count);
+  for l_oComObj in i_oComObjCollection do
+  begin
+    Result.Add(m_oNativeValueHelper.ValueToString(m_arrValues[l_oComObj.DatasourceIndex]), l_oComObj);
+  end;
+end;
+\end{delphicode}
+
+Since all identifiers in \gap~are strings, we expand the Native Value Helper with a \fn{ValueToString} method that converts any native value to a string. For instance, the integer 13 is converted to "13". Although objects might come in arbitrary order, that is data source indexes might not be consecutive, in most cases they do. In other words, cache locality will be maximized.
+
+\subsection{Results}
+\label{sub:Results}
+The results are shown in table X
+
+\subsection{Discussion}
+\label{sub:Discussion}
+Even though this optimization was motivated by \bd~functionality, we still observe that the \fn{CreateIdentifierIndex} is used other places in the appliaction.
+
+\section{Predicate Evaluation}
+\label{sec:Predicate Evaluation}
+Inspired to look into other places in \gap~to utilize our new storage structure, we look at the filter mechanisms in the task execution unit. One common operation is to add objects to a data source and then do something with a subset of these. This subset is defined by a filter. Previously, the entire data source was enumerated and each object was compared. For each object.
+\begin{enumerate}
+    \item The \cn{GValue} for the Data Descriptor is fetched. Depending on the implementation, this is either a search through pointers or a memory allocation.
+    \item The \cn{GValue} is compared using the comparison methods in the class.
+    \item This is repeated for every predicated that is evaluated. \todo{Figure out what happened on different predicates}
+\end{enumerate}
+
+\begin{delphicode}{Creating a bitmap for the Equal operator.}{lst:create-equal-bitmap}
+function CNativeFieldValueCollectionBase<TDataType>.GetEqualBitmap
+( i_oValue : CGValue )
+: CBasicBitArray;
+var
+  l_i : integer;
+  l_oNativeValue : TDataType;
+begin
+  Result := CBasicBitArray.Create(m_iMaxDatasourceIndex + 1);
+  l_oNativeValue := m_oNativeValueHelper.ExtractValue(i_oValue);
+  for l_i := 0 to m_iMaxDatasourceIndex do
+    Result[l_i] := m_oNativeValueHelper.ValueEqual(m_arrValues[l_i], l_oNativeValue);
+end;
+\end{delphicode}
+
+We propose a new approach to data filtering to avoid all function invokations and/or memory allocations. By introducting filter methods on columns that accepts an operator and a \cn{GValue} and return a bitmap the process can be speeded up. On multiple predicates, the resulting bitmaps are combined (\texttt{AND}, \texttt{OR}) using highly optimized CPU instructions. An example of creating such a bitmap is shown in Listing \ref{lst:create-equal-bitmap}.
+
+
+
+\section{Column Selection}
+\label{sec:Column Selection}
+Now, we have four different \cn{FieldValueCollection} to chose from. Until now, which columns have been used have been selected by specifying which storage format should be used in the metadat. However, this disregards an important aspect of \mdd: The users should not need to know anything about the implementation to make good programs. In other words, it is up to \gap~to decide which storage format is best suited for the different use cases.
+
+First, we observe that our column store has no negative impact on the application. Hence, we may safely assume that all Composition Objects may store their data using our new colum Composition Value Collection. Second, we have not experienced any performance reduction by using native data types. We may, therefore, assume that we can use this implementation whenever we can. Third, there is no negative performance impact on the bitpacked dictionary versus the non-packed one.
+
+However, we have seen a significant space saving by chosing dictionary columns on low and medium cardinality columns. However, for some columns with high cardinality, a dictionary column will not save space, since most values are stored in the dictionary anyway. In addition, the load time of the columns (due to the linear dictionary lookup) has an exponential growth on such columns.
+
+\afigure{img/gap-statistics.png}{Using statistics to select the proper storage format. A statistics provider service will, for a given Data Descriptor, return relevant statiscis, preferrably number of rows and number of unique values. The service might cache, restructure and calculate some of of the statistics manually, as the different database providers have different interfaces.}{fig:gap-statistics}{0.8}.
+To overcome the above challenge, we propose using database statistics to select the proper column. We have implemented a statistics provider that will, for a given data descriptor, return relevant statistics for a column, including number of values and number of unique values.
+
+\subsection{Data Source Filters}
+\label{sub:Data Source Filters}
+One of the major limitations in our statistics provider, is that it considers the entire dataset. However, it is quite common to add a filter on the data source for tasks or analyses. Typically, one would be interested in looking at sales for a given date range. In other words, decisions made about the storage format for the entire dataset might not be optimal for filtered subsets of the data.
+
+One solution to this problem, would be to increase the granularity of the statistics. Instead of mapping a providing data descriptor to a statistics object, the provider should also accept a data source as an input. This would definetely increase the precision of the column selection algorithm. However, this approach does not come without challenges. First, the database backends has no support for this kind of statistics. Hence, the statistics would need to be calculated on-demand, either with custom queries (\texttt{COUNT} and \texttt{COUNT DISTINCT}) or by the application itself. Doing this before every data source load is time-consuming and would increase load time. 
+
+This problem can be overcome if \gap~gather data source statistics after the column has been loaded and store the result. On the first load, the original statistics will be used. After the data is loaded, a low-priority process is started to generate the statistics for a given data source. On consequtive loads, the statistics returned by the provider will reflect the previous load of the data source, and will in most occasions be more precise than considering the column as a whole.
+
+Another, but less precise way, is to extrapolate the statistics for a given filter. For instance:
+\begin{itemize}
+    \item Low-cardinality columns tend to have the same amount of unique values no matter how many more values are added (typically gender, age etc).
+    \item High-cardinality columns tend to have a linear relationship between the number of values and the number of unique values.
+    \item Some column types are more predictable than others. For instance, the number of distinct values in a code domain remains fixed, and some data types are ordered, like timestamps. 
+\end{itemize}
+The results of this extrapolation could also be dependendent on what kind of filter that is applied: Random, max or min values, or most occurences of different values.
+
+\subsection{Other Use-Cases for Statistics}
+\label{sub:Other Use-Cases for Statistics}
+For obvious reasons, we may assume that the statistics are mere estimates. However, if we knew that the statistics were not only statistics but an exact measure of the column distribution, more optimizations could be applied. First and foremost, the exact buffer sizes, including dictionaries, could be allocated in the beginning, and not the doubling strategy explained in Section \ref{sub:FieldValueCollection growth strategy}. On every reallocation, there's a potential copy operation that copies the entire value buffer from one place to the other. Exact buffer sizes would reduce the risk of this. This is even more important for bit packed columns; on every dictionary overflow, the entire value buffer is rebuilt. 
+
+\subsection{Special Cases}
+\label{sub:Special Cases}
+
+
+\section{Chapter Conclusion}
+\label{sec:Chapter Conclusion}
+
+In this chapter, we have seen that.
+
+
+

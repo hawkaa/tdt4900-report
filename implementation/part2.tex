@@ -1,5 +1,5 @@
-\chapter{Implementation Part II: Data Compression}
-\label{chap:Implementation Part II: Data Compression}
+\chapter{Implementation Part II: Enhancing Storage Format}
+\label{chap:part2}
 In this chapter, we explain how more performance is acheived by introducing native data types and dictionary compression.
 
 \section{Replacing GValues with Native Data Types}
@@ -12,6 +12,18 @@ The implementation was straight forward. We create another implementation of the
 
 \subsection{Native Value Helper}
 \label{sub:Native Value Helper}
+\begin{delphicode}{Passing double array pointers}{lst:double-array-pointers}
+function NativeFieldValueCollection<TDataType>.GetValue
+( index : integer )
+: CGValue;
+begin
+  EnsureCapacity(index);
+  if not nilFlags[index] then
+    Result := valueHelper.CreateCGValue(values[index])
+  else
+    Result := nil;
+end;
+\end{delphicode}
 As a part of the native value column implementation, we create a helper class we call \cn{NativeValueHelper}. This class is a generic class and is owned by the \cn{NativeFieldValueCollection} base class. This class has the current core functionality:
 \begin{itemize}
     \item \fn{ExtractValue} - Inputs an \cn{GValue} and outputs the native value.
@@ -20,21 +32,12 @@ As a part of the native value column implementation, we create a helper class we
 \end{itemize}
 The base class is inherited by one subclass per data type supported.
 
-\section{Dictionary Encoding}
-\label{sec:Dictionary Encoding}
-We read in the background section that dictionary encoding is commonly used to store data in a database. Such encoding has several benefits, with the main being compression. Some operations also benefit from integer comparisons which are cheap compared to for instance string coparisons.
+\section{Loading raw data values}
+\label{sec:Loading raw data values}
 
-In a dictionary encoded column, the dictionary could be optimized for insert operations or for read optimizations. We chose the latter, where the dictionary is implemented as a simple list of elements.
+\section{Chapter Conclusion}
+\label{sec:Chapter Conclusion}
 
-
-We chose to implement the dictionary for read performance.
-
-
-\section{Bitpacking}
-\label{sec:Bitpacking}
-In the background section, we see that dictionary encoding and bitpacking goes hand in hand. We implement a simple version to save more memory. 
-
-The bitpacking dictionary works very much like the ordinary dictionary encoding. We chose to use a growth strategy where each value takes 1, 2, 4, 8, 16.. bits to avoid extracting values across word boundaries. Hence, the number of distinct values a column can contain is $2^{2^n}$.
-
-The value buffer is implemented as an array of 64-bit values which we denote an \textit{cells}. A cell is added one at a time as the buffer fills up. If the dictionary fills up, a \fn{IncreaseDictionaryCapasity} function is called. This allocates a new value cell array of double size and moves all values from the old cells into the new one, except extra padding is added.
-
+\subsection{Future Work}
+\label{sub:Future Work}
+We see a potential in loading XML values directly, however our implementation did nothing but decrease performance since the caching mechanisms was disabled. A more thorough implementation is outside of the scope of this research. Future work should investigate the effects of loading XML data directly into the columns and have the column store handle all caching using dictionary encoding. In theory, all caching should be handled by the column store using a loading state.
