@@ -1,5 +1,5 @@
 \chapter{Implementation Part I: The Column Store}
-\label{chap:part1}
+\label{chap:column-store}
 % Tell how we want to reduce memory and how database technology comes to the rescue
 For the first part of this thesis, our goal is to reduce memory footprint such that client memory requirements can be relaxed. Reduced memory usage are also likely to increase performance due to increased data locality and the cost of memory management. Inspired by the challenges with the current solution which we saw in Section \ref{sec:Challenges with the current solution}, we proceed to use techniques from the field of Database Technology to reduce memory footprint and increase data locality.
 
@@ -192,9 +192,7 @@ Both lookup index creating and source measure lookup operations suffer from the 
 
 Benchmark \ref{bm:write} yielded equal results for both implementations, even though most operations in Benchmark \ref{bm:q1} were slowed down by the column store. However, put in perspective, the operations from the \textit{TPC-H Q1 Load Benchmark} use almost as long time on 600,000 elements that \textit{Write Benchmark} uses on 1,000 elements. This indicates that there is a severe overhead in object iteration and value modification that is unrelated to how the data storage layout.
 
-The least explainable result we see is the difference in storage per \texttt{LINEITEM} for the different scaling factors. This 
-
-Unsure why there is a different space saving for different scaling factors. However, for the other measures, scaling factors seem to scale as they should. It might be caused by the caching and value reuse in load mechanisms in \gap, and that different data size is affected by the total number of rows. The data might also be skewed, which means SF0.01 has more values that can be reused. Either way, we see that both original and column store presentation is affected similarly, which means that the effect is unrelated to our work.
+We are unsure why there is a different space saving for different scaling factors. However, for the other measures, scaling factors seem to scale as they should. It might be caused by the caching and value reuse in load mechanisms in \gap, and that different data size is affected by the total number of rows. The data might also be skewed, which means SF0.01 has more values that can be reused. Either way, we see that both original and column store presentation is affected similarly, which means that the effect is unrelated to our work.
 
 \section{Chapter Conclusion}
 \label{sec:Chapter Conclusion}
@@ -206,6 +204,6 @@ We believe even more memory can be saved, and load time improved, by optimizing 
 
 \subsection{Future Work}
 \label{sub:Future Work}
-Now, we only assign new datasource indexes by incrementing, however we have put in a bitmap for assigned flags. We have disregarded this structure due to the linear search to find the first open bit, and that neither of our benchmarks inserts and removes certain objects. Future work might investigate the effects of using \fn{OpenBit}, and perhaps separate between loading and normal state.
+Now, we only assign new datasource indexes by incrementing, however we have put in a bitmap for assigned flags. We have disregarded this structure due to the linear search to find the first open bit, and that neither of our benchmarks inserts and removes certain objects. Future work might investigate the effects of using \fn{OpenBit}, and perhaps separate between loading and normal state. The \fn{Consolidate} function might also be used to compress the data and make sure all columns are used.
 
-In addition, we have observed that the bytes per \texttt{LINEITEM} is increased on larger data sets, and we believe this is caused by the caching and value reuse mechanisms in the data source loader. However, larger datasets should be able to reuse more values, not less. We therefore encourage studying this artifact in future work.
+In addition, we have observed that the bytes per \texttt{LINEITEM} is increased on larger data sets, and we believe this is caused by the caching and value reuse mechanisms in the data source loader. However, larger datasets should be able to reuse more values, not less. We therefore encourage studying this peculiar effect in future work.
