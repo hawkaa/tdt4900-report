@@ -3,7 +3,9 @@
 
 \gap~is a platform for software development that aims to increase developer productivity and simplyfy change management through model-driven development \cite{Genus_AS2016-kt}. End user applications are modeled using a modeling tool instead of being programmed. This enhances collaboration between business and IT, reduces life cycle costs, and lets the application developers focus on business logic instead of implementation details. \gap~uses generic software concepts on a higher level of abstraction than regular programming languages that are precise and non-ambigous \cite{noauthor_undated-qy}. These concepts, and the underlying implementation, have been refined and improved through years of trial and error on real customer use cases. The model contains enough detail to let \gap~run the application.
 
-\gap~spans over three layers of model-driven development: The development of the platform itself is \textit{method engineering}, expert users using the modelling tool work on the \textit{information system development} layer, and the end users are in the \textit{information system} layer.
+\gap aims to be a "no code", high-productivity tool.
+
+Like most tools for model-driven engineering, \gap~spans over three layers of model-driven development: The development of the platform itself is \textit{method engineering}, expert users using the modelling tool work on the \textit{information system development} layer, and the end users are in the \textit{information system} layer.
 
 
 \section{Components and Architecture}
@@ -13,11 +15,11 @@ A system developed with \gap~consists of four major components, as seen in Figur
 
 \paragraph{Database Server}
 \label{par:Database Server}
-\gap~stores both the application models and the data for these models in one or more database servers. The platform can extend existing systems by building on top of existing database relations used in other applications, or define a completely new set tables for a new application. Since \gap~handles all integrety checks, validation rules, triggers, duplicates, and foreign keys, these constraints do not need to be defined at the database layer. \genus~has developed adapters for most major database vendors, including \pn{Oracle Database}, \pn{Microsoft SQL Server}, \pn{IBM DB2}, and \pn{MySQL}. 
+\gap~stores both the application models and the data for these models in one or more database servers. The platform can extend existing systems by building on top of existing database relations used in other applications, or define a completely new set tables for a new application. Since \gap~handles all integrety checks, validation rules, triggers, duplicates, and foreign keys, these constraints do not need to be defined at the database layer. \genus~has developed adapters, or object relational models, for most major database vendors, including \pn{Oracle Database}, \pn{Microsoft SQL Server}, \pn{IBM DB2}, and \pn{MySQL}. In addition to the traditional relational database providers, \gap~supports NoSQL-databases, REST-services and other APIs. The main point is that it is somewhere the data is persisted.
 
 \paragraph{Genus App Services}
 \label{par:Genus App Services}
-\pn{Genus App Services} is the server back-end in \gap. It facilitates communication between the client and the database server by multiplexing on application model, different data sets, and language \todo{Ønsker å fjerne språk, irrelevant for oppgaven}. It also handles authentication and session management. For simplicity and scalability, all \pn{Genus App Services} instances are stateless, which means that even though caching is used to improve performance, all servers may handle all responses. 
+\pn{Genus App Services} is the server back-end in \gap. It facilitates communication between the client and the database server by multiplexing on application model and different data sets. It also handles authentication and session management. For simplicity and scalability, all \pn{Genus App Services} instances are stateless, which means that even though caching is used to improve performance, all servers may handle all responses. \pn{Genus App Services} is not a single server instance, it can be spread across various nodes, and each node can provide different services. Objects deployed to a node group is processed by any node within that group which provides the requested app service for a give data set.
 
 \paragraph{Genus Studio}
 \label{par:Genus Studio}
@@ -34,12 +36,18 @@ In this section we study how an application is developed in \gap~using \pn{Genus
 \subsection{Data Layer}
 \label{sub:Data Layer}
 \afigure{img/gap-data-layer.png}{The data layer in \gap. There is built-in security in the framework, in addition to integrity, data validation, and calculation. Courtesy of \cite{Genus_AS2016-kt}.}{fig:gap-data-layer}{0.65}
-In Figure \ref{fig:gap-data-layer}, we see the \gap~data layer. The data layer in an application consists of classes and properties, hierarchies (inheritance) and connections (relations). Schema is \todo{Hva er et schema?}... Each time some data is modified, it is checked for integrety and validity, and new calculations are made for formulas. In addition, events and rules is supported. The data layer is protected by security functionality that limits the access on certain objects or certain properties. The data layer with is modelled in a class diagram, which we will discuss in greater detail in Section \ref{sec:Concepts}.
+In Figure \ref{fig:gap-data-layer}, we see the \gap~data layer. The data layer in an application consists of classes and properties, hierarchies (inheritance) and connections (object class relationships). Schema represents how the object model is represented when exposed through an API, much like an XML schema. Schemas is primarily used to create and consume SOAP based web services that requires XML formatted messages. Each time some data is modified, it is checked for integrety and validity, and new calculations are made for formulas. In addition, events and rules is supported. The data layer is protected by security functionality that limits the access on certain objects or certain properties. The data layer with is modelled in a class diagram, which we will discuss in greater detail in Section \ref{sec:Concepts}.
+
+Hierachies and connections works much like foreign keys and relations in a traditional database; it describes how data is connected.
+
+This layer, as well as storing data, defines how and on which format data is persisted in the various database and web service backends.
 
 \subsection{Logic Layer}
 \label{sub:Logic Layer}
 \afigure{img/gap-logic-layer.png}{Courtesy of \cite{Genus_AS2016-kt}.}{fig:gap-logic-layer}{1.0}
-The main component in the logic layer is \textit{Action Orchestration}, where the logic is defined, or orchestrated, through programming launguage-like constructs, such as loops, ifs, and exceptions. There is a number of different actions, including object create, object delete, object modification, file creation, and IO operations like writing to files and consuming REST services. The Web Service \todo{Hva gjør Web Service i figuren?}... A task, defined by an action orchestration, can be run manually, but is more commonly triggered by elements in the user interface level, like a button press, or by other events like recurring events triggered by a timer. The logic layer is depicted in Figure \ref{fig:gap-logic-layer}.
+The main component in the logic layer is \textit{Action Orchestration}, where the logic is defined, or orchestrated, through programming launguage-like constructs, such as loops, ifs, and exceptions. There is a number of different actions, including object create, object delete, object modification, file creation, and IO operations like writing to files and consuming REST services. These building blocks are referred to ass \textit{effects}, and the process of assembling these building blocks is refered to as \textit{action orchestration}. The Web Service is included in the figure because web services can be interacted with in an effect. A task, defined by an action orchestration, can be run manually, but is more commonly triggered by elements in the user interface level, like a button press, or by other events like recurring events triggered by a timer. The logic layer is depicted in Figure \ref{fig:gap-logic-layer}.
+
+
 
 %For our research, the most important parts of the logic layer is the object fetching and manipulation, as well as the data aggregate generation. We study this later in the thesis.
 
@@ -74,17 +82,19 @@ A data mart defines a data extract that are used by \pn{Genus Discovery}, the in
 
 Besides from the field and data source filtering, a data mart looks very much like like an object diagram, like seen in Figure \ref{fig:gap-data-mart}. Still, there is one important distinction: A data mart must conform to a snowflake schema, that is there can only exist one path through the class diagram. For instance, in Figure \ref{fig:gap-class-diagram}, both customer and suppliers refer to the nation table. In a data mart, there would two nation entitities, a \texttt{CUSTOMER\_NATION} and a \texttt{SUPPLIER\_NATION} table.
 
-\subsection{Genus Discovery}
-\label{sub:Genus Discovery}
+\subsection{Analysis}
+\label{sub:Analysis}
 \missingfigure{Genus discovery screenshot}
-\pn{Genus Discovery} is the built-in \bd~solution in the platform. It is a graphical user interface component that builds on a data mart. Like most similar products, \pn{Genus Discovery} does not rely on aggregated data such that the user can follow his "information scent" and click his way through the data. An example user interface is seen in Figure \ref{fig:genus-discovery}.
+\pn{Analysis} is the built-in \bd~solution in the platform, and is ofter referred to as \pn{Genus Discovery}. It is a graphical user interface component that builds on a data mart. Like most similar products, \pn{Genus Discovery} does not rely on aggregated data such that the user can follow his "information scent" and click his way through the data. An example user interface is seen in Figure \ref{fig:genus-discovery}.
 
-\subsection{Task}
-\label{sub:Task}
+\subsection{Actions}
+\label{sub:Actions}
 \afigure{img/gap-task.png}{A task definition in \gap. A task may read from and to data sources, enumerate using for or while loops, consume services, import, export, and more.}{fig:gap-task}{1.0}
-A task in \gap~is similar to a procedure or a function in a programming language, and is defined at the logic layer. A task might be triggered manually, or through user interaction in the user interface, or by agents that trigger tasks periodically.
+An action in \gap~is similar to a procedure or a function in a programming language, and is defined at the logic layer. A task might be triggered manually, or through user interaction in the user interface, or by agents that trigger tasks periodically.
 
 As seen in Figure \ref{fig:gap-task}, the users might specify specific steps that loads data sources, filters, modifies attributes, imports, exports, and more.
+
+\todo{Jobbe litt med tilbakemeldingene til Petter her}
 
 \section{Source Code and Classes}
 \label{sec:Source Code and Classes}
@@ -109,9 +119,9 @@ The \cn{CompositionDescriptor} class describes a composition, and represents an 
 The \cn{CompositionObject} class represents object instances for object classes. Each object has a reference to its composition descriptor, and in addition, there are other variables that store object state, validation errors, formatting, and more. The properties and data belonging to a composition object instance is stored in a \cn{CompositionObjectValueCollection} class, which we study in Section \ref{sub:CompositionObjectValueCollection}.
 
 
-\subsection{DataDescriptor}
+\subsection{FieldDescriptor}
 \label{sub:DataDescriptor}
-The \cn{DataDescriptor} class describes an attribute in a composition, which is the object class property we studied in Section \ref{sub:Object Class Properties}. It holds all revelant data about a property, mainly type and representation, but also constraints and formatting rules. Instances of the \cn{DataDescriptor} class exist in the information system development layer.
+The \cn{FieldDescriptor} class describes an attribute in a composition, which is the object class property we studied in Section \ref{sub:Object Class Properties}. It holds all revelant data about a property, mainly type and representation, but also constraints and formatting rules. Instances of the \cn{DataDescriptor} class exist in the information system development layer.
 
 \subsection{CompositionObjectValueCollection}
 \label{sub:CompositionObjectValueCollection}
@@ -128,7 +138,7 @@ The \cn{CompositionObjectValueCollection} class holds the data for composition o
         \hline
         \cn{CompositionObject} & Instance of Object Class & Information system layer \\
         \hline
-        \cn{DataDescriptor} & Object Class Property & Information system development layer \\
+        \cn{FieldDescriptor} & Object Class Property & Information system development layer \\
         \hline
         \cn{CompositionObject- ValueCollection} & Values of Object Class Property & Information system layer
     \end{tabularx}
@@ -164,7 +174,7 @@ This results in 32,000,018 pointers, which is roughly 244mb on a 64-bit architec
 
 \subsection{Ineficcient Data Access and Poor Memory Locality}
 \label{sub:Ineficcient Data Access and Poor Memory Locality}
-Commonly in \gap, there are operations that perform calculations or evaluate predicates on a large number of values. These operations access many values in tight loops, and it is not uncommon they scan all values for a given data descriptor in a data source. For instance, an operation that sums up all numbers for an object property in a data source would for every iteration do the following:
+Sometimes in \gap, there are operations that perform calculations or evaluate predicates on a large number of values. These operations access many values in tight loops, and it is not uncommon they scan all values for a given data descriptor in a data source. For instance, an operation that sums up all numbers for an object property in a data source would for every iteration do the following:
 \begin{itemize}
     \item The \cn{CompositionObjectValueCollection} is scanned linearly for the correct data descriptor.
     \item The corresponding \cn{GValue} is found, and the accessor method (i.e. \fn{GetAsInteger}) is looked up in the dispatch table.
