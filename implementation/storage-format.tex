@@ -76,11 +76,11 @@ To do this, \cn{FieldValueCollectionBase} is extended with a method \cn{LoadXMLV
 We hypothesize that loading xml values directly into a column will speed up load time. We believe this is the case because there will be no allocation and deallocation of \cn{GValues}. Also, as seen in Figure \ref{fig:gap-load-raw}, the new implementation has less steps than the original.
 
 \section{Test Results}
-\label{sec:Test Results}
+\label{sec:storage-format-test-results}
 Like last chapter, we test our implementation with Benchmark \ref{bm:q1} and Benchmark \ref{bm:write}. We are curious to see whether memory has been reduced by avoiding the overhead corresponding with \cn{GValue}s and whether load time has been affected. Write performance is also important to test, since \cn{GValue}s are allocated and deallocated as they are read and written to the columns. Full descriptions of the benchmarks are found in Appendix \ref{app:bm}.
 
-\subsection{TPC-H Result}
-\label{sub:TPC-H Result}
+\subsection{TPC-H Results}
+\label{sub:storage-format-tpch-results}
 Benchmark \ref{bm:q1}, the \textit{TPC-h Q1 Data Load Benchmark}, was run with our new primitive value column implementation with and without the new loading scheme. Both scaling factor 0.1 and 0.01 were run. Like in Chapter \ref{chap:column-store}, only three tests were run per configuration. However, all results yielded low variance, and no single measurement was more than 15 \% different than the average value.
 
 \begin{table}

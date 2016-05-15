@@ -66,31 +66,99 @@ We test our implementation using Benchmark \ref{bm:q1} and Benchmark \ref{bm:wri
         & Distinct Values & Dictionary Encoding? \\ 
         \hline
         \hline
-        LINEITEMKEY & 100,000 & No \\
+        LINEITEMKEY & 600,000 & No \\
         LINESTATUS & 3 & Yes \\
         RETURNFLAG & 3 & Yes \\
-        SHIPDATE & - & Yes \\
+        SHIPDATE & 2526 & Yes \\
         QUANTITY & 50 & Yes \\
-        EXTENDEDPRICE & - & No \\
-        DISCOUNT & - & Yes \\
-        TAX & - & Yes
+        EXTENDEDPRICE & 598,966 & No \\
+        DISCOUNT & 11 & Yes \\
+        TAX & 9 & Yes
     \end{tabularx}
     \caption{Column selection for Benchmark \ref{bm:q1}. Low-cardinality columns are dictionary encoded, while the others are not. The numbers are based on Scaling Factor 0.1.}
     \label{tab:column-selection}
 \end{table}
-Like we read in Section \ref{sec:Dictionary Encoding}, dictionary encoding is effective when there is only a small number of distinct values compared to the number of total values. Hence, not all columns should be encoded with dictionary encoding. Therefore, certain properties for \texttt{LINEITEM} were picked by-hand to be dictionary encoded for this test, based on the column cardinality. The dictionary encoded columns with cardinalities are shown in Table \ref{tab:column-selection}. The numbers are based on the \texttt{LINEITEM} table in the \tpch, and the configuration is used in all benchmarks.
+Like we read in Section \ref{sec:Dictionary Encoding}, dictionary encoding is effective when there is only a small number of distinct values compared to the number of total values. Hence, not all columns should be encoded with dictionary encoding. Therefore, certain properties for \texttt{LINEITEM} were picked by-hand to be dictionary encoded for this test, based on the column cardinality. The dictionary encoded columns with cardinalities are shown in Table \ref{tab:column-selection}. The table shows that most columns are low-cardinality, and will benefit from dictionary encoding. The numbers are based on the \texttt{LINEITEM} table in the \tpch, and the configuration is used in all benchmarks.
 
 \subsection{TPC-H Result}
 \label{sub:TPC-H Result}
+Benchmark \ref{bm:q1}, the \textit{TPC-h Q1 Data Load Benchmark}, was run with all three compression configurations. In addition to this, dictionary encoding was run with raw value load, as explained in Section \ref{sec:Avoiding GValues at Load Time}. Both scaling factors were used for the tests. Like the previous chapters, all tests were run three times per configuration. There was low variance in the results, and no single measurement was more than 15 \% different from the average value.
+\begin{table}
+    \centering
+    \begin{tabularx}{\textwidth}{X | X X}
+        & SF0.01 & SF0.1 \\ 
+        \hline
+        \hline
+        Primitive Column Store & 333 bytes & 374 bytes \\
+        Dictionary Encoding & 298 bytes & 318 bytes \\
+        Dictionary Encoding w/ raw value load & 298 bytes & 318 bytes \\
+        Dictionary Encoding w/ bitpacking & 290 bytes & 301 bytes \\
+        Dictionary Encoding w/ bitpacking, null-pointer compression, and attribute packing & 226 bytes & 237 bytes \\
+    \end{tabularx}
+    \caption{Bytes per \texttt{LINEITEM} for various compression implementations.} 
+    \label{tab:dict-bpl}
+\end{table}
+
+We see in Table \ref{tab:dict-bpl} that memory used per lineitem is reduced by 11 \% and 15 \% for scaling factors 0.01 and 0.1 respectively. Also, there is no longer a difference between memory footprint for original and new raw value loading mechanism, something we observed in Section \ref{sub:storage-format-tpch-results}. There is a slight memory reduction by applying bit-packing, but null-pointer compression and attribute packing has reduced memory storage from 374 to 237 bytes for scaling factor 0.1, which means our compression has reduced memory usage by 37 \%. 
+\begin{table}
+    \centering
+    \begin{tabularx}{\textwidth}{X | X X}
+        & SF0.01 & SF0.1 \\ 
+        \hline
+        \hline
+        Primitive Column Store & 1210 ms & 13585 ms \\
+        Dictionary Encoding & 1332 ms & 14826 ms \\
+        Dictionary Encoding w/ raw value load & 2215 ms & 21760 ms \\
+        Dictionary Encoding w/ bitpacking & 1421 ms &  15366 ms \\
+        Dictionary Encoding w/ bitpacking, null-pointer compression, and attribute packing & 1389 ms & 15584 ms \\
+    \end{tabularx}
+    \caption{Load times for Benchmark \ref{bm:q1} for different column compression implementations for scaling factors 0.01 and 0.1.} 
+    \label{tab:dict-load}
+\end{table}
+
+As we see in Table \ref{tab:dict-load}, load times have increased as a result of the compression. For scaling factor 0.1, dictionary encoding adds 1.2 seconds load time, bitpacking adds an additional 0.5 seconds, and null-pointer compression and attribute packing adds 0.2 seconds more. Even though load time has been increased, it is still less than the original implementation. Loading raw values into the columns increases load time to 21.8 seconds for SF 0.1. We discuss this observation in Section \ref{sec:compression-discussion}.
+
+We refrain from presenting the timing results for lookup index generation and source measure lookup from Benchmark \ref{bm:q1}. These does not vary significantly from the results presented in Section \ref{sec:storage-format-test-results}.
+
+\subsection{Write Benchmark}
+\label{sub:compression-write-benchmark}
+\begin{table}
+    \begin{tabularx}{\textwidth}{X | X X X X}
+         & \texttt{QUANTITY} & \texttt{EXTENDEDPRICE} & \texttt{COMMENT} & \texttt{SHIPDATE}\\ 
+        \hline
+        \hline
+        Primitive Column Store & 1807 ms & 1779 ms & 1820 ms & 2352 ms \\
+        Dictionary Encoding & 1855 ms & 1774 ms & 1753 ms & 2183 ms \\
+        Dictionary Encoding /w Bitpacking & 1757 ms & 1638 ms & 1657 ms & 2198 ms \\
+        Dictionary Encoding /w Bitpacking, null-pointer compression and attribute packing & 1939 ms & 1813 ms & 1777 ms & 227 ms \\
+    \end{tabularx}
+    \caption{Test results for Benchmark \ref{bm:write}.}
+    \label{tab:compression-write}
+\end{table}
+Write performance has not been significantly changed compared to primitive column storage, as seen it Table \ref{tab:compression-write}. Bitpacking is the fastest of all implementations, but only by very little.
 
 \section{Discussion}
-\label{sec:Discussion}
+\label{sec:compression-discussion}
+We are excited to see the effects data compression. For scaling factor 0.1, the memory used to store each \texttt{LINEITEM} is reduced by 37 \%. In this formula, dictionary encoding, null-pointer compression and attribute packing contribute the most, while bitpacking yields no more than 5 \% total memory savings. 
 
+We are especially excited to see that compression in the Method Engineering layer, namely null-pointer compression and attribute packing, contribute to large memory savings. This has implications for all system development, not only in the realm of model-driven engineering. We elaborate on these implications further in Section \ref{X}.
+
+By using dictionary encoding, we have been able to save the same amount of memory as the built-in caching mechanism for data source load. However, data load times are significantly higher by using our new raw data load mechanism. We believe this is because the caching mechanism not only reuse data, but also saves the job of converting XML string values to the primitive data type, a job that can be cumbersome for certain data types, like dates.
+
+Write results are not significantly affected by compression, which might indicated that there is much more overhead associated with such operations than only data write and read. Although the results of Benchmark \ref{bm:write} show that write performance is reduced compared to the original implementation, this is no more than 10 \%.
 
 \section{Chapter Conclusion}
 \label{sec:Chapter Conclusion}
-We have reduced memory footprint by xxx, but we have yet to see how to utilize these structures even more.
+We have reduced memory footprint by 67 \% compared to the original implementation by applying compression techniques known by the database technology. Despite of the fact that load time is increased by compression, it is still lower than the original implementation by 33 \%.
+
+After this chapter, we are left with two major challenges. First, currently, the correct column structure is picked by hand. However, this is not feasible in the long-run. Although such information could be added to the application model, we should investigate whether \gap~can pick the correct storage format without modeller interaction. We do so in Chapter X.
+
+Second, and more important, is that we have applied techniques used in read-optimized databases, but so far only been hurt by our new implementation. For instance, the source measure lookup operation now takes 6.9 seconds, which originally only took 0.3 seconds. We claim that these read-intensive operations can be rewritten to utilize our new storage formats. We look into this in Chapter X.
 
 \subsection{Future Work}
 \label{sub:Future Work}
+Like last chapter, we encourage studying the built-in caching mechanism on data source load. We have proved that dictionary encoded columns reuse values as efficiently as the already existing mechanism, since, as opposed to for pure primitive value columns, dictionary encoding use the same number of bytes per lineitem regardless of loading mechanisms. However, the time it takes to load the \tpch~Q1 data mart is still more than the original. We, therefore, encourage further scrutinization of the built-in caching mechanism, for instance by caching dictionary keys for raw string values instead of the column primitive type. This way, data conversion results can also be reused.
+
 In the bitpacked column, cells are added one at a time. This was done for simplicity reasons, and the fact that adding a cell adds more than one value, reducing the number of memory allocations. However, the effects of doubling the array instead of adding one cell at a time should be investigated.
+
+
