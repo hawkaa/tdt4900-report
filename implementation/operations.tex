@@ -95,7 +95,7 @@ begin
   Result := BasicBitArray.Create(maxDatasourceIndex + 1);
   nativeValue := valueHelper.ExtractValue(value);
   for i := 0 to maxDatasourceIndex do
-    Result[i] := valueHelper.ValueEqual(values[l_i], nativeValue);
+    Result[i] := valueHelper.ValueEqual(values[i], nativeValue);
 end;
 \end{delphicode}
 
@@ -105,6 +105,10 @@ In Listing \ref{lst:create-equal-bitmap}, we see the implementation in the gener
 
 \section{Test Results}
 \label{sec:Test Results}
+To test source measure lookup and lookup index operations, Benchmark \ref{bm:q1} was used. In addition to this, Benchmark \ref{bm:odin-load} was used to test identifier index generation, and Benchmark \ref{bm:filter} was used to test predicate evaluation.
+
+\subsection{Source Measure Lookup}
+\label{sub:Source Measure Lookup}
 \begin{table}
     \centering
     \begin{tabularx}{\textwidth}{X | X X X X}
@@ -119,8 +123,10 @@ In Listing \ref{lst:create-equal-bitmap}, we see the implementation in the gener
     \label{tab:operations-sml}
 \end{table}
 
-We see in table \ref{tab:operations-sml} that source measure lookup is reduced by more than one order of magnitude from the original implementation, and more than two orders of magnitude from the compressed implementation.
+In Table \ref{tab:operations-sml} that source measure lookup is reduced by more than one order of magnitude from the original implementation, and more than two orders of magnitude from the compressed implementation. The operation on the \texttt{EXTENDEDPRICE} column is faster than the others, because this can be done by simply passing the array pointer. The others are dictionary encoded, takes longer, but is still fast. The fact that values from \texttt{QUANTITY} have to be converted from integer to floating points does not affect the result.
 
+\subsection{Lookup Index Generation}
+\label{sub:Lookup Index Generation}
 
 \begin{table}
     \centering
@@ -129,24 +135,69 @@ We see in table \ref{tab:operations-sml} that source measure lookup is reduced b
         \hline
         \hline
         Original & 2939 ms & 2849 ms & 13144 ms \\
-        Compressed & 12291 ms & 12688 ms & 19674 ms \\
+        Compressed & 12,291 ms & 12,688 ms & 19,674 ms \\
         \fn{GetLookupIndex} & 26 ms & 26 ms & 220 ms \\
     \end{tabularx}
     \caption{Lookup index generation operation for SF0.1 in Benchmark \ref{bm:q1}}
     \label{tab:operations-lig}
 \end{table}
+The \fn{GetLookupIndex} operation decreases the time it takes to performa join operation by two orders of magnitude, as seen in Table \ref{tab:operations-lig}.
+
+
+\subsection{Identifier Index}
+\label{sub:Identifier Index}
+To test the performance of identifier index generation, Benchmark \ref{bm:odin-load} was used. In this benchmark, joins are not limited to small join columns, there is a join in that benchmark that joins 200,000 rows. Hence, the effects of creating the \fn{GetIdentifierIndex} operation are easier to measure.
+
+\begin{table}
+    \centering
+    \begin{tabularx}{\textwidth}{X | X X}
+        & \texttt{Fund} & \texttt{Customer} \\
+        \hline
+        \hline
+        Compressed & 11 ms & 10,040 ms \\
+        \fn{GetIdentifierIndex} & 9 ms & 2863 ms \\
+    \end{tabularx}
+    \caption{Lookup index generation for Benchmark \ref{bm:odin-load} with the new \fn{GetIdentifierIndex} operation.}
+    \label{tab:operations-odin-lig}
+\end{table}
+As we see in Table \ref{tab:operations-odin-lig}, the time it takes to join \texttt{Customer Balance Daily} with \texttt{Customer} has been reduced by almost four times. Fund lookup performance is slightly improved. 
+
+\subsection{Predicate Evaluation}
+\label{sub:Predicate Evaluation}
+\begin{table}
+    \centering
+    \begin{tabularx}{\textwidth}{X | X X X}
+        Predicate & Original & Compressed & Predicate Operator \\
+        \hline
+        \hline
+        \texttt{LINESTATUS = F} & 10,540 ms & 19,115 ms & 14,776 ms\\
+        \texttt{TAX >= 0.02} & 9102 ms & 17,538 ms & 16,387 ms \\
+        \texttt{EXTENDEDPRICE >= 1000} & 12,306 ms & 26,031 ms & 26,249 ms \\
+        \texttt{EXTENDEDPRICE >= 40000} & 6946 ms & 13,682 ms & 11,475 ms \\
+        \texttt{EXTENDEDPRICE < 1000} & 3535 ms & 4455 ms & 811 ms \\
+        \texttt{EXTENDEDPRICE = 42995.94} & 53,291 ms & 55,291 ms & 29 ms \\
+        \texttt{SHIPDATE IN 1995} & 13,286 ms & 17,748 ms & 5591 ms \\
+        \texttt{SHIPINSTRUCT\_NULL HAS VALUE} & 7853 ms & 19,656 ms & 19,107 ms 
+    \end{tabularx}
+    \caption{Test results for Benchmark \ref{bm:filter} for originaland compressed column implementation, with and without predicate evaluation operators.}
+    \label{tab:operations-filter}
+\end{table}
+To test predicate evaluation, we use the \textit{Filter Benchmark}, Benchmark \ref{bm:filter}. This moves data from one datasource to another based on a filter. The results are presented in Table \ref{tab:operations-filter}.
+
+For all high-selectivity predicate evaluations, using the new predicate operator function in the columns increase performance, but is slower than the original implementation. Low selectivity predicates, like \texttt{EXTENDEDPRICE < 10000} (44) and \texttt{EXTENDEDPRICE = 42995.94} (1) are faster than the original implementation, with the latter three orders of magnitude faster.
 
 \section{Discussion}
 \label{sec:Discussion}
+We are excited to see the benefits of introducing column operations. Both lookup index and measure lookup operations used by \gd~have increased performance by one or two orders of magnitude as an effect of utilizing the storage format, avoiding memory allocations, and layers of indirection. Another operation, \fn{GetLookupIndex} has also speeded up joining of two equally sized columns by almost four times. This operation is also used other places in \gap.
+
+Although predicate evaluation operators have speeded up the operation where objects are moved from one data source to another based on a filter operation, most of them are still slower than the original implementation. The reason for this is that \gap~is not designed to utilize the new storage format; to move data from one datasource to another, rows, or \cn{CompositionFieldValueCollection} are created, filled with \cn{GValues} and transfered. Still, the full potential of predicate evaluation operators as a column operator revealed itself in \texttt{EXTENDEDPRICE = 42995.94}: The operation speeded up with three orders of magnitude.
 
 \section{Chapter Conclusion}
 \label{sec:Chapter Conclusion}
-
-In this chapter, we have seen that.
-
-Even though this optimization was motivated by \bd~functionality, we still observe that the \fn{CreateIdentifierIndex} is used other places in the appliaction.
+We conclude that there are much to gain from utilizing the column structure. In this chapter, we defined four column operations, all of which has a potential to increase performance by one, two, and even three orders of magnitude. Common for these operations is that they work on all values for an object class property consecutively, which is key to acheive good performance. All operations that took longer due to our new, compressed storage format, are now faster than the original implementation.
 
 \subsection{Future Work}
 \label{sub:Future Work}
-The bitmap creation certainly speeds up predicate evaluation, however the system is not aligned to move data from one data source to another.
+Generally speaking, future work should aim to identify more column operators that can increase performance in \gap. As we have seen so far in this report, the compressed column format has normally decreased performance for operations that reads values intensively. This is normally caused by the \cn{GValue} interface with the data, which means values are allocated on the heap on each data access. However, most such operation benefits from having data stored as primitive data types in columns, or as dictionary columns. The job is to find such operations and implement them in the \fn{FieldValueCollection} class.
 
+The predicate evaluation operator can speed up low-selectivity filters with three orders of magnitude. However, for high-selectivity filters, the overhead with moving data from one data source to another is large. Future work should seek to reduce this overhead by exploiting the column storage, for instance by creating an operation that moves all data from one column store to another based on a bitmap. This way, all filters can be applied on the original data source, combined using \texttt{AND} and \texttt{OR} operations, then be used as an input for this copy operation.

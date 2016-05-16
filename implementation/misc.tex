@@ -1,10 +1,43 @@
-\chapter{Implementation Part V: Miscellaneous}
+\chapter{Miscellaneous}
 \label{chp:misc}
-In this chapter we discuss other techniques tested out in this thesis. This include table statistics and UTF 8 encoding.
+In this chapter we cover some other techniques we investigated in this research. First, we see how memory can be reduced even more by applying UTF-8 instead of UTF-16 to strings stored in the column storage. Second, we discuss how statistics from a database can be used to automaticall select the correct column implementation.
 
 \section{UTF-8}
 \label{sec:UTF-8}
+The built-in \cn{string} class in \delphi~is UTF-16 encoded \cite{noauthor_undated-cp}. This is an Unicode encoding that uses two bytes per character, and is used because Win32 platform uses this format. However, another encoding, UTF-8, exists for the Unicode charset. This encodes the first 127 ASCII characters with only one byte. 
 
+Our observation is that most strings only use the first 127 ASCII characters, which means we can cut the memory footprint of strings in half. \delphi~has a built-in type for this, \cn{UTF8String}, which we use to implement the string columns. String conversions between the different string formats are handled by \delphi.
+
+\subsection{Test Results}
+\label{sub:Test Results}
+\begin{table}
+    \begin{tabularx}{0.75\textwidth}{X | X X}
+        & SF0.01 & SF0.1 \\ 
+        \hline
+        \hline
+        Compressed & 226 bytes & 237 bytes \\
+        Compressed w/ UTF-8 Store & 210 bytes & 221 bytes \\
+        \% reduction & 7 \% & 7 \% \\
+    \end{tabularx}
+    \caption{UTF-8 test results for Benchmark \ref{bm:q1} for SF0.1 and SF0.01.}
+    \label{tab:utf-8-bpl}
+\end{table}
+\begin{table}
+    \begin{tabularx}{0.75\textwidth}{X | X X}
+        & SF0.01 & SF0.1 \\ 
+        \hline
+        \hline
+        Compressed & 1389 ms & 15584 ms \\
+        Compressed w/ UTF-8 Store & 1749 ms & 17718 ms \\
+    \end{tabularx}
+    \caption{UTF-8 test results for Benchmark \ref{bm:q1}}
+    \label{tab:utf-8-load}
+\end{table}
+Table \ref{tab:utf-8-bpl} shows that the number of bytes used per \texttt{LINEITEM} is reduced by 7 \% for both scaling factors. However, as Table \ref{tab:utf-8-load} shows, load times are slightly increased.
+
+\subsection{Conclusion}
+\label{sub:Conclusion}
+There is a slight benefit in reduced memory consumption by applying UTF-8 encoding to strings. However, this comes at the cost of increased load time. The increased load time might be the tip of the iceberg; \gap~uses \cn{string} as their string format, which is UTF-8 encoded. This means there are many string conversions between the different encoding standards. Last, but not least, the impact of rebuilding  \gap~into UTF-8 on operation system interaction is unknown.
 
 \section{Column Selection}
 \label{sec:Column Selection}
@@ -39,4 +72,9 @@ For obvious reasons, we may assume that the statistics are mere estimates. Howev
 
 \subsection{Special Cases}
 \label{sub:Special Cases}
+In a data mart, float arrays are used. Until Data mart is redesigned to use dictionaries, which we saw in Section \ref{xx} could be beneficial, no float column that is used as a measure should be stored in a dictionary. 
+
+\subsection{Conclusion}
+\label{sub:Conclusion}
+
 

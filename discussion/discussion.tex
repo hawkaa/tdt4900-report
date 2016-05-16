@@ -31,6 +31,10 @@ class Person:
 \end{lstlisting}
 
 
+\subsection{Null-pointer Compression}
+\label{sub:Null-pointer Compression}
+In Section \ref{sec:Null-pointer Compression}, we investigated the effects of compressing null pointers. This can be used in other programming languages too.
+
 \section{Other room for improvement}
 \label{sec: Other room for improvement}
 More effort should be put into the loading strategy. For instance, they should be put at the correct size immediately.
@@ -56,6 +60,10 @@ In Section \ref{sec:Pointer Exposure} we reasoned how pointers to value buffers 
 One way to avoid such data duplication, could be to allow the \cn{SourceMeasureLookup} class to drop all data within a column after the value buffer was created. We, therefore, propose to extend the \fn{UnassignAllValues} to not only accept a composition object (row), but also a data descriptor (column). This way, a value would only be stored once.
 
 A better, but a more long-term solution, would be to extend the \bd~implementation. First and foremost, all data types should be supported, like integers. This could, in fact, give other side effects like more efficient calculation \footnote{http://nicolas.limare.net/pro/notes/2014/12/12\_arit\_speed/}. Secondly, the \bd~functionality should be able to utilize the dictionaries. For instance, dictionaries make the perfect basis for joins and aggregations. 
+
+\subsection{Integers instead of strings as identifiers}
+\label{sub:Integers instead of strings as identifiers}
+
 
 \section{Critics}
 \label{sec:Critics}
