@@ -1,0 +1,152 @@
+\chapter{Implementation Part IV: Column Operations}
+\label{chap:operations}
+
+\afigure{img/memory-performance-graph}{As memory footprint goes down, operation time increases.}{fig:memory-performance-graph}{0.6} 
+So far, we have seen that our implementation has given drastical reduction in memory usage and load time. In general, reduced memory usage normally results in higher program performance. However, we have not yet utilized our new column structure. In Figure \ref{fig:memory-performance-graph}, we see that both lookup index generation and source measure lookup operations has been severly slowed down, with the latter has been slowed down with one order of magnitude.
+
+In this chapter, we implement these operations within the columns to use the potential in the storage format and to avoid creation and deletion of \cn{GValue}s in tight loops. We also create and study the performance impact filtering and index creation mechanisms within the columns.
+
+\section{Source Measure Lookup}
+\label{sec:Source Measure Lookup}
+As we read in Appendix \ref{app:benchmarks}, the source measure lookup operation creates an array of double precision floating point values for a column in a data source. It uses such array as a basic unit for calculations and aggregations within \gd. For simplicity reasons, all numeric types that works as measures in a data mart is converted to 64-bit floating point numbers, even 32-bit integers. Our observation is that we already have these arrays available within the \cn{RealFieldValueCollection}, and that there is no longer need for using the column \fn{Get} function to access values one by one.
+%The \bd~functionality in \gap~works strictly on arrays of floating point values (\cn{TArray<double>}). This buffer is created with a \cn{SourceMeasureProvider} class which is linked to a data descriptor. For every composition object in the data source, it calls the \fn{GetValue} method, which returns a \cn{GValue}. The buffer is then filled by calling \fn{GetAsFloat} on all values. 
+
+\begin{delphicode}{Getting an array of doubles using pointer exposure.}{lst:get-double-array}
+function RealFieldValueCollection.GetDoubleArray
+: TArray<double> ;
+begin
+  Result := values;
+end;
+\end{delphicode}
+We implement a new function, \fn{GetDoubleArray} in \cn{FieldValueCollection}. This function will, for all supported column types, return a \delphi~array of \cn{double}. If the operation is not supported by a column, \texttt{nil} is returned. For a \cn{RealFieldValueCollection}, it is only a matter of returning a pointer to its internal value buffer.  This is seen in Listing \ref{lst:get-double-array}.
+\begin{delphicode}{Getting an array of doubles using creation.}{lst:get-double-array-create}
+function IntegerDictionaryFieldValueCollection.GetDoubleArray
+: TArray<double>;
+begin
+  SetLength(Result, maxDatasourceIndex + 1);
+  for i := 0 to maxDatasourceIndex do
+    Result[i] := dictionary[values[i]];
+end;
+\end{delphicode}
+However, since this operation is also called on integer columns, we see the potential of creating the array within the column anyway, such that the column structure can be utilized. We, therefore, implement this operation for other applicable columns, including dictionary encoded columns. The implementation is seen in Listing \ref{lst:get-double-array-create}.
+%As seen in Table X, there are drastic differences between native floating point columns and everything else. For instance, the quantity-column, which is an integer, it takes \~ 1500ms to create a source measure index. The same is the case for tax, which is floating point but dictionary encoded. We hypothetize that the reason for this is the large amount of memory allocations for \cn{GValue}s and access patterns, and that we can do better by operating on the whole column in a batch.
+
+\section{Lookup Index Generation}
+\label{sec:Lookup Index Generation}
+A common operation in \bd~is to create a lookup index from one table to another, which maps datasource indexes from one datasource to another. The operation is considered as a join operation. In the realm of database technology, such join function takes two columns as input and outputs a mapping from one table to another. There are several algorithms for joining, however the \pn{nested loop} one is the most popular. This algorithm creates a lookup from values to datasoruce indexes for the smalles column, and then scans the largest column by probing the lookup.  
+
+\gd~uses such lookup index to join tables within a data mart, but creating such index is inefficient with the current implementation. We observe that this operation can benefit from the column structure, and avoiding the uneccessesary middle step of creating \cn{GValue}s. Although such operation normally requires two columns as input, \gap~already has a structure, \textit{identifier index}, available for us to use, a structure used several places in the platform \todo{Where?}. The structure is created on demand, and might already exist when needed.
+
+\begin{delphicode}{\fn{GetLookupIndex} implementation}{lst:get-lookup-index}
+function ObjectHandleFieldValueCollection.GetLookupIndex
+( identifierIndex : TDictionary<string, CompositionObject>)
+: TArray<integer>;
+begin
+  SetLength(Result, maxDatasourceIndex + 1);
+  for i := 0 to maxDatasourceIndex do
+  begin
+    if identifierIndex.TryGetValue(values[i], comObj) then
+      Result[i] := comObj.DatasourceIndex
+    else
+      Result[i] := -1;
+  end;
+end;
+\end{delphicode}
+We proceed to implement \cn{GetLookupIndex} in \cn{FieldValueCollection}, which accepts the the identifier index as input and outputs a \cn{TArray<integer>} that maps datasource indexes from the current column to the other. The implementation is seen in Listing \ref{lst:get-lookup-index}.  
+
+\section{Identifier Index}
+\label{sec:Identifier Index}
+We read about the \textit{identifier index} structure in the previous section, and how it was used in the \fn{GetLookupIndex} operation. This structure maps an identifier, typically a database primary key, to composition objects, and is used to... \todo{Hvor?}. Whenever needed, the structure is created within a datasource on-demand. We believe this operation can benefit from column storage.
+
+\begin{delphicode}{Creating an identifier index in a primitive column}{lst:create-identifier-index}
+function PrimitiveFieldValueCollection<TType>.GetIdentifierIndex
+( compositionObjects : CompositionObjectCollection )
+: TDictionary<string, CompositionObject>;
+begin
+  Result := TDictionary<string, CCompositionObject>.Create;
+  for comObj in compositionObjects do
+  begin
+    id := valueHelper.ValueToString(values[comObj.DatasourceIndex]);
+    Result.Add(id, comObj);
+  end;
+end;
+\end{delphicode}
+We implement an operation named \cn{GetIdentifierIndex} in \fn{PrimitiveFieldValueCollection}. This iterates a list of composition objects, looks up the column value based on the datasource index. All identifiers in \gap~are strings, which means that the value helper class must convert the column contents to string before using it as a key in the dictionary. Most objects come in ordered by their datasource index, which means cache locality is maximized.
+
+The \cn{GetIdentifierIndex} is not implemented in the dictionary encoded columns because it is not needed: If a column works as an identifier column, or a primary key, there will only be unique values, which means such column will never benefit from a dictionary.
+
+\section{Predicate Evaluation}
+\label{sec:Predicate Evaluation}
+One common operation in \gap~is to move certain objects from one datasource to another based on a filter. This is used in actions. We believe the column structure can help this operation by avoiding unecessary memory allocations and layers of indirection. The filters used in such operation are composed by one or more predicates, which can compare values with equal, not equal, greater than, less than, and other comparisons operators. 
+
+% CONSIDER EXPLAINING THIS
+%Inspired to look into other places in \gap~to utilize our new storage structure, we look at the filter mechanisms in the task execution unit. One common operation is to add objects to a data source and then do something with a subset of these. This subset is defined by a filter. Previously, the entire data source was enumerated and each object was compared. For each object.
+%\begin{enumerate}
+    %\item The \cn{GValue} for the Data Descriptor is fetched. Depending on the implementation, this is either a search through pointers or a memory allocation.
+    %\item The \cn{GValue} is compared using the comparison methods in the class.
+    %\item This is repeated for every predicated that is evaluated. \todo{Figure out what happened on different predicates}
+%\end{enumerate}
+
+\begin{delphicode}{Creating a bitmap for the Equal operator.}{lst:create-equal-bitmap}
+function PrimitiveFieldValueCollection<TType>.GetEqualBitmap
+( value : CGValue )
+: BasicBitArray;
+begin
+  Result := BasicBitArray.Create(maxDatasourceIndex + 1);
+  nativeValue := valueHelper.ExtractValue(value);
+  for i := 0 to maxDatasourceIndex do
+    Result[i] := valueHelper.ValueEqual(values[l_i], nativeValue);
+end;
+\end{delphicode}
+
+We introduce a new column operator, \fn{GetBitmap}, that takes an operator and a value as input, and returns a bitmap of matching rows. An implementation of the equal operator is shown in Listing \ref{lst:create-equal-bitmap}. The bitmaps can then be combined efficiently using \texttt{AND} and \texttt{OR} operations, much like bitmap indexes depicted in Figure \ref{fig:bitmap-query}.
+
+In Listing \ref{lst:create-equal-bitmap}, we see the implementation in the generic \cn{PrimitiveFieldValueCollection} class, which means the value helper class must be used to evaluate the predicate. This causes extra overhead in calling the \fn{ValueEqual} function. To avoid this, column operations can be implemented in the sub-classes, such that the delphi value comparison operator can be used.
+
+\section{Test Results}
+\label{sec:Test Results}
+\begin{table}
+    \centering
+    \begin{tabularx}{\textwidth}{X | X X X X}
+        SF0.01 & \texttt{QUANTITY} & \texttt{EXTENDEDPRICE} & \texttt{DISCOUNT} & \texttt{TAX}\\ 
+        \hline
+        \hline
+        Original & 302 ms & 385 ms & 312 ms & 369 ms \\
+        Compressed & 6975 ms & 7233 ms & 7189 ms & 7223 ms \\
+        \fn{GetDoubleArray} & 18 ms & 8 ms & 19 ms & 18 ms \\
+    \end{tabularx}
+    \caption{Source measure lookup for \texttt{QUANTITY} \texttt{EXTENDEDPRICE}, \texttt{DISCOUNT}, and \texttt{TAX} for SF0.1.} 
+    \label{tab:operations-sml}
+\end{table}
+
+We see in table \ref{tab:operations-sml} that source measure lookup is reduced by more than one order of magnitude from the original implementation, and more than two orders of magnitude from the compressed implementation.
+
+
+\begin{table}
+    \centering
+    \begin{tabularx}{\textwidth}{X | X X X}
+        & \texttt{LINESTATUS} & \texttt{RETURNFLAG} & \texttt{SHIPDATE}\\ 
+        \hline
+        \hline
+        Original & 2939 ms & 2849 ms & 13144 ms \\
+        Compressed & 12291 ms & 12688 ms & 19674 ms \\
+        \fn{GetLookupIndex} & 26 ms & 26 ms & 220 ms \\
+    \end{tabularx}
+    \caption{Lookup index generation operation for SF0.1 in Benchmark \ref{bm:q1}}
+    \label{tab:operations-lig}
+\end{table}
+
+\section{Discussion}
+\label{sec:Discussion}
+
+\section{Chapter Conclusion}
+\label{sec:Chapter Conclusion}
+
+In this chapter, we have seen that.
+
+Even though this optimization was motivated by \bd~functionality, we still observe that the \fn{CreateIdentifierIndex} is used other places in the appliaction.
+
+\subsection{Future Work}
+\label{sub:Future Work}
+The bitmap creation certainly speeds up predicate evaluation, however the system is not aligned to move data from one data source to another.
+

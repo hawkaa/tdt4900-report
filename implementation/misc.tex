@@ -1,0 +1,42 @@
+\chapter{Implementation Part V: Miscellaneous}
+\label{chp:misc}
+In this chapter we discuss other techniques tested out in this thesis. This include table statistics and UTF 8 encoding.
+
+\section{UTF-8}
+\label{sec:UTF-8}
+
+
+\section{Column Selection}
+\label{sec:Column Selection}
+Now, we have four different \cn{FieldValueCollection} to chose from. Until now, which columns have been used have been selected by specifying which storage format should be used in the metadat. However, this disregards an important aspect of \mdd: The users should not need to know anything about the implementation to make good programs. In other words, it is up to \gap~to decide which storage format is best suited for the different use cases.
+
+First, we observe that our column store has no negative impact on the application. Hence, we may safely assume that all Composition Objects may store their data using our new colum Composition Value Collection. Second, we have not experienced any performance reduction by using native data types. We may, therefore, assume that we can use this implementation whenever we can. Third, there is no negative performance impact on the bitpacked dictionary versus the non-packed one.
+
+However, we have seen a significant space saving by chosing dictionary columns on low and medium cardinality columns. However, for some columns with high cardinality, a dictionary column will not save space, since most values are stored in the dictionary anyway. In addition, the load time of the columns (due to the linear dictionary lookup) has an exponential growth on such columns.
+
+\afigure{img/gap-statistics.png}{Using statistics to select the proper storage format. A statistics provider service will, for a given Data Descriptor, return relevant statiscis, preferrably number of rows and number of unique values. The service might cache, restructure and calculate some of of the statistics manually, as the different database providers have different interfaces.}{fig:gap-statistics}{0.8}.
+To overcome the above challenge, we propose using database statistics to select the proper column. We have implemented a statistics provider that will, for a given data descriptor, return relevant statistics for a column, including number of values and number of unique values.
+
+\subsection{Data Source Filters}
+\label{sub:Data Source Filters}
+One of the major limitations in our statistics provider, is that it considers the entire dataset. However, it is quite common to add a filter on the data source for tasks or analyses. Typically, one would be interested in looking at sales for a given date range. In other words, decisions made about the storage format for the entire dataset might not be optimal for filtered subsets of the data.
+
+One solution to this problem, would be to increase the granularity of the statistics. Instead of mapping a providing data descriptor to a statistics object, the provider should also accept a data source as an input. This would definetely increase the precision of the column selection algorithm. However, this approach does not come without challenges. First, the database backends has no support for this kind of statistics. Hence, the statistics would need to be calculated on-demand, either with custom queries (\texttt{COUNT} and \texttt{COUNT DISTINCT}) or by the application itself. Doing this before every data source load is time-consuming and would increase load time. 
+
+This problem can be overcome if \gap~gather data source statistics after the column has been loaded and store the result. On the first load, the original statistics will be used. After the data is loaded, a low-priority process is started to generate the statistics for a given data source. On consequtive loads, the statistics returned by the provider will reflect the previous load of the data source, and will in most occasions be more precise than considering the column as a whole.
+
+Another, but less precise way, is to extrapolate the statistics for a given filter. For instance:
+\begin{itemize}
+    \item Low-cardinality columns tend to have the same amount of unique values no matter how many more values are added (typically gender, age etc).
+    \item High-cardinality columns tend to have a linear relationship between the number of values and the number of unique values.
+    \item Some column types are more predictable than others. For instance, the number of distinct values in a code domain remains fixed, and some data types are ordered, like timestamps. 
+\end{itemize}
+The results of this extrapolation could also be dependendent on what kind of filter that is applied: Random, max or min values, or most occurences of different values.
+
+\subsection{Other Use-Cases for Statistics}
+\label{sub:Other Use-Cases for Statistics}
+For obvious reasons, we may assume that the statistics are mere estimates. However, if we knew that the statistics were not only statistics but an exact measure of the column distribution, more optimizations could be applied. First and foremost, the exact buffer sizes, including dictionaries, could be allocated in the beginning, and not the doubling strategy explained in Section \ref{sub:FieldValueCollection growth strategy}. On every reallocation, there's a potential copy operation that copies the entire value buffer from one place to the other. Exact buffer sizes would reduce the risk of this. This is even more important for bit packed columns; on every dictionary overflow, the entire value buffer is rebuilt. 
+
+\subsection{Special Cases}
+\label{sub:Special Cases}
+

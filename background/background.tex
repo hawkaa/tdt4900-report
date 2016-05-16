@@ -80,6 +80,19 @@ For systems that do not keep columns sorted, stitching together rows is pretty s
 
 Stitching together columns with different sort orders is a very expensive operation. \cstore~uses join indexes for this operation, which we study in Section \ref{sec:Join Indexes}. \vertica~only allows a query to access columns belonging to the same projection. In other words, a query must use a projection that contains all the columns needed for the query.
 
+\section{Bitmap Indexes}
+\label{sec:Bitmap Indexes}
+
+\ffigure{img/bitmap-query.png}{Executing a query using bitmap indexes. Queries are efficiently processed using bitwise operations like \texttt{AND} and \texttt{OR}. Courtesy of \cite{noauthor_undated-hp}.}{fig:bitmap-query}
+
+A \biti~is a particular structure where a bitmap represents each distinct value in a column, and all rows containing that value is set to 1. As we have seen in Section \ref{sec:Compression Using Bitmaps}, replacing columns with bitmaps can reduce the storage requirements for a column. However, the bitmaps can also aid predicate evaluation as the form of a \biti. A \biti~is most efficient on queries that contain multiple \texttt{WHERE} clauses since many candidate rows can be excluded using bitwise \texttt{AND} and \texttt{OR} operations, as seen in Figure \ref{fig:bitmap-query} \cite{noauthor_undated-hp}. Since bitmap indexes combine so easily, composite indexes are extraneous. 
+
+One of our reference products, \qlikview, reports that it uses binary indexes for each field \cite{Qlik2011-ef}, which we believe are the same as bitmap indexes. Some database management systems also support bitmap indexes, including \oracle~\cite{noauthor_undated-hp} and \ibm~\cite{Raman2013-em}.
+
+In general, low-cardinality columns, which is columns with few distinct values, are better suited for bitmap indexes than high-cardinality columns \cite{noauthor_undated-hp}. The reason for this is because a bitmap must be created and maintained for each unique value in the column. Besides, since these indexes are hard to maintain, they are not suited for inserts, updates, and deletes. When deciding whether to add a \biti~to a column, \oracle~recommends at least 100 rows per distinct value. 
+
+Bitmap indexes may also be used as join indexes, and is much more efficient in storage than storing pre-joined materialized views \cite{noauthor_undated-hp}. We study join indexes in Section \ref{sec:Join Indexes}.
+
 \section{Compression}
 \label{sec:Compression}
 Historically, compression has been thought of a measure for reducing disk usage and memory footprint. However, in our case, compression of data also comes with the benefit of increased performance. A study conducted by Abadi \ea~looked into database compression for in-memory databases, and concluded compression increases performance by a factor of two on average \cite{Abadi2008-dd}.
