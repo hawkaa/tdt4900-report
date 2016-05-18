@@ -5,29 +5,27 @@
 \input{misc/vars}
 
 \begin{document}
-
-    % English abstract
-    \thispagestyle{empty}
-    \include{abstract/abstract} 
-    \blankpage
-
-    % Norwegian abstract
-    \thispagestyle{empty}
-    \include{abstract/abstract-norwegian} 
-    \blankpage
-
-    % Acknowledgements
-    \thispagestyle{empty}
-    \include{acknowledgements/acknowledgements} 
-    \blankpage
-    
-    % Table of contents, figure list
+    % turn off page numbering
     \setcounter{page}{1}
     \pagenumbering{roman}
-    \tableofcontents \thispagestyle{empty}
-    \listoffigures \thispagestyle{empty} 
-    \listoftables \thispagestyle{empty} 
-    \lstlistoflistings \thispagestyle{empty}
+
+    % English abstract
+    \include{abstract/abstract} 
+    \cleardoublepage
+
+    % Norwegian abstract
+    \include{abstract/abstract-norwegian} 
+    \cleardoublepage
+
+    % Acknowledgements
+    \include{preface/preface} 
+    \cleardoublepage
+    
+    % Table of contents, figure list
+    \tableofcontents 
+    \listoffigures 
+    \listoftables 
+    \lstlistoflistings 
 
     % Start main content
     \cleardoublepage

@@ -1,0 +1,42 @@
+# Title: Where Database Technology Meets Model-Driven Engineering: A Proof-of-Concept in Genus App Platform
+
+# Abstract
+    * Motivation or objectives
+        What has happened in database techonology, olap, and business discovery (steal from prosjektoppgave)
+        What is model-driven development.
+        What is GAP, how does it relate to in-memory processing.
+        Improve GAP and introduce new evidence that model-driven technology can learn from database technology.
+    * Methods
+        Implement column store, enhance storage format, apply compression. Identify Column operations. Also, we study which storage formats are useful for different fields in different settings. We benchmark our results using a number of benchmarks to test load, read, and write performance.
+    * Results and recommendations
+        For certain benchmarks in this research, memory is reduced by 65 \% and load time reduced by 33 \%. Most read-intense operations suffered from the new storage format, but once the code were rewritten to exploit the column structure, they speeded up by one or two orders of magnitude compared to the original. We have successfully proven there is a huge potential in combining techniques from read-only in-memory datases into a model-driven framework.
+
+# Sammendrag
+    (Samme som abstract, tar dette når abstract er ferdig)
+
+
+# Preface
+    As a part of the master education at NTNU. Project was supervised by Bratsberg and Einar. 
+    Started out with business discovery and technologies used in genus discovery, but took a rapid turn. However, most material is applicable.
+    * Acknowledgements
+        Genus; even though the code had issues.
+        Einar; expanding the scope of the thesis, contributing with hands-on experience.
+        Thomas; testing
+        Johnny
+        Andre: Bernt, Petter, Martin Børke, Ole Anders
+        Sveinern
+        Marte
+
+# Introduction [WHY?]
+    
+
+# Implementation [HOW?, WHAT?]
+
+# Discussion [SO WHAT?]
+
+# Conclusion 
+
+# Discussion
+    - What can database technology learn from 
+
+   
