@@ -1,7 +1,7 @@
 \chapter{Introduction}
 \label{chap:introduction}
-% There are something in the English Matters handout about introductions.
-There should be something here! Welcome to this awesome master thesis.
+In this chapter we explain the background information and motivation of this research project. We proceed to state our goals for this chapter, explain our methodology and our contraints. Last, but not least, we explain our deliverables.
+\clearpage
 
 \section{Background and Motivation}
 \label{sec:Background and Motivation}
@@ -84,33 +84,6 @@ Our contributions of this research are two-fold. First, we plan on \textit{intro
 
 Secondly, we contribute to an \textit{improved computer-based product}. We hope the users of \gap~will be excited about the results.
 
-% could be a list
-
-\section{Definitions}
-\label{sec:Definitions}
-This section presents terms, definitions, and important products that are relevant to understanding the content of this report.
-
-\paragraph{Online Analytical Processing (OLAP)}
-\label{par:Online Analytical Processing (OLAP)}
-  We use the term Online Analytical Processing (OLAP) extensively in this report. By OLAP, we mean systems that enable users to analyze multidimensional data interactively from multiple perspectives \cite{Wikipedia_contributors2015-hw}. OLAP is usually dominated by ad-hoc, complex queries that group, aggregate and summarize over large datasets \cite{Bjorklund2011-wh}. OLAP systems can be both disk and memory based. Column storage is considered to be an attractive solution for OLAP systems, a technique we study further in Chapter \ref{chap:Data Layout}.
-
-
-\paragraph{Online Transactional Processing (OLTP)}
-\label{par:Online Transactional Processing (OLTP)}
-Online Transactional Processing (OLTP) is a class of database systems that manage transaction-oriented applications \cite{Wikipedia_contributors2015-cw}. Transactional workloads are typically referred to as insertion of new records, as well as updates and deletes of single records in the database. An OLTP system normally uses row storage for its data.
-
-\paragraph{Database Management System (DBMS)}
-\label{par:Database Management System (DBMS)}
-A Database Management System (DBMS) is a computer software application for storage and analysis of data \cite{Wikipedia_contributors2015-pb}. The most common way to interface with a database is through SQL, although other methods exist. Regarding performance, DBMSes can focus on analytical workloads (OLAP), transactional performance (OLTP), or both. DMBSes do not come with user interfaces for \bd~but is designed such that other applications can be built on top of them. In this report, we look at \oracle, \ibm, \saph, \sapnw, \mssql, \cstore, \vertica, \blink, \exasol, \oracle, \hyper, and \hyrise.
-
-\paragraph{\bd}
-\label{par:Business Discovery}
-\bd~is a term introduced by a \qlikview~whitepaper \cite{Qlik2014-vd}. \bd~products differ from traditional \bi~systems by focusing more on the end user. \bd~products do not rely on aggregated data such that the user can follow his "information scent" and click his way through the data. \bd~platforms often provide an architecture that enables panels and dashboards to be shared with multiple clients, both on desktops and mobile devices. Current \bd~products typically build on tailored storage systems that are specifically designed for \bd~workloads, but some of them integrate directly with read-optimized DBMSes. \bd~products include \tableau, \qlikview, \powerpivot, and more. \bd~is explained in greater detail is Section~\ref{sec:Business Discovery}.
-
-%\paragraph{Reference products}
-%\label{par:Reference products}
-%We will occasionally use the term \textit{reference products} in this report. By reference products we mean \bd~products pointed out by \genus~that \bd~capabilities in \gap~will be compared to. In this report, we study \qlikview~and \tableau.
-
 
 \section{Thesis Structure}
 \label{sec:Thesis Structure}
@@ -119,13 +92,18 @@ We use the two first implementation chapters to focus on reducing memory footpri
 
 We structure our thesis as following:
 \begin{itemize}
-  \item \textbf{Chapter 2} introduces background material relevant to this report. 
-  \item \textbf{Chapter 3} outlines \gap.
-  \item \textbf{Chapter 4} shows how column store is implemented.
-  \item \textbf{Chapter 5} shows how simple data types and compression techniques are used to reduce memory footprint.
-  \item \textbf{Chapter 6} elaborates on techniques that speeds up certain operations.
-  \item \textbf{Chapter 7} discuss the results.
-  \item \textbf{Chapter 6} concludes this research and points at interesting directions for future work.
+  \item \textbf{Chapter 2} introduces background material relevant to this report, and introduces database technology and model-driven enginering. 
+  \item \textbf{Chapter 3} outlines \gap, how it works, and challenges with the platform.
+  \item \textbf{Chapters 4-7} are the implementation chapters. For each chapter, design changes are made, the changes are tested, results discussed and points at what should be done next
+  \begin{itemize}
+    \item \textbf{Chapter 4} shows how column store is implemented in \gap.
+    \item \textbf{Chapter 5} shows how enhancement of data storage by introducing primitive data types can be used to reduce memory footprint in \gap.
+    \item \textbf{Chapter 6} shows how compression techniques can be used to reduce memory consumption in \gap.
+    \item \textbf{Chapter 7} elaborates on techniques that speeds up certain operations.
+  \end{itemize}
+  \item \textbf{Chapter 8} investigates other techiques explored in this research, which is UTF-8 encoding of strings and applying database statistics to select the correct storage format.
+  \item \textbf{Chapter 9} discuss the results and implication of our findings, and sees it in a bigger picture.
+  \item \textbf{Chapter 10} concludes this research and points at interesting directions for future work.
 \end{itemize}
 
 

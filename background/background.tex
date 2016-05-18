@@ -1,7 +1,30 @@
-\chapter{Background}
+\chapter{Background Theory}
 \label{chap:background}
 
 This chapter introduce the main theory that is needed to understand the thesis. We start by explaining database technology and row stores, then we explain model-driven development, model meta levels, and frameworks.
+
+\clearpage
+
+\section{Database Terminology}
+\label{sec:Database Terminology}
+This section presents terms, definitions, and important products that are relevant to understanding the content of this report.
+
+\paragraph{Online Analytical Processing (OLAP)}
+\label{par:Online Analytical Processing (OLAP)}
+  We use the term Online Analytical Processing (OLAP) extensively in this report. By OLAP, we mean systems that enable users to analyze multidimensional data interactively from multiple perspectives \cite{Wikipedia_contributors2015-hw}. OLAP is usually dominated by ad-hoc, complex queries that group, aggregate and summarize over large datasets \cite{Bjorklund2011-wh}. OLAP systems can be both disk and memory based. Column storage is considered to be an attractive solution for OLAP systems, a technique we study further in Chapter \ref{chap:Data Layout}.
+
+
+\paragraph{Online Transactional Processing (OLTP)}
+\label{par:Online Transactional Processing (OLTP)}
+Online Transactional Processing (OLTP) is a class of database systems that manage transaction-oriented applications \cite{Wikipedia_contributors2015-cw}. Transactional workloads are typically referred to as insertion of new records, as well as updates and deletes of single records in the database. An OLTP system normally uses row storage for its data.
+
+\paragraph{Database Management System (DBMS)}
+\label{par:Database Management System (DBMS)}
+A Database Management System (DBMS) is a computer software application for storage and analysis of data \cite{Wikipedia_contributors2015-pb}. The most common way to interface with a database is through SQL, although other methods exist. Regarding performance, DBMSes can focus on analytical workloads (OLAP), transactional performance (OLTP), or both. DMBSes do not come with user interfaces for \bd~but is designed such that other applications can be built on top of them. In this report, we look at \oracle, \ibm, \saph, \sapnw, \mssql, \cstore, \vertica, \blink, \exasol, \oracle, \hyper, and \hyrise.
+
+\paragraph{\bd}
+\label{par:Business Discovery}
+\bd~is a term introduced by a \qlikview~whitepaper \cite{Qlik2014-vd}. \bd~products differ from traditional \bi~systems by focusing more on the end user. \bd~products do not rely on aggregated data such that the user can follow his "information scent" and click his way through the data. \bd~platforms often provide an architecture that enables panels and dashboards to be shared with multiple clients, both on desktops and mobile devices. Current \bd~products typically build on tailored storage systems that are specifically designed for \bd~workloads, but some of them integrate directly with read-optimized DBMSes. \bd~products include \tableau, \qlikview, \powerpivot, and more. \bd~is explained in greater detail is Section~\ref{sec:Business Discovery}.
 
 \begin{figure}
   \centering
@@ -79,19 +102,6 @@ If horizontal partitioning is used, a technique we discuss in the next section, 
 For systems that do not keep columns sorted, stitching together rows is pretty straight forward. All columns selected in a query can be iterated in order and tuples can be materialized before sent back to the client. Needless to say, the operation of stitching together rows comes at a higher cost in a column store than for a row store.
 
 Stitching together columns with different sort orders is a very expensive operation. \cstore~uses join indexes for this operation, which we study in Section \ref{sec:Join Indexes}. \vertica~only allows a query to access columns belonging to the same projection. In other words, a query must use a projection that contains all the columns needed for the query.
-
-\section{Bitmap Indexes}
-\label{sec:Bitmap Indexes}
-
-\ffigure{img/bitmap-query.png}{Executing a query using bitmap indexes. Queries are efficiently processed using bitwise operations like \texttt{AND} and \texttt{OR}. Courtesy of \cite{noauthor_undated-hp}.}{fig:bitmap-query}
-
-A \biti~is a particular structure where a bitmap represents each distinct value in a column, and all rows containing that value is set to 1. As we have seen in Section \ref{sec:Compression Using Bitmaps}, replacing columns with bitmaps can reduce the storage requirements for a column. However, the bitmaps can also aid predicate evaluation as the form of a \biti. A \biti~is most efficient on queries that contain multiple \texttt{WHERE} clauses since many candidate rows can be excluded using bitwise \texttt{AND} and \texttt{OR} operations, as seen in Figure \ref{fig:bitmap-query} \cite{noauthor_undated-hp}. Since bitmap indexes combine so easily, composite indexes are extraneous. 
-
-One of our reference products, \qlikview, reports that it uses binary indexes for each field \cite{Qlik2011-ef}, which we believe are the same as bitmap indexes. Some database management systems also support bitmap indexes, including \oracle~\cite{noauthor_undated-hp} and \ibm~\cite{Raman2013-em}.
-
-In general, low-cardinality columns, which is columns with few distinct values, are better suited for bitmap indexes than high-cardinality columns \cite{noauthor_undated-hp}. The reason for this is because a bitmap must be created and maintained for each unique value in the column. Besides, since these indexes are hard to maintain, they are not suited for inserts, updates, and deletes. When deciding whether to add a \biti~to a column, \oracle~recommends at least 100 rows per distinct value. 
-
-Bitmap indexes may also be used as join indexes, and is much more efficient in storage than storing pre-joined materialized views \cite{noauthor_undated-hp}. We study join indexes in Section \ref{sec:Join Indexes}.
 
 \section{Compression}
 \label{sec:Compression}
@@ -279,34 +289,38 @@ Branches can also be avoided by compiling queries to machine code \cite{Lamb2012
 
 Since short-circuit boolean operators are control structures and not simple arithmetic operators, there is a chance of branch misprediction. That is why \blink~does not short-circuit between tuples \cite{Raman2008-gi, Johnson2008-cp}. If a block is selected for scanning, all fields in the records are checked. According to Raman \ea, short-circuiting only improves performance on low selectivity queries \cite{Raman2008-gi}.
 
-\section{Model-driven Development}
-\label{sec:Model-driven Development}
-Model-driven development is defined as *. Developers have always wanted to raise programming abstraction levels \cite{Atkinson2003-wr}.
+\subsection{Cache Awareness}
+\label{sub:Cache Awareness}
+We saw in Section \ref{sub:CPU Caches} that efficient utilization of caches is important for database performance, so data structures and algorithms should be designed such that they are cache-aware. Our research has identified several systems that are designed to be cache-aware, including \monetdb~\cite{Boncz2002-yj}, \mssql~\cite{Lahiri2015-mz}, and \ibm~\cite{Raman2013-em}. The developers of \exasol, the top performing database system in the TPC-H benchmark, claim that high level of data locality is one of the key factors to performance.
 
-\todo{Insert from Atkinson 2003 here}
+\subsection{Macro Expansions}
+\label{sub:Macro Expansions}
+\afigure{img/macro-expansion.png}{Macro expansions in \monetdb. For different algorithms and data types, the \texttt{select} operator has a total of 173 implementations. Courtesy of \cite{Boncz2002-yj}.}{fig:macro-expansion}{0.6}
 
-\mendix, one of the market players in \mdd, uses a JavaScript blabla.
+\monetdb~uses macro expansion to reduce layers of indirection and to optimize query execution performance \cite{Boncz2002-yj}. Since operators normally are type-generic, \monetdb~has for each algorithm multiple implementations that are specific to a certain type. The implementations are generated automatically using macros, which is why they are called \textit{macro expansions}. Figure \ref{fig:macro-expansion} shows how the \texttt{select} operator is expanded into 173 implementations, depending on which algorithm and data types are queried.
 
-We investigate \gap in the following chapter.
+The vector data structure in \ibm~is implemented using C++ templates to support multiple data types.
 
-\subsection{Model levels}
-\label{sub:Model levels}
-\afigure{img/linguistic-metamodeling.png}{Linguistic metamodeling view. Courtesy of \cite{Atkinson2003-wr}}{fig:linguistic-metamodeling}{0.8}
-According to Leppänen M, a model is a thing that is used to help the understanding of some other things \cite{Leppanen2006-ay}. In his framework, he describe three different levels of models: The instance model, the type model, and the meta model. A meta model is something used to help the understanding and communication analysis and design of type models. A model on a higher level describes/ prescirbes models on teh next lower level.
 
-% Ønsker å bruke disse nivåene, kanskje med eksempler fra Bergheim.
-They also correspond to the information system layer, information system development layer, the method engineering layer, and research work layer.
 
-Although there are many ways to define these levels, we list the levels defined by Bergheim et al.
-\begin{itemize}
-    \item Operational level - Changes of state in an application
-    \item Next meta level - Descriptions of a specific application
-    \item B-level - how to make programming tool, like the java programming language itself
-    \item Higest level is to make intances on feth B level, how to make different formalisms.
-\end{itemize}
+\section{Other Database Topics}
+\label{sec:Other Database Topics}
 
-\section{Joining}
-\label{sec:Joining}
+\subsection{Bitmap Indexes}
+\label{sub:Bitmap Indexes}
+
+\ffigure{img/bitmap-query.png}{Executing a query using bitmap indexes. Queries are efficiently processed using bitwise operations like \texttt{AND} and \texttt{OR}. Courtesy of \cite{noauthor_undated-hp}.}{fig:bitmap-query}
+
+A \biti~is a particular structure where a bitmap represents each distinct value in a column, and all rows containing that value is set to 1. As we have seen in Section \ref{sec:Compression Using Bitmaps}, replacing columns with bitmaps can reduce the storage requirements for a column. However, the bitmaps can also aid predicate evaluation as the form of a \biti. A \biti~is most efficient on queries that contain multiple \texttt{WHERE} clauses since many candidate rows can be excluded using bitwise \texttt{AND} and \texttt{OR} operations, as seen in Figure \ref{fig:bitmap-query} \cite{noauthor_undated-hp}. Since bitmap indexes combine so easily, composite indexes are extraneous. 
+
+One of our reference products, \qlikview, reports that it uses binary indexes for each field \cite{Qlik2011-ef}, which we believe are the same as bitmap indexes. Some database management systems also support bitmap indexes, including \oracle~\cite{noauthor_undated-hp} and \ibm~\cite{Raman2013-em}.
+
+In general, low-cardinality columns, which is columns with few distinct values, are better suited for bitmap indexes than high-cardinality columns \cite{noauthor_undated-hp}. The reason for this is because a bitmap must be created and maintained for each unique value in the column. Besides, since these indexes are hard to maintain, they are not suited for inserts, updates, and deletes. When deciding whether to add a \biti~to a column, \oracle~recommends at least 100 rows per distinct value. 
+
+Bitmap indexes may also be used as join indexes, and is much more efficient in storage than storing pre-joined materialized views \cite{noauthor_undated-hp}. We study join indexes in Section \ref{sec:Join Indexes}.
+
+\subsection{Joining}
+\label{sub:Joining}
 Joining is a common database operation that combines records from two or more tables. In our research, we have studied several DBMSes, and seen how their join algorithms work. As we saw in Section \ref{sub:Business Discovery, Queries, and SQL}, joining is also needed for a \bd~application such that interaction with one table can affect the selection, filters, or aggregations in other tables.
 
 For joining two tables, three main methods exist \cite{Bratbergsengen2015-ed}: 
@@ -341,89 +355,15 @@ Regarding implementation, it is important that the algorithm and the hash table 
 
 Joining should be done in parallel for ultimate performance. For instance, the hash tables can be built using multiple threads \cite{Barber2014-ey}. We see that some \textit{nested loop} based algorithms partition the input to improve cache performance. However, this decision might as well be a parallelization decision \cite{Neumann2011-uq}. A system studied in our research that employs high-performance parallel joining is \ibm~\cite{Raman2013-em}.
 
+\subsection{Database Statistics}
+\label{sub:Database Statistics}
+\term{Database Statistics} are commonly used by a query optimizer to make better decisions about creating efficient execution plans. These statistics may the include number of records, selectivity, column cardinality, value distribution, and more. In our case, \term{Database Statistics} can be used to prune horizontal partions based on the column minimum and maximum values. This technique exploits clustering in the columns, especially when the columns are sorted, or partially sorted, like timestamps. \oracle~\cite{Lahiri2015-mz}, \ibm~\cite{Raman2013-em}, \vertica~\cite{Lamb2012-kg}, \monetx~\cite{Boncz2005-wj}, \mssql~\cite{Larson2013-mc}, and \exasol~\cite{Exasol2014-xh} store partition metadata for quick data pruning.
 
-\section{The Delphi Programming Language}
-\label{sec:The Delphi Programming Language}
-Since the system we will study in this thesis, the \gap, we need to study some background theory of how this language works. \delphi~is both a programming language and an integrated development environment \cite{Wikipedia_contributors2016-jk}, but we will only consider the programming language in this section. The language is an \name{Object Pascal} dialect and compiles into native code for several platforms, including \name{OSX} 32-bit architecture and \name{Windows} 32- and 64-bit architectures. It has a more efficient compiler than most languages. Delphi is classified as a strongly typed high-level language. Delphi supports object oriented design with polymorphism and interfaces.
+Most database systems keep the statistics stored together with the table. However, other schemes exist. \ibm~uses a synopsis table to keep track of all column pages (partitions), including minimum and maximum values. This way, irrelevant pages can easily be skipped \cite{Raman2013-em}.
 
-Delphi support strings with reference counting \cite{Wikipedia_contributors2016-jk}, and the memory for such is managed without programmer intervention. It supports unicode strings.
+We have previously discussed how a partition dictionary can be checked for a key's existence before scanning an entire block. If a key is not present in the dictionary, the partition can be skipped. We consider this technique as a part of utilizing \term{Database Statistics} to improve performance.
 
-In 2009, generics and full unicode support was introduced.
-
-A program in \delphi~is composed of different units, with two mandatory parts: The interface, much like a header in C, that declares constants, types, variables, and functions that are available from the outside, and the implementation, that contains the actual code \cite{noauthor_undated-pl}. Types, variables, etc. that are declared in the implentation part only are inaccesible outside the unit. In addition, each unit might specify an initialization and finalization code chunk to run on unit load and unit unload respectively. One unit may depend on other units by specifying the dependencies in the \texttt{uses}. Hence, the dependency graph is automatically created and no makefiles are needed. Cricular dependencies cause compilation error, and are not resolved automatically \cite{noauthor_undated-sp}.
-
-It supports preprocessing directives, but not macros.
-
-\delphi~has operators for referencing and dereferencing values, and supports basic pointer arithmetic \cite{noauthor_undated-cn}.
-
-\subsection{Delphi Types}
-\label{sub:Delphi Types}
-
-Simple types can be divided into two categories: Ordinal and real \cite{noauthor_undated-st}. Integer types is one of the ordinal value types, and have both platform-dependend and platform-independent implementations. Platform-dependent is always encouraged due to performance benefits.
-
-\subsubsection{String Types}
-\label{ssub:String Types}
-\afigure{img/delphi-strings.png}{Strings in \delphi}{fig:delphi-strings}{0.8}
-There are two major character implementations, \cn{AnsiChar} and \cn{WideChar}, with 1 or 2 bytes each respectively. The latter is default.
-
-There is support for both single and double precision floating point numbers.
-
-There are both Ansi and Unicode strings, where the default is Unicode \cite{noauthor_undated-cp}. There is support for both UTF-8 and UTF-16 encodings. The latter is default. Both strings are dynamically allocated, and is limited by the available memory. They are allocated on the heap. A string variable is a pointer with reference counting, length, data length and code page. The compiler tries to exploit the nature of the reference counting, and it has copy-on-write semantics if one reference changes the string. Unicode strings defaults to UTF-16. These string types are not null-terminated. Unicode strings are also managed automatically by the compiler.
-
-\subsubsection{Structured Types}
-\label{ssub:Structured Types}
-Commonly used in \delphi. A structured type can be a set, array, record, file, class, and more \cite{noauthor_undated-vu}. A structure is by default byte-aligned.
-
-One such structured type, is the array. An array can be static or dynamic. The static arrays are allocated with a certain length, and will take all the space, even if values are not assigned to all indexes. The dynamic arrays are reallocated when you assign a value that is not yet been assigned or you call the \fn{SetLength} method on them. The arrays are ref-counted the same way as a string, but they are not copy-on-write.
-
-Another type, the \cn{record} type, commonly represents a heterogenous set of values. A record might also have a variant part, which is not allowed in classes. Records are allocated on the stack by default and has value semantics, like copy on assignment, passed by value etc.
-
-\subsubsection{Pointer Types}
-\label{ssub:Pointer Types}
-A pointer is a 64-bit value on a 64-bit architecture. Pointers are typed to indicate which type they hold, much like C and C++.
-
-Both function and method pointers are supported.
-
-Delphi supports variant types for types that cannot be determined at compile time \cite{noauthor_undated-mx}. Althogh variants are powerful, they consume more memory and are slower than statically bound data types, and errors that earlier were caught compile time, will now happen at run-time.
-
-Variables are allocated on the stack by default, but can also be dynamically created on the heap \cite{noauthor_undated-lw}.
-
-\subsection{Memory Management}
-\label{sub:Memory Management}
-The memory manager is different for different platforms \cite{noauthor_undated-ys}. On Windows, which is the platform used by \gap, the \name{FastMM} memory manager is used. This memory manager is optimized for programs that allocate small to medium size blocks. Block size are rounded up to the nearest 16 bytes. It anticipates future block reallocations which reduces address space fragmentation.
-
-Arrays are also ref-counted.
-
-Classes are 64-bit pointers. Variables are held in the same order which they are declared on the stack. On a 64-bit platform, the first 8 bytes are pointers to a virtual method table.
-
-\subsection{Functions and Methods}
-\label{sub:Functions and Methods}
-The default calling convention is \texttt{register}, which uses three registers and puts the rest on the stack \cite{noauthor_undated-xi}. This is most efficient, because it does not need to create a stack frame on every function invocation. In addition, all properties contain either none, one, or two parameters, hence are quite efficient. 
-
-Function overloading is supported.
-
-\subsection{Inlining}
-\label{sub:Inlining}
-The compiler supports inlining of methods using the \texttt{inline} directive. However, this does not work for virtual methods, across package boundaries \cite{noauthor_undated-rx} \todo{finne mer her}
-
-\subsection{Program Control}
-\label{sub:Program Control}
-Value and constant parameters to a method call is either passed by reference or by value, depending on the size of the variable \cite{noauthor_undated-ae}. By default, the \fn{register} calling convention is used, which means up to three parameters can be stored in registers. Some types, including doubles and 64-bit integers, are always pushed on the stack.
-
-\subsection{Misc}
-\label{sec:Misc}
-\delphi~is object oriented, and supports interfaces, inheritance, polymorphism and generics. In addition, inline assembly is supported, where \delphi~identifiers are allowed \cite{noauthor_undated-px}.
-
-There is support for Generics, where things can be parameterized by type \cite{noauthor_undated-sx}. Used to decouple an algorithm from its data structure. On an instantiation, it results in a code duplication.
-
-\subsection{Standard library}
-\label{sub:Standard library}
-Some built-in classes in the standard library include:
-\begin{itemize}
-    \item \cn{TBits} is a built in type that represents a bitmap. It works like an array of booleans, except that it is optimized for speed using assemply code. In addition, it contains an utility method \fn{OpenBit}, which finds the first 0, or the open bit, in the bitmap.
-    \item \cn{TArray} is the generic implementation of \cn{array of *}. It is ref-counted, dynamically allocated using the \texttt{SetLength} function. Its performance is studied in Appendix \ref{app:array-performance}.
-    \item \cn{TList} and \cn{TObjectList} are wrappers for \cn{TArray} that automatically allocates enough space. \cn{TObjectList} is like \cn{TList}, but it assumes ownership over objects and automatically frees objects that are removed from the list.
-\end{itemize}
+It can sometimes be useful to know a column's value distribution. For instance, the frequency partitioning in \blink~and \ibm~uses the columns' value distributions when determining how to partition the data \cite{Raman2008-gi, Raman2013-em}. The query optimizer in \mssql~also uses the value distributions when creating execution plans \cite{Larson2013-mc}. Value distributions are usually determined by creating histograms, and to make these histograms, random sampling can be used. In \mssql, two techniques are used: One is truly random, where values are picked across the whole column, and one is a grouped version, where a random sample range is picked.
 
 \section{Business Discovery}
 \label{sec:Business Discovery}
@@ -514,3 +454,114 @@ The schema for the TPC-H benchmark consists of eight separate tables, as seen in
 Figure \ref{fig:tpc-h-population} shows the minimum population for the TPC-H benchmark, which is a database of 10,000 suppliers and roughly 6 million line-items (items per order). The minimum population corresponds to roughly 1 GB. To test larger data sizes, a scaling factor is commonly applied to increase the size of the dataset. According to the specification, data in the tables should be uniformly distributed.
 
 The TPC-H benchmark tests uniformly distributed data, but, in reality, it is quite common that data is skewed. For instance, a retailer might expect that 99\% of the sales are performed on weekdays, and around 40\% of the total sales for a year is done around Christmas \cite{Raman2008-gi}. Tests on data with non-uniform distributions should be performed to see how the algorithms and data structures in the database handle outliers. Data skew can be modelled with a \term{Zipfian} distribution \cite{Holloway2008-rr}. 
+
+
+\section{Model-driven Development}
+\label{sec:Model-driven Development}
+Model-driven development is defined as *. Developers have always wanted to raise programming abstraction levels \cite{Atkinson2003-wr}.
+
+\todo{Insert from Atkinson 2003 here}
+
+\mendix, one of the market players in \mdd, uses a JavaScript blabla.
+
+We investigate \gap in the following chapter.
+
+\subsection{Model levels}
+\label{sub:Model levels}
+\afigure{img/linguistic-metamodeling.png}{Linguistic metamodeling view. Courtesy of \cite{Atkinson2003-wr}}{fig:linguistic-metamodeling}{0.8}
+According to Leppänen M, a model is a thing that is used to help the understanding of some other things \cite{Leppanen2006-ay}. In his framework, he describe three different levels of models: The instance model, the type model, and the meta model. A meta model is something used to help the understanding and communication analysis and design of type models. A model on a higher level describes/ prescirbes models on teh next lower level.
+
+% Ønsker å bruke disse nivåene, kanskje med eksempler fra Bergheim.
+They also correspond to the information system layer, information system development layer, the method engineering layer, and research work layer.
+
+Although there are many ways to define these levels, we list the levels defined by Bergheim et al.
+\begin{itemize}
+    \item Operational level - Changes of state in an application
+    \item Next meta level - Descriptions of a specific application
+    \item B-level - how to make programming tool, like the java programming language itself
+    \item Higest level is to make intances on feth B level, how to make different formalisms.
+\end{itemize}
+
+\section{Delphi Programming Language}
+\label{sec:Delphi Programming Language}
+Since the system we will study in this thesis, the \gap, we need to study some background theory of how this language works. \delphi~is both a programming language and an integrated development environment \cite{Wikipedia_contributors2016-jk}, but we will only consider the programming language in this section. The language is an \name{Object Pascal} dialect and compiles into native code for several platforms, including \name{OSX} 32-bit architecture and \name{Windows} 32- and 64-bit architectures. It has a more efficient compiler than most languages. Delphi is classified as a strongly typed high-level language. Delphi supports object oriented design with polymorphism and interfaces.
+
+Delphi support strings with reference counting \cite{Wikipedia_contributors2016-jk}, and the memory for such is managed without programmer intervention. It supports unicode strings.
+
+In 2009, generics and full unicode support was introduced.
+
+A program in \delphi~is composed of different units, with two mandatory parts: The interface, much like a header in C, that declares constants, types, variables, and functions that are available from the outside, and the implementation, that contains the actual code \cite{noauthor_undated-pl}. Types, variables, etc. that are declared in the implentation part only are inaccesible outside the unit. In addition, each unit might specify an initialization and finalization code chunk to run on unit load and unit unload respectively. One unit may depend on other units by specifying the dependencies in the \texttt{uses}. Hence, the dependency graph is automatically created and no makefiles are needed. Cricular dependencies cause compilation error, and are not resolved automatically \cite{noauthor_undated-sp}.
+
+It supports preprocessing directives, but not macros.
+
+\delphi~has operators for referencing and dereferencing values, and supports basic pointer arithmetic \cite{noauthor_undated-cn}.
+
+\subsection{Delphi Types}
+\label{sub:Delphi Types}
+
+Simple types can be divided into two categories: Ordinal and real \cite{noauthor_undated-st}. Integer types is one of the ordinal value types, and have both platform-dependend and platform-independent implementations. Platform-dependent is always encouraged due to performance benefits.
+
+\subsubsection{String Types}
+\label{ssub:String Types}
+\afigure{img/delphi-strings.png}{Strings in \delphi}{fig:delphi-strings}{0.8}
+There are two major character implementations, \cn{AnsiChar} and \cn{WideChar}, with 1 or 2 bytes each respectively. The latter is default.
+
+There is support for both single and double precision floating point numbers.
+
+There are both Ansi and Unicode strings, where the default is Unicode \cite{noauthor_undated-cp}. There is support for both UTF-8 and UTF-16 encodings. The latter is default. Both strings are dynamically allocated, and is limited by the available memory. They are allocated on the heap. A string variable is a pointer with reference counting, length, data length and code page. The compiler tries to exploit the nature of the reference counting, and it has copy-on-write semantics if one reference changes the string. Unicode strings defaults to UTF-16. These string types are not null-terminated. Unicode strings are also managed automatically by the compiler.
+
+\subsubsection{Structured Types}
+\label{ssub:Structured Types}
+Commonly used in \delphi. A structured type can be a set, array, record, file, class, and more \cite{noauthor_undated-vu}. A structure is by default byte-aligned.
+
+One such structured type, is the array. An array can be static or dynamic. The static arrays are allocated with a certain length, and will take all the space, even if values are not assigned to all indexes. The dynamic arrays are reallocated when you assign a value that is not yet been assigned or you call the \fn{SetLength} method on them. The arrays are ref-counted the same way as a string, but they are not copy-on-write.
+
+Another type, the \cn{record} type, commonly represents a heterogenous set of values. A record might also have a variant part, which is not allowed in classes. Records are allocated on the stack by default and has value semantics, like copy on assignment, passed by value etc.
+
+\subsubsection{Pointer Types}
+\label{ssub:Pointer Types}
+A pointer is a 64-bit value on a 64-bit architecture. Pointers are typed to indicate which type they hold, much like C and C++.
+
+Both function and method pointers are supported.
+
+Delphi supports variant types for types that cannot be determined at compile time \cite{noauthor_undated-mx}. Althogh variants are powerful, they consume more memory and are slower than statically bound data types, and errors that earlier were caught compile time, will now happen at run-time.
+
+Variables are allocated on the stack by default, but can also be dynamically created on the heap \cite{noauthor_undated-lw}.
+
+\subsection{Memory Management}
+\label{sub:Memory Management}
+The memory manager is different for different platforms \cite{noauthor_undated-ys}. On Windows, which is the platform used by \gap, the \name{FastMM} memory manager is used. This memory manager is optimized for programs that allocate small to medium size blocks. Block size are rounded up to the nearest 16 bytes. It anticipates future block reallocations which reduces address space fragmentation.
+
+Arrays are also ref-counted.
+
+Classes are 64-bit pointers. Variables are held in the same order which they are declared on the stack. On a 64-bit platform, the first 8 bytes are pointers to a virtual method table.
+
+\subsection{Functions and Methods}
+\label{sub:Functions and Methods}
+The default calling convention is \texttt{register}, which uses three registers and puts the rest on the stack \cite{noauthor_undated-xi}. This is most efficient, because it does not need to create a stack frame on every function invocation. In addition, all properties contain either none, one, or two parameters, hence are quite efficient. 
+
+Function overloading is supported.
+
+\subsection{Inlining}
+\label{sub:Inlining}
+The compiler supports inlining of methods using the \texttt{inline} directive. However, this does not work for virtual methods, across package boundaries \cite{noauthor_undated-rx} \todo{finne mer her}
+
+\subsection{Program Control}
+\label{sub:Program Control}
+Value and constant parameters to a method call is either passed by reference or by value, depending on the size of the variable \cite{noauthor_undated-ae}. By default, the \fn{register} calling convention is used, which means up to three parameters can be stored in registers. Some types, including doubles and 64-bit integers, are always pushed on the stack.
+
+\subsection{Misc}
+\label{sec:Misc}
+\delphi~is object oriented, and supports interfaces, inheritance, polymorphism and generics. In addition, inline assembly is supported, where \delphi~identifiers are allowed \cite{noauthor_undated-px}.
+
+There is support for Generics, where things can be parameterized by type \cite{noauthor_undated-sx}. Used to decouple an algorithm from its data structure. On an instantiation, it results in a code duplication.
+
+\subsection{Standard library}
+\label{sub:Standard library}
+Some built-in classes in the standard library include:
+\begin{itemize}
+    \item \cn{TBits} is a built in type that represents a bitmap. It works like an array of booleans, except that it is optimized for speed using assemply code. In addition, it contains an utility method \fn{OpenBit}, which finds the first 0, or the open bit, in the bitmap.
+    \item \cn{TArray} is the generic implementation of \cn{array of *}. It is ref-counted, dynamically allocated using the \texttt{SetLength} function. Its performance is studied in Appendix \ref{app:array-performance}.
+    \item \cn{TList} and \cn{TObjectList} are wrappers for \cn{TArray} that automatically allocates enough space. \cn{TObjectList} is like \cn{TList}, but it assumes ownership over objects and automatically frees objects that are removed from the list.
+\end{itemize}
+

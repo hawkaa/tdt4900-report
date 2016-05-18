@@ -28,9 +28,207 @@
         Marte
 
 # Introduction [WHY?]
-    
+    In this chapter we explain the background information and motivation of this research project. We proceed to state our goals for this chapter, explain our methodology and our contraints. Last, but not least, we explain our deliverables.
+    * Background and motivation
+        - Database technology for OLAP, ditched rows. Column store, compression techniques, high utilization of CPUs, parallelization has lead to technologies that can process bla bla bla. Business discovery tools.
+        - Model-driven engineering, only solving a problem once, enhancing productivity by raising programming abstraction levels. Using models, rules, etc. Model-driven engineering can optimize operations much like a compiler or interpreter does. "No code", "high productivity", code can often be better due to years of experimentation and experience. There are room for optimizations. Gap between problem and implementation (Sources)
+        - Genus, one of the market players in model-driven engineering, has one platform, gap, that can connect to data sources, using a gui to connect them, define rules, and tasks. However, this platform is due to code readability and other focus, not optimized for handling large data sets, it is slow and uses too much memory, paging. 
+        - There are many parallels of the operations GAP struggle with and database technology. For instance, operations intensively read millions of rows. In addition, one key aspect of database performance is to reduce memory usage to better utilize CPU (source), and thus can help reduce overall memory consumption as a bonus. We are motivated to investigate what technologies like column store, dictionary encoding can contribute to model-driven engineering by using GAP, to be a part of optimizations that a mdd can apply to a program. It is important for model-driven engineering to become faster and more wide-spread.
+    * Problem Statement, Goals and Research Questions
+        - Based on the motivation, we have a goals:
+        - G1: Improve performance and reduce memory consumption in GAP for tasks that work on large amounts of data
+        - Define goal, what does large amount of data mean etc.
+        - G2: Introduce new evidence that model-driven engineering can benefit from OLAP database technology. 
+        - Define G2, what does database technology mean, and model-driven. From a more general perspective
+        - To address G1 and G2, we answer the following research questions:
+        - RQ1: How does column store and compressio storage formats used in analytical databases affect GAP?
+        - Explain RQ1, what is analytical database etc.
+        - RQ2: Which operations in GAP can benefit from column store, and how must GAP source code be adjusted to benefit from the new storage format?
+        - Explain RQ2, identify operations that can be speeded up, both in tasks and load.
+        - The goals has not always been this way. For the initial part of the research, focused mainly on analytical soultions to create Genus Discovery, a qlikview competitor, where the goal was to study how to implement support for large datasets. The key motivation was to study techniques that allows for high performance, limited to read-only and in-memory scope.  (Summary of 1.2 of prosjektoppgave)
+    * Methodology
+        - Two parts: Litterature review which is analytical, and implementation which is a design. The reason why this is chosen is to get a good theoretical understanding of the field of study, and designing within GAP has a great amount of time savings.
+        * Litterature review and initial research (remember to explain litterature review protocol)
+            - The first step was to do a snowball litterature review. We will look at several products. This part of the research was did mainly focus on looking at techniques to improve discovery functionality, as this was the original pitch of the research. (Explain why snowballing was used)
+            - Also done with model-driven engineering
+            - Then, an in-depth study of GAP and how it works, and the challenges. This is seen in Chapter. This included Delphi programming language, which we see in Section x
+        * Implementation
+            - Design and creation, change GAP internally. Because according to France \ea this requires systematic accumulation of experience. Proof of concept. Experiment and measure the impact.
+            - Plan to test the implementation with systematic tests, with inputs used by the database world. as well as some real use cases. We do some limited tests to check whether other parts of the application has been affected.
+            - We chose to work in an iterative fashion and draw conclusions as we go. We first work to reduce memory for two reasons. Many roads to take. First, reduced memory are many times correlated with improved performance, which is confirmed by the database technology. Second, GAP uses too much memory, and is important to check out.This is reflected in the thesis structure, where it it consists of 4 parts.
+       
+    * Deliverables and contributions
+        - Main deliverable is this report with discussion on our findings, results and code and everything. Not a super sound, theoretical piece, but to illustrate some use cases and potential of our solution.
+        - Contribute to an improved computer based product, see if memory can be reduced and performance can be increased in GAP
+        - Second, and perhaps more important, is that we introduce new evidence of how model-driven engineering can benefit from database technology.
+        - Also results in some side paths that were excluded due to the scope of this research.
+        
 
-# Implementation [HOW?, WHAT?]
+    (* Definitions REMOVED)
+    * Thesis structure 
+    For every part, an introduction, implementation, test, discussion, and conclusions are drawn
+
+# Background theory (The key here is to add as much background theory as possible without polluting the most important parts with less important stuff)
+    Introduction to background theory, explain the setup of the chapter, and how it relates to in-memory, read-only performance. Was done with that in mind.
+    - Terminology
+        OLAP
+        OLTP
+        DBMS
+        Business Discovery
+        More?
+    - Column storage (avoid business-discovery)
+    - Compression
+        Why compression is important
+        - Bitpacking
+        - Dictionary encoding
+    - Modern CPUs
+        - How they work
+        - Branch avoidance
+    - Business Discovery
+    - Testing Database Applications
+    - Model-driven engineering
+        - The levels of MDD
+    - Delphi Programming language
+
+# Genus App Platform
+    About GAP, use paragraphs that are already there
+    To understand the problem, it requires an analysis of gap. We start with architecture and general concepts, and move us down through concepts ending up at source code. At last
+        Ultimate goal, "no code", "high productivity", experience accumulated over years
+        How it relates to model-driven engineering, with expert users using the studio
+    - Components and architecture
+        Three-layered architecture with
+        - Database infrastructure
+        - Genus app Services
+        - Clients
+            Studio
+            Genus Desktop and Genus Apps
+    - Application development
+        We study all layers
+        - Data layer
+        - Logic layer
+        - User interface layer
+            Analyses
+    - Concepts
+        We list some important concepts needed to understand the platform
+        - Object Classes
+        - Object Class Properties
+        - Data source
+        - Actions
+            Actions are used in Tasks, Agents, Web Services and Rules to define operations to perform during execution. Specific actions are defined by effects...
+        - Analysis
+            Data mart
+            Genus Discovery
+    - Classes in GAP Source Code
+        In GAP, written in delphi, there are several classes. In this section we enumerate them and explain how they relate to concepts from the previous section.
+    - Challenges
+        Code has been writen to be maintainable.
+        Has lead to issues for certain operations, and high memory usage.
+        - Many pointers
+            (Use what is there already)
+            Several other pointers that are normally null, because they are used different places in the application.
+        - Ineficcient data access and poor memory locality
+    - Observations and Motivation
+        Why it is important to address.
+        Now that we have established relevant background theory from chapter 2 and 3, we may present the thesis motivation
+        GAP is in-memory
+        Changes can be made without affecting ISD layer. Hence, the gap between the problem and the implementation stays the same.
+
+# Part I: Column Store [HOW?, WHAT?]
+    Brief motivation, endeavor to apply database technology, we lay the foundation by implementing a column store. Show how memory is reduced by 30 \% by using simple techniques.
+    - Introduction
+        Reduce memory footprint
+        Why we picked column store
+        Why we did not pick a row store
+    - Implementation
+        - CompositionValueCollection
+        - Field Value Collection
+        - Growth strategy
+        - Changes done to CompositionObject
+    - Results
+        We used that and that test result
+        - TPC-H Results
+        - Write Benchmark
+    - Discussion
+    - Conclusion
+        Large potential in column storage in terms of memory and load time
+        Most operations take longer
+        There is potential in columns, and that more memory can be saved by removing the CGValue overhead and introducing primitive data types. It has not affected write performance, only read-performance. However, these operations have not been rewritten to exploit the new storage format.
+        - Future work
+            Use openbit
+            Reevaluate data caching mechanism.
+
+# Part II: Primitive data types [HOW?, WHAT?]
+    Counter another challenge, which is the heap-allocated GValue, which is not ideal. We show that it may reduce bla bla.
+    - Introduction
+        Primitive data types
+        Overhead in GValue
+        Motivation and introduction of blabla
+    - implementation
+        - PrimitiveFieldValueCollecion
+        - Column Selection
+        - Loading strings directly
+    - Results
+        - TPC-H
+        - Write benchmark
+    - Discussion
+    - Conclusion
+        Memory down, load time up, but still lower than original
+        Operations suffer a great deal, like Part II.
+        Loading XML values does not work
+        Yet to be explored are two things. The new potential in column structure, and compression techniques used by database technology
+        - Future work
+            Explore XML direct load and regain control
+
+# Part III: Compression [HOW?, WHAT?]
+    We have reduced memory consumption, but still have not applied compression. In this chapter we explore dictionary encoding, bitpacking and null-pointer compression.
+    - Introduction
+        Why dictionary encoding is important from background theory
+        How it can help reduce memory
+        No difference between data from the ISD layer and ME layers, we compress null-pointers.
+    - Implementation
+        - Dictionary Encoding
+        - Bitpacking
+        - Null-pointer compression
+        - Data packing
+    - Results
+        - TPC-H benchmark
+        - Write benchmark
+    - Discussion
+    - Conclusion
+        Conclude about current results. Memory have been reduced by xx, mostly by dictionary encoding and null-pointer compression. 
+        In the big run, we have done that and that, the memory is reduced my so much, load time by so much. Write operations have suffered, but not by much
+        Left with two big challenges. First, some operations have way increased time. They must be reduced. To to this, the new format must be used.
+        Secondly, correct storage format must be chosen
+        - Future work
+            More evidence that built-in caching mechanism should be scrutinized, and that there is potential
+            Check out alternative growth strategy for bitpacked columns
+
+# Part IV: Column operations [HOW? WHAT]
+    Chapter introduction
+    - Introduction
+        Graph about how memory have gone down, how primitive data types have ruined everything. 
+        In this chapter, we implement these operations within the columns to use the potential in teh storage format.
+    - Implementation
+        - Source Measure Lookup
+        - Lookup Index
+        - Identifier Index
+        - Predicate Evaluation
+    - Results
+        - SML
+        - LI
+        - II
+        - PE
+    - Discussion
+    - Conclusion
+        Much potential by using column structure
+        For data load, its speeded up by xx (find the whole figure)
+        - Future work
+            More operators
+            Speed up predicate evalution
+# Other
+    This chapter covers something our research have covered, but not detailed enough to draw any conclusions
+    * Column Selection
+    Using statistics
 
 # Discussion [SO WHAT?]
 
@@ -38,5 +236,7 @@
 
 # Discussion
     - What can database technology learn from 
+    - Works much like Oracle In-Memory option, which is a dual format. We decide which format is most suited for a specific task.
+    - Indexes can be dropped since column operations are so fast.
 
    
