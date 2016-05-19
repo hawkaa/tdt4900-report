@@ -17,6 +17,7 @@
 
 # Preface
     As a part of the master education at NTNU. Project was supervised by Bratsberg and Einar. 
+    What was acheieved during the fall project
     Started out with business discovery and technologies used in genus discovery, but took a rapid turn. However, most material is applicable.
     * Acknowledgements
         Genus; even though the code had issues.
@@ -32,8 +33,8 @@
     * Background and motivation
         - Database technology for OLAP, ditched rows. Column store, compression techniques, high utilization of CPUs, parallelization has lead to technologies that can process bla bla bla. Business discovery tools.
         - Model-driven engineering, only solving a problem once, enhancing productivity by raising programming abstraction levels. Using models, rules, etc. Model-driven engineering can optimize operations much like a compiler or interpreter does. "No code", "high productivity", code can often be better due to years of experimentation and experience. There are room for optimizations. Gap between problem and implementation (Sources)
-        - Genus, one of the market players in model-driven engineering, has one platform, gap, that can connect to data sources, using a gui to connect them, define rules, and tasks. However, this platform is due to code readability and other focus, not optimized for handling large data sets, it is slow and uses too much memory, paging. 
-        - There are many parallels of the operations GAP struggle with and database technology. For instance, operations intensively read millions of rows. In addition, one key aspect of database performance is to reduce memory usage to better utilize CPU (source), and thus can help reduce overall memory consumption as a bonus. We are motivated to investigate what technologies like column store, dictionary encoding can contribute to model-driven engineering by using GAP, to be a part of optimizations that a mdd can apply to a program. It is important for model-driven engineering to become faster and more wide-spread.
+        - Genus, one of the market players in model-driven engineering, has one platform, gap, that can connect to data sources, using a gui to connect them, define rules, and tasks. However, this platform is due to code readability and other focus, not optimized for handling large data sets, it is slow and uses too much memory, paging. Also a well-known problem for other mdd frameworks?
+        - There are many parallels of the operations GAP struggle with and database technology. For instance, operations intensively read millions of rows. In addition, one key aspect of database performance is to reduce memory usage to better utilize CPU (source), and thus can help reduce overall memory consumption as a bonus. We are motivated to investigate what technologies like column store, dictionary encoding can contribute to model-driven engineering by using GAP, to be a part of optimizations that a mdd can apply to a program. It is important for model-driven engineering to become faster and more wide-spread. Well known is that compilers can apply optimizations better on average, can we do the same with storage format?
     * Problem Statement, Goals and Research Questions
         - Based on the motivation, we have a goals:
         - G1: Improve performance and reduce memory consumption in GAP for tasks that work on large amounts of data
@@ -221,22 +222,87 @@
     - Discussion
     - Conclusion
         Much potential by using column structure
+        Indexes can be dropped since column operations are so fast.
         For data load, its speeded up by xx (find the whole figure)
         - Future work
             More operators
-            Speed up predicate evalution
+            An example of this is to ppeed up predicate evalution
 # Other
-    This chapter covers something our research have covered, but not detailed enough to draw any conclusions
-    * Column Selection
-    Using statistics
+    This chapter covers something our research have covered, but not detailed enough to draw any big conclusions, but rather some promising techniques. We look into column selection using statistics and UTF-8
+    * Column Selection and Database Statistics
+        So far, metadata, but this does not close the gap, it widens it
+        Observations about which columns can be used. So native is always safe. Last, if one chose to use a bitpacked dictionary, there is no significant differences, only space saving.
+        Other methods exist to select a column, for instance a measure column should never be a dictionary due to data duplication, nor should an identifier column.
+        But we have seen a space saving using dictionary column can reduce memory usage by 15 \%.
+        To overcome the challenge, we implement a statistics module
+        * Implementation
+            Using database statistics. Most vendors offer this. This data provides number of values, number of distinct, bytes per element.
+            Some of these queries are slow, we therefore propse a local cache that can be updated periodically by a low priority thread
+        * Challenges with filters
+            Challenge that the statistics consider the entire dataset
+            Make statistics more fine-graneid. Would rely more on the cache mechanism
+            Extrapolation
+        * Statistics precision
+            If more precise, exact buffer sizes could be used.
+        * Column rebuild
+            Another related strategy, could build entire native column, then create a dictionary.
+    * UTF-8
+        Bult-in string class
+        Observation is that most use 127 ASCII characters
+        * Test results
+        * Discussion and Conclusion
+            Space savings
+            Rebuild entire application
+            Unsure about UTF-8 general performance.
+    * Other ideas
+        * Server communication
+            Can be improved, compress before sent to the client
+        * Server state
+            Database held on the server, such that is ready
+        * Source measure lookup
+            Drop columns after source measure lookup is created. Especially integers
+            Ditch column
+            Add support for other data types in calculations
+        * Integers instead of strings as identifiers
+            We know that integer processing is faster than string processing.
 
 # Discussion [SO WHAT?]
+    So far, we have only discussed our results in isolation. Here, we discuss the implications in the big picture.
+    * Implications for GAP
+        Now left with a system that uses less memory and works faster for large data sets. Although readability has gone down, composition objects still exist, as well as GValues.
+        Just a matter of defining operations that benefit
+    * MDD In-memory Database
+        Instead of using data on an object to object basis, one benefit from treating multiple objects at a time as an index, or row, in a database.
+        We earlier pointed out that GAP was an in-memory db. Our results show that this was the case.
+        Have to choose between, but we can use both. Much like oracle dual-format. Which format is better suited for the task
+        There is much to gain from using database technology in model-driven engineering.
+    * Relation to Normal Programming languages
+        This can be extended. How storage is not controlled by the user
+        Python decorators
+        Null-pointer compression
+    * Limitations
+        * Row storage and OLTP workloads
+            Did not test OLTP very much.
+            Could look into the effects of using row storage
+            No operations hurt, but some might benefit.
+        * Benchmarks
+            Although we have good results, there are several things yet to be explored. First of all, we have only tested a small subset of the functionality. 
+            Debugger performance, not checked in detail how how production compiler code works. 
+        
 
-# Conclusion 
-
-# Discussion
-    - What can database technology learn from 
-    - Works much like Oracle In-Memory option, which is a dual format. We decide which format is most suited for a specific task.
-    - Indexes can be dropped since column operations are so fast.
+# Conclusion and Future Work
+    - Conclusion
+        We set out to answer two research questions, RQ1 and RQ2.
+        RQ1: How does column store and compressio storage formats used in analytical databases affect GAP?
+        We have seen that memory has been reduced by XX and load time by XX.
+        - RQ2: Which operations in GAP can benefit from column store, and how must GAP source code be adjusted to benefit from the new storage format?
+        Most operations, like predicate evaluation and lookup index generation. However, for the optimizations to work, the entire system.
+        - G1: Improve performance and reduce memory consumption in GAP for tasks that work on large amounts of data
+        Yes, partly.
+        - G2: Introduce new evidence that model-driven engineering can benefit from OLAP database technology. 
+        Yes we have! 
+    - Future work
+        The main part of the thesis has left out some interesting topics for future work. This include bla bla bla
+        This research has looked into what model-driven engineering can learn from database technology. Future work might do this another way around: What can database technology learn from model-driven development.
 
    

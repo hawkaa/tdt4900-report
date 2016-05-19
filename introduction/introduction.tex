@@ -1,19 +1,25 @@
 \chapter{Introduction}
 \label{chap:introduction}
-In this chapter we explain the background information and motivation of this research project. We proceed to state our goals for this chapter, explain our methodology and our contraints. Last, but not least, we explain our deliverables.
+In this chapter we explain the background information and motivation of this research project, and based on this, we state our goals and research questions. We then proceed to explain how we plan to answer the research questions by stating our methodology, deliverables, and contributions.
 \clearpage
 
 \section{Background and Motivation}
 \label{sec:Background and Motivation}
-% Paragraph about MDD
-\mdd~has gained much more traction recently. Although one may think that an extra level of abstraction will reduce overall performance, this technique allows for highly optimized implementations underneath. A model abtracts away.
+A new breed of \bi~products, which we refer to as \bd~products, has emerged recently, due to cheap, commodity hardware, based on in-memory technologies. Such products does not rely on preaggregated data, all results are calculated on-the-fly as needed, to help people answer their stream of questions and enable them to follow their own path to business insight. Such systems are enabled by in-memory technologies that uses column storage, compression and parallelization to maximize CPU utilization, hence improve user experience. Such systems decrease memory usage. \todo{rewrite, sources}
+
+\mde, a discipline that aims to increase developer productivity by raising abstraction levels, uses models, rules etc. to model an application instead of programming them. There will always be a gap between the business problem, and \mdd~aims to close that gap. Through years of experience, frameworks faithful to this discipline abstracts away complex problems, and apply optimizations. \todo{rewrite, sources}
+
+\genus, one of the market players in \mde, has one such system, \gap. This platform connects to a wide variety of data sources, and by defining data, logic, and GUI layers, a complete application model can be made. However, since this platform is made to be maintainable, no special attention has been given to how data is represented in the application implementation. This has resulted in a system with high memory usage, which causes paging, ucapable of handling large datasets, and poor performance on operations that work on multiple data elements. Performance challenges in \mde~is a well-known phenomena \cite{Selic2003-qa} \todo{rewrite, check the source}
+
+%Research has recently shown a keen interest in database technology for analytical workloads that enables high-performance analysis and on-the-fly aggregation recently, where the main motivation is \bi~products. Such products store data in main memory as compressed columns to maximize memory utilization and CPU throughput. \mde, a discipline that aims to increase developer productivity through the use of models on a higher level of abstraction, automates many of the complex programming tasks, like persistence and interoperability. One such product, \gap, has evolved over time and become a powerful and expressive tool for rapid application development. However, operations that process large amounts of data are slow, and the platform has a high memory footprint, mainly because no particular attention has been paid to storage format and structures in the source code. Based on the observation that \gap~has many similarities with an in-memory database, we are motivated to investigate if \gap~and \mdd~can benefit from database technology for analytical workloads.
+
+% Paragraph about database technology and OLAP solutions.
+%Database technology have had much progress in the last couple of years. The traditional OLTP systems with row stores are being supplemented with high-performance column stores for quick data analysis. Not only does column store improve performance aggregation performance, but it also reduces memory footprint as aggressive compression can be applied.
+
 
 However, several challenges with \mdd~exist, including performance \cite{Selic2003-qa}. However it is common knowledge that compiler optimization can outperform human creativity, and more recently: \mdd~tools generate code or systems that are faster and more reliable due to years of experimentation and experience. However, there are still problems left which leads developers to ditch the MDD approach all-together.
 
 One such problem is memory usage and tasks that affect a large amount of the data simultaneously. In this thesis, we explain and implement a column store in a model-driven development tool that will, without affecting the system developers, store data in highly optimized and compressed columns, such that memory usage can be improved. We apply technology from the recent database research and apply it to a development framework to allow for optimizations.
-
-% Paragraph about database technology and OLAP solutions.
-Database technology have had much progress in the last couple of years. The traditional OLTP systems with row stores are being supplemented with high-performance column stores for quick data analysis. Not only does column store improve performance aggregation performance, but it also reduces memory footprint as aggressive compression can be applied.
 
 
 % Paragraph about the intersection of these two fields.

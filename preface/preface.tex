@@ -3,22 +3,28 @@
 % The preface includes the facts - what type of project, where it is conducted, who supervised and any acknowledgements.
 % http://www.writersandeditors.com/preface__foreword__or_introduction__57375.htm
 
-After a long fall, we finally concluded a paper on database techonolgies used for business intelligence. However, we came across with an idea that was rather controversial. Why not implement column store within the core of \gap?
+This Master's Thesis is the final deliverable of the Computer Science Program at the Department of Informatics, Norwegian University of Science and Technology. Master's research at this program consists of two parts: A pre-study, due December 2015, and the main thesis, due June 2016. The research is a collaboration between NTNU and Genus AS. The research is executed by Håkon Åmdal, supervised by Svein Erik Bratsberg at the Department of Informatics, NTNU, and Einar Bleikvin at Genus AS.
 
-As a collaboration project between \genus~and \ntnu~to improve performance, we implement column storage within the core of \gap. The research in mainly conducted by \textit{Håkon Åmdal} with the assistance and supervision of \textit{Einar Bleikvin} and \supervisor.
+The pre-study, due December 2015, focused on \bi~related performance improvements. The ultimate goal was to improve ad-hoc analytical abilities in \gap~by applying state-of-the-art in-memory database technology. This research resulted in a literature review and a report enumerating the most important aspects when engineering such system.
+
+This thesis builds on the pre-study, but with a broader perspective: It inspired us to reevaluate how \gap~and other frameworks for \mde~should handle data internally, and see whether the storage formats and techniques from in-memory database technologies could be applied. The background theory presented in this report is, therefore, adapted from the pre-study.
+
 \vspace{1cm}
 
 {\Large Acknowledgements}
 % Read academic writing MIT for inpsiration
 
-First of all, I would like to thank \genus~for proposing an interesting and challenging research project. It has been compelling working with in-memory, \bd~products, but most importantly; working on a real business case.
 
-It is my pleasure to express my gratitude to \textit{Einar Bleikvin}, my co-supervisor at \genus. He has during the project period always shown interest in my work, and he has been a great discussion partner. Einar is not easily convinced, which have motivated me to do a thorough job before presenting my findings to him. I look forward to working closer with Einar in the spring project.
+First of all, I would like to thank \genus~for proposing an interesting and challenging research project. It has been compelling working with storage representation and optimizations in \gap. Even more important to me, is that I have been working on a real business case and that my research has contributed towards a better product for \genus' customers.
+
+It is my pleasure to express my gratitude to \textit{Einar Bleikvin}, my co-supervisor at \genus. He has during the project period always shown interest in my work, been a great discussion partner, and contributed with his years of experience in programming, \delphi, and \gap. Most important is that he has trusted me in working on central components in \gap, and helped me fix numerous bugs and memory leaks.
 
 \textit{Johnny Troset Andersen} deserves recognition for his dedication to this research. Johnny has always provided be with the resources I need to execute the project, which includes access to key personnel within \genus~and relevant literature. Last, but not least, he has always provided me with a desk at \genus' office and made me feel like home.
 
-Other \genus~employees that deserve recognition include \textit{Thomas Hedén}, which demonstrated \qlikview~to me and helped me access customer data, \textit{Bernt Almlid} that held a lesson in \gap~multitenancy and architecture, and \textit{Martin Børke} for input on the history of \bi. These people have also provided valuable feedback on the project report.
+I am grateful for the support I have received from \textit{Thomas Hedén}. Thomas has helped me establish benchmarks, access customer data, and maintain test environments. Ha has been a key contributor in report quality assurance, regarding language, structure, and content.
 
-I would like to thank \textit{Svein Erik Bratsberg} for being my supervisor on this project. Svein Erik has kept me on track for the project period and has always held his office door open for me. He has provided me with key literature for this project, and provided valuable feedback on the project report. Svein Erik has been an irreplaceable asset for this project, especially in the final couple of weeks.
+Other \genus~employees that deserve recognition include \textit{Bernt Almlid} for assistance with \gap~multitenancy and architecture, \textit{Ole Anders Bøe} for maintenance of benchmark environments, \textit{Petter Bergfjord} for valuable feedback on the report, and finally \textit{Martin Børke} for the input on the history of \bi. \todo{Add more here after feedback}
+
+I would like to thank \textit{Svein Erik Bratsberg} for being my supervisor on this project. Svein Erik has kept me on track for the project period and has always held his office door open for me. He has provided me with key literature for this project, and provided valuable feedback on the project report. Svein Erik has been an irreplaceable asset for this project, especially in the final weeks before deadline.
 
 Lastly, I am extremely grateful for \textit{Marte Løge}'s support.
