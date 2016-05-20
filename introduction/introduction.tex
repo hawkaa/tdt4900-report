@@ -5,70 +5,46 @@ In this chapter we explain the background information and motivation of this res
 
 \section{Background and Motivation}
 \label{sec:Background and Motivation}
-A new breed of \bi~products, which we refer to as \bd~products, has emerged recently, due to cheap, commodity hardware, based on in-memory technologies. Such products does not rely on preaggregated data, all results are calculated on-the-fly as needed, to help people answer their stream of questions and enable them to follow their own path to business insight. Such systems are enabled by in-memory technologies that uses column storage, compression and parallelization to maximize CPU utilization, hence improve user experience. Such systems decrease memory usage. \todo{rewrite, sources}
+RAM is getting cheaper \cite{Exasol2014-xh}, and together with 64-bits CPUs, in-memory databases are getting an increasingly more significant role \cite{Delaney2014-ip}. Systems capable of using main memory as primary storage include \oracle~\cite{Lahiri2015-mz}, \saph~\cite{Farber2012-vh}, \gorilla~\cite{Pelkonen2015-ko}, \qlikview~\cite{Qlik2011-ef}, \tableau~\cite{Kamkolkar2015-iq}, \monetdb~\cite{Boncz2002-yj}, \blink~\cite{Barber2012-xt}, and \sapnw~\cite{Lemke2010-is}. In-memory database systems are used where performance and low latency is a key design goal, and on systems that have no need for persistent storage \cite{Zicari2012-is}. Most of these systems are tuned for ad-hoc analysis and \bi~queries, which is enabled by column storage, compression, and parallelization that maximizes CPU utilization and obtains extreme throughput.
 
-\mde, a discipline that aims to increase developer productivity by raising abstraction levels, uses models, rules etc. to model an application instead of programming them. There will always be a gap between the business problem, and \mdd~aims to close that gap. Through years of experience, frameworks faithful to this discipline abstracts away complex problems, and apply optimizations. \todo{rewrite, sources}
+\mde, a discipline that aims to increase developer productivity by raising abstraction levels, has identified that there always will be a gap between the business problem and the implementation \cite{France2007-ae}. One of the main goals of \mdd~research is to create technologies that shield software developers from complexities of the underlying platform. To cope with these complexities, and close the gap between the business problem and the implementation, a deep understanding of the gap bridging process is required, an understanding that are gained through experimentation and accumulation of experience. One of the major advantages of \mde~is that we express models in in such way they are closer to the problem domain and less bound to the underlying implementation \cite{Selic2003-qa}. In general, \mdd-tools generate programs that are just as memory and performance efficient as hand-crafted programs, but there are occasional critical cases where \mde~are outperformed.
 
-\genus, one of the market players in \mde, has one such system, \gap. This platform connects to a wide variety of data sources, and by defining data, logic, and GUI layers, a complete application model can be made. However, since this platform is made to be maintainable, no special attention has been given to how data is represented in the application implementation. This has resulted in a system with high memory usage, which causes paging, ucapable of handling large datasets, and poor performance on operations that work on multiple data elements. Performance challenges in \mde~is a well-known phenomena \cite{Selic2003-qa} \todo{rewrite, check the source}
+\genus~is one of the market players in \mde, and like most vendors, they aim to close the gap between business logic and implementation through abstractions and models. Their platform, \gap, uses generic software concepts on a higher level of abstraction than regular programming languages that are precise and non-ambigous \cite{noauthor_undated-qy}. These concepts, and the underlying implementation, have been refined and improved through years of trial and error on real customer use cases. However, since the main focus of the source code of the platform is readability and maintainability, no particular attention has been paid to how data is represented internally. This has resulted in a system with high memory usage, a system uncapable of handling large data sets, and a system with poor performance on operations that work on multiple data elements, such as joins and data aggregations.
 
-%Research has recently shown a keen interest in database technology for analytical workloads that enables high-performance analysis and on-the-fly aggregation recently, where the main motivation is \bi~products. Such products store data in main memory as compressed columns to maximize memory utilization and CPU throughput. \mde, a discipline that aims to increase developer productivity through the use of models on a higher level of abstraction, automates many of the complex programming tasks, like persistence and interoperability. One such product, \gap, has evolved over time and become a powerful and expressive tool for rapid application development. However, operations that process large amounts of data are slow, and the platform has a high memory footprint, mainly because no particular attention has been paid to storage format and structures in the source code. Based on the observation that \gap~has many similarities with an in-memory database, we are motivated to investigate if \gap~and \mdd~can benefit from database technology for analytical workloads.
+Our main motivation for this research is two-fold. First, we have identified a critical case in \gap, and likely \mde~in general, which is memory consumption and handling and analysis of large datasets. We are motivated to seek out how this problem can be solved in the context of \mdd. Second, we observe that \gap~has many similarities with an in-memory database: Data is fetched from persistent data sources, manipulated and analyzed in-memory, before being persisted in the data sources again. We are, therefore, motivated to solve the problem using techniques used in state-of-the-art in-memory databases, and see whether such technology applies to a \mde-tool. Overall, our research is of interest because it increases versatility of \mdd-tools and the number of problems where \mde~can be applied.
 
-% Paragraph about database technology and OLAP solutions.
-%Database technology have had much progress in the last couple of years. The traditional OLTP systems with row stores are being supplemented with high-performance column stores for quick data analysis. Not only does column store improve performance aggregation performance, but it also reduces memory footprint as aggressive compression can be applied.
+\section{Goals and Research Question}
+\label{sec:Goals and Research Question}
+Based on our motivation, we define the following goals:
 
+\setlength{\leftskip}{1cm}
 
-However, several challenges with \mdd~exist, including performance \cite{Selic2003-qa}. However it is common knowledge that compiler optimization can outperform human creativity, and more recently: \mdd~tools generate code or systems that are faster and more reliable due to years of experimentation and experience. However, there are still problems left which leads developers to ditch the MDD approach all-together.
+\textbf{G1: Reduce memory consumption in \gap~and increase the platforms ability to handle large datasets.}
 
-One such problem is memory usage and tasks that affect a large amount of the data simultaneously. In this thesis, we explain and implement a column store in a model-driven development tool that will, without affecting the system developers, store data in highly optimized and compressed columns, such that memory usage can be improved. We apply technology from the recent database research and apply it to a development framework to allow for optimizations.
+\setlength{\leftskip}{0pt}
 
+We set \textbf{G1} not only to improve \gap and tackle its performance challenges, but also to see how this problem can be generalized and solved in the context of \mde. By \textit{handling large datasets}, we mean operations and analyses that work from several thousands to several million elements at a time. \todo{Poor definition of handling large datasets?}In addition to \textbf{G1}, we also set a broader, but yet intertwined goal:
 
-% Paragraph about the intersection of these two fields.
-Database technology and column store is one such implementation that can be changed out and applied to the whole framework. We therefore implement column store within \gap to see which aspects of this technique are beneficial for \mdd.
+\setlength{\leftskip}{1cm}
 
-% Paragraph of what we will investigate (GENUS specific)
+\textbf{G2: Introduce new evidence that \mde~can benefit from in-memory database technologies.}
 
-% Paragraph about how we got the idea to the research
-Our original research was focusing on business discovery optimalizations. However, we came up with the idea to use the techniques learnt from the database techonolgy dircectly as base structures within \gap.
+\setlength{\leftskip}{0pt}
 
-\subsection{Motivation}
-\label{sub:Motivation}
-One of \genus' main issues with \gap~is that it uses too much memory. The clients normally run in virtual environments with little RAM available. It is commonplace that a client runs out of memory and starts paging, which leads to drastically reduced performance. In addition, the hypothesis is that reduced memory consumption increases performance because memory management is expensione. In addition, there are several operations in \gap~that are slow, including \pn{Genus Discovery} load and filter operations.
+As mentioned, \gap, and likely other \mde~tools, have many similarities with in-memory databases. We are curious to see whether techniques used in in-memory databases, mainly those optimized for analytical workloads, can be applied to the context of \mde. 
 
-Therefore, we implement database techniques in order to:
-\begin{enumerate}
-    \item Reduce memory consumption to relax memory requirements for clients and improve performance by reducing expensive memory management.
-    \item See how a model-driven development tool benefits from database technology, and see which operations can be speeded up
-\end{enumerate}
+To reach \textbf{G1} and \textbf{G2}, we address the following research questions:
 
-\section{Problem Statement, Goals, and Research Questions}
-\label{sec:Problem Statement, Goals, and Research Questions}
-Based on our motivation, we define the goal of the project as following: 
+\setlength{\leftskip}{1cm}
 
-\textbf{G1: Improve performance and reduce memory consumption in \gap~for all the major use cases in the framework by applying state-of-the-art database technology in the core.}
+\textbf{RQ1: How does storage techniques used in an in-memory, analytics-oriented database, like columns and compression, affect \gap's ability to handle large datasets, and how must the application be changed to accomodate and utilize the new storage format?} \todo{Needs work, but you get the point?}
 
-According to France \ea~, there is a large gap between the business problem and the actual implementation \cite{France2007-ae}. \mdd~aims to close the gap, or at least make it a little smaller. According to these authors, closing this gap requires a deep understanding of the problems which we do through experimentation and systematic acumulation of experience. We plan to gain exacly that experience in solving high memory usage and poor performance on certain operations. 
+\setlength{\leftskip}{0pt}
 
-We focus primarily on three major tasks:
-\begin{itemize}
-    \item \bd~capabilities.
-    \item Batch operations.
-    \item Filtering tasks.
-\end{itemize}
+By answering \textbf{RQ1}, we hope to address \textbf{G1} directly by making changes in \gap~that increases its ability to handle large datasets. However, by using \gap~as a proof-of-concept, we plan to address \textbf{G2} by drawing general conclusions on the intersection of \mde~and in-memory database technology.
 
-We define \textit{state-of-the-art etc.} as following:
-\begin{itemize}
-    \item It's super new and the best!
-\end{itemize}
+To understand the goals and research questions, it is important to know that the scope of the research has changed during the project execution. The initial direction of the research aimed directly towards the \bi~components in \gap, which still had the same issues: High memory consumption and poor performance. However, in the course of the research and more knowledge was gathered, we decided to widen the scope and see whether our findings could apply to the entire platform. This way, the changes could accomodate the \bi~and analytical functionality in \gap, but also applied elsewhere
 
-We have defined this goal because we know that for certain tasks \gap~are too slow and use too much memory.
-
-As a step towards reaching \textbf{G1}, we address the following research question:
-
-\textbf{RQ1: Which benefits will a column store give a model driven development framework?} 
-
-For \textbf{RQ1}, not only do we study the benefits, we also try to define a set of operations that can be used by other parts of the application to create efficient code.
-
-\textbf{RQ2: Which metadata should be used to decide on the storage format?} 
 
 \section{Methodology}
 \label{sec:Methodology}
@@ -77,6 +53,13 @@ The main part of the literature review was conducted using a method known as \te
 The initial papers, theses, and books used in this research were found in collaboration with department staff and regarded in-memory databases, columnar storage, and online analytical processing (OLAP) workloads. Both forward and backward searching was performed, and each paper was considered by reading the abstract, and conclusion and introduction if needed, to be put on the reading list. During the search process, we picked articles that could help us reach \textbf{G1} and answer \textbf{RQ1}. Also, articles must have been published by a known digital library, journal, or conference. When the field felt properly understood, we concluded the \term{Snowball} literature study.
 
 We implement column store in \gap and measure every change we do to get an overview over what affects the total performance.
+
+%We focus primarily on three major tasks:
+%\begin{itemize}
+    %\item \bd~capabilities.
+    %\item Batch operations.
+    %\item Filtering tasks.
+%\end{itemize}
 
 % theoretic/analytic
 % model/abstraction
@@ -114,3 +97,24 @@ We structure our thesis as following:
 
 
 
+%However, several challenges with \mdd~exist, including performance \cite{Selic2003-qa}. However it is common knowledge that compiler optimization can outperform human creativity, and more recently: \mdd~tools generate code or systems that are faster and more reliable due to years of experimentation and experience. However, there are still problems left which leads developers to ditch the MDD approach all-together
+
+%\genus, one of the market players in \mde, has one such system, \gap. This platform connects to a wide variety of data sources, and by defining data, logic, and GUI layers, a complete application model can be made. However, since this platform is made to be maintainable, no special attention has been given to how data is represented in the application implementation. This has resulted in a system with high memory usage, which causes paging, ucapable of handling large datasets, and poor performance on operations that work on multiple data elements. Performance challenges in \mde~is a well-known phenomena \cite{Selic2003-qa} \todo{rewrite, check the source}
+
+%A new breed of \bi~products, which we refer to as \bd~products, has emerged recently, due to cheap, commodity hardware, based on in-memory technologies. Such products does not rely on preaggregated data, all results are calculated on-the-fly as needed, to help people answer their stream of questions and enable them to follow their own path to business insight. Such systems are enabled by in-memory technologies that uses column storage, compression and parallelization to maximize CPU utilization, hence improve user experience. Such systems decrease memory usage. \todo{rewrite, sources}
+
+%\mde, a discipline that aims to increase developer productivity by raising abstraction levels, uses models, rules etc. to model an application instead of programming them. There will always be a gap between the business problem, and \mdd~aims to close that gap. Through years of experience, frameworks faithful to this discipline abstracts away complex problems, and apply optimizations. \todo{rewrite, sources}
+
+
+
+
+
+%\subsection{Motivation}
+%\label{sub:Motivation}
+%One of \genus' main issues with \gap~is that it uses too much memory. The clients normally run in virtual environments with little RAM available. It is commonplace that a client runs out of memory and starts paging, which leads to drastically reduced performance. In addition, the hypothesis is that reduced memory consumption increases performance because memory management is expensione. In addition, there are several operations in \gap~that are slow, including \pn{Genus Discovery} load and filter operations.
+
+%Therefore, we implement database techniques in order to:
+%\begin{enumerate}
+%    \item Reduce memory consumption to relax memory requirements for clients and improve performance by reducing expensive memory management.
+%    \item See how a model-driven development tool benefits from database technology, and see which operations can be speeded up
+%\end{enumerate}

@@ -2,7 +2,7 @@
 
 # Abstract
     * Motivation or objectives
-        What has happened in database techonology, olap, and business discovery (steal from prosjektoppgave)
+        What has happened in database techonology, olap, and business discovery IN-MEMORY
         What is model-driven development.
         What is GAP, how does it relate to in-memory processing.
         Improve GAP and introduce new evidence that model-driven technology can learn from database technology.
