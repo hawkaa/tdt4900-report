@@ -1,5 +1,10 @@
-\chapter{Other Background Theory}
+\chapter{Background Theory}
 \label{chap:background}
+This chapter introduce important background theory relevant to this research. First, we introduce \mde. Then, to introduce a use-case where handling and analyzis of large datasets is required, we give a brief introduction to \bi~and \bd. Last, we study \delphi, the programming language used in \gap~core.
+
+\todo{Is this a good pitch on why we introduce bi and bd?}
+\clearpage
+
 
 \section{Model-driven Development}
 \label{sec:Model-driven Development}
@@ -26,6 +31,45 @@ Although there are many ways to define these levels, we list the levels defined 
     \item B-level - how to make programming tool, like the java programming language itself
     \item Higest level is to make intances on feth B level, how to make different formalisms.
 \end{itemize}
+
+\section{Business Intelligence}
+\label{sec:Business Intelligence}
+\bi~is normally described as tools and techniques used to transform unstructured data into useful and meaningful information that can be used to support decisions \cite{Wikipedia_contributors2015-ag}. The goal is to allow for easy interpretation and gain insight in the data, such that businesses end up with a competitive market advantage. \bi~software can assist in making a wide range of business decisions, including strategic decisions as goals and product pricing or positioning, as well as operational decisions like priorities.
+
+\subsection{History}
+\label{sub:History}
+At the beginning of the era of information systems, businesses were busy developing applications that fulfil their everyday needs \cite{Pavlic2002-nm}. However, it soon became apparent that management needed to study business trends within the company to make strategic decisions, something the current applications were unable to provide. Legacy systems commonly used OLTP databases to persist their data, however, doing this had two disadvantages regarding reporting needs: (i) The databases lack support for summarizing data, and (ii) it was tough to combine data from different databases.
+
+Then, to improve business efficiency and to enable \bi, a separation between operational systems and decision support systems (DSS) was made. DSS started out with \textit{multiway data analysis}, which is a method of analyzing data as dimensions in a multidimensional array \cite{Wikipedia_contributors2015-zu}, but very soon after the \textit{business data warehouse} emerged \cite{Devlin1988-yu}. Data warehouses were designed to satisfy companies' need for reporting by collecting data from multiple legacy systems into one large data vault. A data warehouse is no more than a collection of data from different sources in a company, and it is used by the management to make strategic decisions and solve business problems \cite{Pavlic2002-nm}. A data warehouse can contain several data marts; smaller slices of the data warehouse that are usually department-specific.
+
+\subsubsection{Business Intelligence on Real-Time Data}
+Data warehouses help management in making \textit{long-term} decisions by storing historical data for the purpose of studying trends within a business. The \textit{Operational Data Store} (ODS) was developed to serve the needs to make \textit{short-term} operational and tactical decisions \cite{Pavlic2002-nm}. An ODS stores an up to the minute view of the data within an organization to make operational decisions, for instance helping a bank clerk to decide whether a client may cash out a check or not. One of the main differences between a data warehouse and an ODS is that a data warehouse is based on snapshots while the ODS is based on updates. The Operational Data Store can be seen as an important step towards \bi~on real-time data.
+
+Today, we find systems that try to unite OLAP and OLTP systems into DBMSes that handle both workloads equally well. Such mixed-workload (OLXP) systems reduce application complexity and data redundancy and enable real-time reporting on transactional data \cite{Plattner2014-fr}. Examples of OLXP systems are \hyper~and \hyrise~\cite{Kemper2011-ap, Schwalb2014-hn}.
+
+\subsubsection{Self-Service Business Intelligence}
+The data warehouses expose data marts to the departments in a business, however creating reports are still a job for the IT department. It soon became apparent that non-technical professionals needed to be able to create their own reports without assistance from the IT staff \cite{noauthor_undated-fi}. The most recent within self-service \bi~are the \bd~applications we study in this thesis, which we explain in greater detail in Section \ref{sec:Business Discovery}.
+
+\subsection{Star and Snowflake Schema}
+\label{sub:Star and Snowflake Schema}
+Many \bi~applications and data warehouses usually access data that is organized in a \textit{star or snowflake schema} \cite{Barber2012-xt}. Distinct for such schemas is that they have a huge fact table, which can have millions or billions of rows, and smaller dimension tables, each representing some aspect of the fact rows (e.g. category, region, time). The fact table is connected to the dimension tables using foreign keys. A snowflake schema is an extension of the star schema, where one or more dimension tables can have relationships that further describe a dimension.
+
+Star and snowflake schemas are normally used in \bi~applications because they are easier to optimize \cite{Lamb2012-kg}. The query optimizer creates efficient query plans by filtering and applying joins on the most highly selective dimensions first. Secondly, queries on star and snowflake schemas are easier to anticipate, such that indexes, materialized views, and/or denormalization can be applied to improve query efficiency \cite{Barber2012-xt}.
+
+The disadvantage of using star and snowflake schemas for \bi is the lack of flexibility. There are certain situations where there are more than one large fact table and situations where there is no clear distinction between fact and dimension tables.
+
+\subsection{Challenges in Business Intellingence and Traditional Business Intelligence Systems} 
+\label{sub:Challenges in Business Intelligence and Traditional Business Intelligence Systems}
+A challenge in \bi~can be information overflow. To know which information is needed in a \bi~application, decision makers must be aware of which types of decisions they should make, and have a model for each \cite{Ackoff1999-wk}. Since managers rarely fulfil the latter requirement, they add a safety factor and asks the IT department to provide everything. The result is information overload, and the much of the data is irrelevant. 
+
+The challenges with data warehouses are many, among them, the lack of flexibility. Reports are usually preconfigured and implemented by the IT department, which can result in lengthy reporting backlogs. Besides, the \qlikview~developers have pointed out some other drawbacks of traditional query-based \bi~tools \cite{Qlik2010-ya}:
+\begin{itemize}
+  \item Only small subsets of the main dataset are extracted at a time. These subsets are divorced from the data that was not included in the query.
+  \item Each query represents a single piece of information, and the information gathered from individual queries are hard to combine.
+  \item Traditional systems do not maintain relationships between queries. A query can be hard to formulate, and it is not always easy to know what to look for. Traditional \bi~applications do not let the user build queries step by step.
+\end{itemize}
+
+
 
 \section{Business Discovery}
 \label{sec:Business Discovery}

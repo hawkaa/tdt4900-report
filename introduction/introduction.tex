@@ -19,11 +19,11 @@ Based on our motivation, we define the following goals:
 
 \setlength{\leftskip}{1cm}
 
-\textbf{G1: Reduce memory consumption in \gap~and increase the platforms ability to handle large datasets.}
+\textbf{G1: Reduce memory consumption in \gap~and increase the platforms ability to handle and analyze large datasets.}
 
 \setlength{\leftskip}{0pt}
 
-We set \textbf{G1} not only to improve \gap~and tackle its performance challenges, but also to see how this problem can be generalized and solved in the context of \mde. By \textit{handling large datasets}, we mean operations and analyses that work on thousands, even millions of elements at a time. \todo{Poor definition of handling large datasets?}In addition to \textbf{G1}, we also set a broader, but yet intertwined goal:
+We set \textbf{G1} not only to improve \gap~and tackle its performance challenges, but also to see how this problem can be generalized and solved in the context of \mde. By \textit{handling large datasets}, we mean operations and analyses that work on thousands, even millions of elements at a time. Most of these operations, but not all, are associated with \bi~related functionality. \todo{Poor definition of handling large datasets?}In addition to \textbf{G1}, we also set a broader, but yet intertwined goal:
 
 \setlength{\leftskip}{1cm}
 
@@ -49,21 +49,21 @@ Important to know is that the scope of this research has changed during the proj
 
 \section{Methodology}
 \label{sec:Methodology}
-To reach our goals and to address our research question, we divide our research into two parts. The first part is a \textit{literature review} on read-optimized, in-memory databases. This part also contains background theory on model-driven engineering and an analysis of \gap. The second part is a \textit{design and experiment} type research, where promising techniques from the literature review is applied to \gap. The performance impact of the modifications are tested by benchmarks, and conclusions are drawn based on the results.
+To reach our goals and to address our research question, we divide our research into two parts. The first part is a \textit{literature review} on read-optimized, in-memory databases. This part also contains background theory on \mde, \bi, and an analysis of \gap. The second part is a \textit{design and experiment} type research, where promising techniques from the literature review is applied to \gap. The performance impact of the modifications are tested by benchmarks, and conclusions are drawn based on the results.
 
 \subsection{Literature Review}
 \label{sub:Literature Review}
-The main goal of the initial research and literature review is to gain a deeper understanding of in-memory databases and find out which technologies that enable high performance and low memory usage. In Section \ref{sub:Research Scope}, we saw that the original scope of the research was to improve analytical capabilities in \gap. Thus, this part emphasizes techniques used in online analytical processing (OLAP) databases. In this phase of the research, we also study \mde~and provide an analysis of \gap.
+The main goal of the initial research and literature review is to gain a deeper understanding of in-memory databases and find out which technologies that enable high performance and low memory usage. In Section \ref{sub:Research Scope}, we saw that the original scope of the research was to improve analytical capabilities in \gap. Thus, this part emphasizes techniques used in online analytical processing (OLAP) databases. In this phase of the research, we also study \mde, \bi, \bd, \delphi, and provide an analysis of \gap.
 
 Most of the literature review was performed using a method known as \term{Snowballing}, which is convenient if the scope of the project is uncertain \cite{Ang2014-nm}. The Snowballing method is the process whereby you start with a few number of authoritative papers and based on these you expand your list of readings by relevant work that the papers have cited. The identification of papers can also happen in the other direction, where you look for papers that have used the current one as a reference. Either way, this method is known to generate a large number of papers, so the researcher must be very strict and objective in which papers to read.
 
-The initial papers, theses, and books used in this research were found in collaboration with department staff and regarded in-memory databases, columnar storage, and online analytical processing (OLAP) workloads. Both forward and backward searching were performed, and each paper was considered by reading the abstract, and conclusion and introduction if needed, to be put on the reading list. During the search process, we picked articles that could help us answer \textbf{RQ1}. When the field felt properly understood, we concluded the literature study. A similar process was used for the background theory on \mde, although this process was not as thorough as the study on in-memory databases.
+The initial papers, theses, and books used in this research were found in collaboration with department staff and regarded in-memory databases, columnar storage, and online analytical processing (OLAP) workloads. Both forward and backward searching were performed, and each paper was considered by reading the abstract, and conclusion and introduction if needed, to be put on the reading list. During the search process, we picked articles that could help us answer \textbf{RQ1}. When the field felt properly understood, we concluded the literature study. A similar process was used for the residual background theory, although this process was not as thorough as the study on in-memory databases.
 
 \todo{Should mention we end up with many products?}
 
 To gain a deeper understanding of \gap, a combination of technical briefs, lessons from \genus' employees, and source code analysis was used.  This part also included a study of \delphi, the programming language used to develop the \gap~core.
 
-The findings from this part of the study result in three chapters in this report: One chapter that outlines techniques used by in-memory, analytical databases that enable high performance and low memory usage, one chapter with background theory on \mde, \bd, and \delphi, and one chapter with the \gap~analysis.
+The findings from this part of the study result in three chapters in this report: One chapter with background theory on \mde, \bi, \bd, and \delphi, one chapter that outlines techniques used by in-memory, analytical databases that enable high performance and low memory usage, and one chapter with the \gap~analysis.
 
 \subsection{Design and Experiment}
 \label{sub:Design and Experiment}
@@ -93,9 +93,9 @@ Second, and likely to be more important, is that we \textit{introduce new eviden
 \label{sec:Thesis Structure}
 The first three chapters of the thesis is associated with the first research phase, which is the literature review.
 \begin{itemize}
-  \item \textbf{Chapter 2} is a chapter on read-optimized databases. This chapter explores techniques used by these databases to achieve high performance and low memory usage, as well as how such systems are benchmarked. 
-  \item \textbf{Chapter 3} introduce other background material relevant to this research. The chapter contains sections about \mde, \bd, and \delphi~programming language.
-  \item \textbf{Chapter 4} contains a top-down analysis \gap, containing platform architecture, application development, concepts, and source code. The last part of this chapter identifies challenges in \gap, which motivates the design and experiment part of the research.
+    \item \textbf{Chapter 2} introduce relevant background material to this research. The chapter contains sections about \mde, \bi, \bd, and \delphi~programming language.
+    \item \textbf{Chapter 3} is a chapter on read-optimized databases. This chapter explores techniques used by these databases to achieve high performance and low memory usage, as well as how such systems are benchmarked. 
+    \item \textbf{Chapter 4} contains a top-down analysis \gap, containing platform architecture, application development, concepts, and source code. The last part of this chapter identifies challenges in \gap, which motivates the design and experiment part of the research.
 \end{itemize}
 
 The next four chapters belong to the second and main research phase, where techniques learnt from the litterature review are implemented in \gap. Each chapter contains an introduction, implementation, results, discussion, and conclusion, and corresponds to a research iteration. \todo{Should be done clearer?}

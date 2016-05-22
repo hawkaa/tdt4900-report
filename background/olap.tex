@@ -1,9 +1,8 @@
 \chapter{Read-Optimized Databases}
 \label{chap:olap}
+This chapter forms the background theory on databases that are optimized for analytical workloads, where the main motivation is to investigate which technologies enable high performance data processing to accomodate such workloads. The chapter elaborates on storage formats, compression, and testing, and also background theory on modern CPUs.\todo{rewrite when chapter done} We emphasize techniques used in in-memory databases, although most of our findings apply to disk-based databases as well.
 
-This chapter contains the main background theory for this thesis. The majority of the chapter elaborates on database technology, which is storage formats, compression, \bi, and testing. The chapter also includes background theory on modern CPUs, \mde, and the \delphi~programming language. \todo{Rewrite once chapter is complete, perhaps change the overall layout}
-
-The main focus of this chapter is databases that are optimized for analytic workloads. Also, there is an emphasis on technologies that assumes the database fits in RAM. However, optimization techniques for disk-based databases normally apply to in-memory databases as well.
+The sources used to form this chapter were found using the \textit{Snowballing} method. During this research, we identified several database systems and \bi~solutions which apply the various techniques. \todo{Not sure if this is specific enough}
 
 \todo{For chapter: Ask bratsberg and genus whether content is too much, too little? Needs språkvask}
 
@@ -24,11 +23,11 @@ Online Transactional Processing (OLTP) is a class of database systems that manag
 
 \paragraph{Database Management System (DBMS)}
 \label{par:Database Management System (DBMS)}
-A Database Management System (DBMS) is a computer software application for storage and analysis of data \cite{Wikipedia_contributors2015-pb}. The most common way to interface with a database is through SQL, although other methods exist. Regarding performance, DBMSes can focus on analytical workloads (OLAP), transactional performance (OLTP), or both. In this research, we look at \oracle, \ibm, \saph, \sapnw, \mssql, \cstore, \vertica, \blink, \exasol, \oracle, \hyper, and \hyrise.
+A Database Management System (DBMS) is a computer software application for storage and analysis of data \cite{Wikipedia_contributors2015-pb}. The most common way to interface with a database is through SQL, although other methods exist. Regarding performance, DBMSes can focus on analytical workloads (OLAP), transactional performance (OLTP), or both. In this literature review, we look at several systems, including \oracle, \ibm, \saph, \sapnw, \mssql, \cstore, \vertica, \blink, \exasol, \oracle, \hyper, and \hyrise. \todo{shorten this list?}
 
 \paragraph{Business Discovery}
 \label{par:Business Discovery}
-\bd~is a term introduced by a \textit{QlikView} whitepaper \cite{Qlik2014-vd}. \bd~products differ from traditional \bi~systems by focusing more on the end user. \bd~products do not rely on aggregated data such that the user can follow his "information scent" and click his way through the data. \bd~platforms often provide an architecture that enables panels and dashboards to be shared with multiple clients, both on desktops and mobile devices. Current \bd~products typically build on tailored storage systems that are specifically designed for \bd~workloads, but some of them integrate directly with read-optimized DBMSes. \bd~products include \tableau, \qlikview, \powerpivot, and more. \bd~is explained in greater detail is Section~\ref{sec:Business Discovery}. \todo{This paragraph requires a total makeover to explain context and relevance.}
+\bd~is a term introduced by a \textit{QlikView} whitepaper \cite{Qlik2014-vd}. \bd~products differ from traditional \bi~systems by focusing more on the end user. \bd~products do not rely on aggregated data such that the user can follow his "information scent" and click his way through the data. \bd~platforms often provide an architecture that enables panels and dashboards to be shared with multiple clients, both on desktops and mobile devices. Current \bd~products typically build on tailored storage systems that are specifically designed for \bd~workloads, but some of them integrate directly with read-optimized DBMSes. \bd~products include \tableau, \qlikview, \powerpivot, and more. \bd~is explained in greater detail is Section~\ref{sec:Business Discovery}. \todo{Explain why bd is relevant?}
 
 
 \section{Column Storage}
@@ -66,9 +65,7 @@ Another disadvantage with column storage is tuple materialization costs. Since t
 
 \subsection{Sorting}
 \label{sub:Sorting}
-We see that few systems sort the data values before storing them to columns. An exception to this is \cstore, and later \vertica~\cite{Lamb2012-kg, Stonebraker2005-qz}. In these systems, \textit{column projections} can be defined, which is a subset of the columns in a table. Each column projection is sorted based on one column in the subset, which means a column is either sorted by own values or by values from another column in the projection. Projections are specified by the database administrator. A column can have multiple projections, hence multiple sort orders, which results in data duplication. The extra storage needed for multiple column sort orders is justified by the compression that column storage enables.
-
-Sorting values in a column store comes with some advantages. First, single value lookups are easily performed by a binary search. Second, and perhaps most important, is that sorted columns can be compressed aggressively by applying \rle. \rle~is the main reason \cstore~stores sorted data \cite{Stonebraker2005-qz}. We study this type of compression in Section \ref{sub:Run-Length Encoding}.
+Few systems sort values within a column, with the exception of \cstore~\cite{Stonebraker2005-qz} and \vertica~\cite{Lamb2012-kg}. Sorting values in a column store comes with some advantages. First, single value lookups are easily performed by a binary search. Second, and perhaps most important, is that sorted columns can be compressed aggressively by applying \rle. \rle~is the main reason \cstore~stores sorted data. We study this type of compression in Section \ref{sec:Run-Length Encoding}.
 
 Except from \cstore~and \vertica, our research has shown little indication that sorting values in columns are common. For instance, \mssql~\cite{Larson2013-mc}, \blink~\cite{Raman2013-em} and \oracle~\cite{Lahiri2015-mz} accept values in the order they appear.
 
@@ -79,7 +76,7 @@ Although most systems do not sort values in the columns and instead accept value
 Most research agrees that row stores are most suitable for OLTP workloads, and column stores are most suitable for OLAP workloads. Abadi \ea~set out to investigate whether there is a fundamental difference between row and column stores \cite{Abadi2008-dd}. In their research, they used a row store with a vertically partitioned schema to mimic a column store. They also tried applying indexes to each column such that each column could be accessed independently. Their conclusion was that there \textit{is something fundamental about column stores} that makes them perform so well, and that changes must be done to both storage layer and query executor to obtain the benefits of a column-oriented approach. The main reasons why column storage is better suited for OLAP workloads are:
 \begin{itemize}
   \item \textit{Compression}, which we discuss in Section \ref{sec:Compression}.
-  \item \textit{Vectorized execution}, which we discuss in Section \ref{sec:Loop Pipelining and Vectorized Execution}. \todo{fix ref or explain}
+  \item \textit{Vectorized execution}, which we discuss in Section \ref{sec:Loop Pipelining and Vectorized Execution}. 
   \item \textit{Late materialization}, which we discuss in Section \ref{sub:Late Materialization}. 
 \end{itemize}
 
@@ -92,7 +89,7 @@ Plattner \ea~claim that most OLTP queries request aggregates instead of single r
 
 \subsection{Row Identifiers and Tuple Materialization}
 \label{sub:Row Identifiers and Tuple Materialization}
-A row in a column store is identified by a unique identifier that is common to every value belonging to the same row in a table. Many systems store these IDs implicitly as virtual object IDs (\texttt{void}). A \texttt{void} for an object is calculated using a base ID and the offset from the first value in the column. For instance, the fourth value of a column with base ID 100 has an implicit ID of 103. \texttt{void} type identifiers are used in \monetdb~\cite{Boncz2002-yj}, \cstore~\cite{Stonebraker2005-qz}, \vertica~\cite{Lamb2012-kg}, and \ibm~\cite{Raman2013-em}. Although stitching together rows in a column store is a trivial operation, it comes at a higher cost than in a row store.
+A row in a column store is identified by a unique identifier that is common to every value belonging to the same row in a table. Many systems store these IDs implicitly as virtual object IDs (\texttt{void}). A \texttt{void} for an object is calculated using a base ID and the offset from the first value in the column. For instance, the fourth value of a column with base ID 100 has an implicit ID of 103. \texttt{void} type identifiers are used in \monetdb~\cite{Boncz2002-yj}, \cstore~\cite{Stonebraker2005-qz}, \vertica~\cite{Lamb2012-kg}, and \ibm~\cite{Raman2013-em}. Although stitching together rows in a column store is a trivial operation, it comes at a higher cost than in a row store. \todo{Link datasource index to this}
 
 If horizontal partitioning is used, a technique we discuss in the next section, the partition number must also be accounted for in row identification. For instance, \mssql~identifies a row by a combination of row group ID and tuple ID \cite{Larson2013-mc}.
 
@@ -100,10 +97,9 @@ If horizontal partitioning is used, a technique we discuss in the next section, 
 \label{sub:Horizontal Partitioning}
 Several systems split columns horizontally. Partitioning data horizontally can be beneficial due to the following reasons:
 \begin{itemize}
-  \item Storing metadata, like minimum and maximum values per block, exploits clustering in the data. A partition block can be skipped entirely if a predicate is outside the value range of a block. We look closer into how database statistics can be utilized in Section \ref{sec:Database Statistics}. \todo{fix ref or drop}
+  \item Storing metadata, like minimum and maximum values per block, exploits clustering in the data. A partition block can be skipped entirely if a predicate is outside the value range of a block.
   \item If each partition has its dictionary, the dictionary can be scanned for the presence of a key. If the key is not there, the partition can be skipped.
   \item Smart partitioning of data based on the value frequencies handles data skew and allows for improved compression rates \cite{Raman2008-gi}. 
-  \item Horizontal partitions can be spread out across different nodes in a distributed environment. 
   \item Partitions provide a logical division of data that can be processed simultaneously. The division enables parallelization and balance \cite{Exasol2014-xh}.
   \item Horizontal partitions can be created one at a time, such that new insertions will not affect already existing partitions. New data can be accumulated in temporary structures, and when there are enough rows in these structures, read-only column partitions can be created and inserted into the database.
   \item The operating system might not be able to provide memory chunks large enough to contain an entire column. Horizontally partitioning the data will help overcome this limitation.
@@ -115,16 +111,11 @@ Instead of operating on entire columns at a time, \mssql~divides the data into \
 
 For \oracle, the column store is made up of multiple extents, called In-Memory Compression Units (IMCUs) \cite{Lahiri2015-mz}. Much like \mssql, data is loaded into the IMCUs without a sort order; they are stored the same way as they appear in the row format. Each partition consists of approximately half a million rows, and each IMCU contains maximum and minimum values per column such that data can be pruned easily. \todo{Merge with above?}
 
-\afigure{img/frequency-partitioning.png}{Frequency partitioning in \blink. For each column, a histogram is calculated to find the most frequent values. Values occurring more frequently are put in the same partitions. Frequency partitioning has the benefit of increased compression rates and has a positive effect on data skew. (Adapted from \cite{Raman2008-gi})}{fig:frequency-partitioning}{0.8}
-
-\blink~and \ibm~use a partition technique called \term{frequency partitioning} \cite{Barber2012-xt, Raman2008-gi, Raman2013-em}. This partitioning method is involved, so we keep our discussion brief. This method puts rows into different partitions based on the frequency of their values. Values that occur more frequently are put in the same partition. Partitioning data based on frequency has a positive effect on data skew, and it improves compression rates. Figure \ref{fig:frequency-partitioning} illustrates frequency partitioning. \todo{Drop this?}
-
 \section{Compression}
 \label{sec:Compression}
 Historically, compression has been thought of a measure for reducing disk usage and memory footprint. However, in our case, compression of data also comes with the benefit of increased performance. A study conducted by Abadi \ea~looked into database compression for in-memory databases, and concluded compression increases performance by a factor of two on average \cite{Abadi2008-dd}.
 
-Among systems we have studied in this research, we have identified several that applies compression for performance reasons. Among these systems are \ibm~\cite{Raman2013-em}, \cstore~\cite{Stonebraker2005-qz}, \vertica~\cite{Lamb2012-kg}, \oracle~\cite{Oracle2015-fs}, and \gorilla~\cite{Pelkonen2015-ko}. In addition to this, \bd~products \tableau~and \qlikview~also use compression extensively to achieve good performance \cite{Kamkolkar2015-iq, Qlik2014-vd}. Last, but not least, \exasol, the top performing DBMS in the \tpch, applies compression to its data, and uses structures that are designed for rapid retrieval \cite{Exasol2014-xh}.
-
+Among systems we have studied in this literature review, we have identified several that applies compression for performance reasons. Among these systems are \ibm~\cite{Raman2013-em}, \cstore~\cite{Stonebraker2005-qz}, \vertica~\cite{Lamb2012-kg}, \oracle~\cite{Oracle2015-fs}, \gorilla~\cite{Pelkonen2015-ko}, and \exasol~\cite{Exasol2014-xh}. In addition to this, \bd~products \tableau~and \qlikview~also use compression extensively to achieve good performance \cite{Kamkolkar2015-iq, Qlik2014-vd}. 
 
 Compression of data in a database is beneficial for performance due to:
 \begin{itemize}
@@ -146,29 +137,29 @@ A database can use multiple compression schemes. First, most of the light-weight
 \subsection{Working Directly on Compressed Data}
 \label{sub:Working Directly on Compressed Data}
 
-\afigure{img/ram-cache-decompression.png}{I/O-RAM vs RAM-CPU compression. In the left sub-figure, data is decompressed before it is put in the buffer manager (RAM). In the right sub-figure, data is kept compressed in the buffer manager and only decompressed when it is brought into the CPU cache. (Adapted from \cite{Zukowski2006-oz})}{fig:ram-cache-decompression}{0.6}
+\afigure{img/ram-cache-decompression.png}{I/O-RAM vs RAM-CPU compression. In the left sub-figure, data is decompressed before it is put in the buffer manager (RAM). In the right sub-figure, data is kept compressed in the buffer manager and only decompressed when it is brought into the CPU cache. (Adapted from \cite{Zukowski2006-oz})}{fig:ram-cache-decompression}{0.8}
 
 Earlier database systems with compression, data was decompressed when brought up to RAM. In 2006, Zukowski \ea~suggested that data should not be decompressed when moved from disk to RAM, but when brought from RAM to cache \cite{Zukowski2006-oz}, as depicted in Figure \ref{fig:ram-cache-decompression}. \monetx~is a system that decompresses when data is moved from RAM to cache \cite{Johnson2008-cp}.
 
 However, the most performance benefit of compression is seen when the system works on the compressed data directly \cite{Lemke2010-is}. This implies that data should not be decompressed until it is materialized and sent to the user. This principle is backed by the creators of \blink, who says data should never be decompressed before absolutely needed \cite{Barber2012-xt}. \oracle~claims one of the main performance benefits is to work directly on the compressed data \cite{Oracle2015-fs}. Not decompressing data before it is needed relates to a technique known as \textit{late materialization}, a technique we study in Section \ref{sub:Late Materialization}. 
 
-\subsection{Bitpacking}
+\section{Bitpacking}
 \label{sec:Bitpacking}
 
 \afigure{img/bitpacking.png}{Bitpacked column values. Values are stored with no more bits than needed to represent the column, which results in values that are not aligned to machine word boundaries. Values may be spread across several machine words and share their machine word(s) with other codewords. (Adapted from \cite{Willhalm2013-ri})}{fig:bitpacking}{0.8}
 
-\bp~is a form of compression where values are stored with no more bits than needed. In other words, if a column has a cardinality of 32, only 5 bits are required to represent a value. This way, in a 32-bit architecture, 100 values can be stored using $500$ bits, and not $100*32 = 3200$. \bp~has lower compression than algorithms that allow variable length for values, but values can be randomly accessed in constant time \cite{Raman2008-gi, Willhalm2013-ri}. Also, \bp~enables SIMD processing, which we discuss in Section \ref{sub:SIMD}. \bp~is well suited for high cardinality, uniform distribution of values, where dictionary encoding only provides an unnecessary layer of indirection \cite{Holloway2008-rr}.
+\bp~is a form of compression where values are stored with no more bits than needed. In other words, if a column has no more than 32 distinct values, only 5 bits are required to represent a value. This way, in a 64-bit architecture, 100 values can be stored using $100*5 = 500$ bits, and not $100*64 = 6400$. \bp~has lower compression rates than algorithms that allow variable length for each value, but the main benefit is that values can be randomly accessed in constant time \cite{Raman2008-gi, Willhalm2013-ri}. Also, \bp~enables SIMD processing, which we discuss in Section \ref{sub:SIMD}. \bp~is well suited for high cardinality, uniform distribution of values \cite{Holloway2008-rr}.
 
 As seen in Figure \ref{fig:bitpacking}, bitpacked values will not generally align to word boundaries. For processing, values normally have to be moved to the word boundary, but this cost has been found to be negligible \cite{Holloway2008-rr}. Aligning values can be done in an SIMD like fashion, a technique we study in Section \ref{sub:SIMD}.
 
-In its simplest form, \bp~works directly on the column data, but the compression scheme can be more powerful if combined with other compression types. We see in Section \ref{sec:Dictionary Encoding} that dictionary keys can be bitpacked, and in Section \ref{sub:Delta Encoding} that \dele~benefits from \bp~if the deltas between the values are small. 
+In its simplest form, \bp~works directly on the column data, but the compression scheme can be more powerful if combined with other compression types. We see in Section \ref{sec:Dictionary Encoding} that dictionary keys can be bitpacked, and in Section \ref{sec:Delta Encoding} that \dele~benefits from \bp~if the deltas between the values are small. 
 
 \subsection{Issues with Bitpacking}
 \label{sub:Issues with Bitpacking}
 \afigure{img/partitioned-bitpack.png}{A normal bitpacked vector (left) and a partitioned bitpacked vector (right). Instead of rebuilding the entire vector on value overflow, the partitioned bitpacked vector has different partitions where each partition is compressed using an increasing number of bits. (Adapted from \cite{Faust2015-ke})}{fig:partitioned-bitpack}{1.0}
 There are two major limitations with \bp~\cite{Faust2015-ke}. The first is that if the bitpacking overflows, the full bitpacked vector must be rebuilt. What this means is that if all values are mapped, such that there are no available values with $n$ bits, a new bit must be introduced, and the entire vector must be rebuilt where each value has $n + 1$ bits. This is depicted in the left part of Figure \ref{fig:partitioned-bitpack}. To counter this effect, Faust \ea~have suggested a partitioned bitpacked vector structure that creates a new partition with $n + 1$ bits on overflow, as seen in the right part of Figure \ref{fig:partitioned-bitpack}. Although this technique improves performance on insert operations, read performance suffers due to the extra overhead of looking up a value.
 
-The second limitation with \bp~is that it does not account very well for data skew. In \bp, each distinct value in a vector contributes to the total number of bits required, completely disregarding the distribution of the values. Often in a database, there are a large number of distinct values, but they are not uniformly distributed. This problem can be solved with the partitioned vectors explained in the previous paragraph, by mapping the values that occur more frequently to the partitions with the fewest bit per value. Other algorithms map outliers to a separate structure, like \pfdelta~\cite{Bjorklund2011-wh}.
+The second limitation with \bp~is that it does not account very well for data skew. In \bp, each distinct value in a vector contributes to the total number of bits required, completely disregarding the distribution of the values. Often in a database, there is a large number of distinct values, but they are not uniformly distributed. This problem can be solved with the partitioned vectors explained in the previous paragraph, by mapping the values that occur more frequently to the partitions with the fewest bit per value. Other algorithms map outliers to a separate structure, like \pfdelta~\cite{Bjorklund2011-wh}.
 
 
 
@@ -191,7 +182,7 @@ Like \bp, \de~does not handle data skew very well, since each unique value needs
 
 \subsection{Sorted Dictionaries}
 \label{sub:Sorted Dictionaries}
-Dictionaries can be either sorted or unsorted. Using a sorted dictionary enables easier value lookup using a binary search. However, more important for us, is that using a sorted dictionary can turn range scans into simple integer comparisons \cite{Faust2015-ke}. For instance, if we want to find all sales in 2010, we only need to look up the integer codes for January 1st, 2010 and January 1st, 2011 and find all integers within this range. Since integer comparisons are fast and effective, this technique will usually improve performance. 
+Dictionaries can be either sorted or unsorted. Using a sorted dictionary enables easier value lookup using a binary search. However, more important for analytical performance, is that using a sorted dictionary can turn range scans into simple integer comparisons \cite{Faust2015-ke}. For instance, if we want to find all sales in 2010, we only need to look up the integer codes for January 1st, 2010 and January 1st, 2011 and find all integers within this range. Since integer comparisons are fast and effective, this technique will usually improve performance. 
 
 Most database systems today use sorted dictionaries. \saph~is an example of such system \cite{Farber2012-vh}.
 
@@ -205,12 +196,8 @@ Systems using \de~and \bp~include \ibm~\cite{Raman2013-em}, \blink~\cite{Barber2
 
 The same advantages and disadvantages of \bp~apply to \de~with bitpacked columns. For instance, values can be looked up in constant time and queries can be processed in an SIMD-like fashion. However, insertions to the dictionary might lead to an overflow, which requires the entire column to be rebuilt.
 
-\section{Other Compression Schemes}
-\label{sec:Other Compression Schemes}
-In this section, we discuss \dele~and \rle.
-
-\subsection{Delta Encoding}
-\label{sub:Delta Encoding}
+\section{Delta Encoding}
+\label{sec:Delta Encoding}
 
 \ffigure{img/delta-encoding.png}{\dele. The difference between the current and the previous value is stored instead of the actual value. Since the difference between values usually is smaller than the actual values, fewer bits can be used to store the data. (Adapted from \cite{Victor_Lavrenko2014-hv})}{fig:delta-encoding}
 
@@ -222,8 +209,8 @@ One of the major drawbacks of \dele~is that values cannot be accessed in constan
 
 \bp~can be used in conjunction with \dele. If the deltas are small, which they typically are if applied to a sorted column, \bp~can compress a column significantly. The column can be compressed even further by using \de, \dele, and \bp~a the same time because the variance in the column values will be reduced when replaced with dictionary keys. However, applying \dele~to bitpacked, dictionary encoded columns comes at a cost; Queries can no longer work directly on the compressed data using simple integer operations. In other words, we improve compression, but at the expense of performance.
 
-\subsection{Run-Length Encoding}
-\label{sub:Run-Length Encoding}
+\section{Run-Length Encoding}
+\label{sec:Run-Length Encoding}
 \ffigure{img/rle.png}{\rle~on a sorted value range. Repeated values are replaced with one instance of the value and an integer indicating how many times that value occurs in the sequence. (Adapted from \cite{Stoimen_undated-js})}{fig:rle}
 
 \rle~is a lossless data compression algorithm that replaces repeating data values with only one instance of the data and a number of how many times that value appears in the sequence \cite{Stoimen_undated-js}, like illustrated in Figure \ref{fig:rle}. Although it can be used for any sequence, \rle~works best on sorted data \cite{Bjorklund2011-wh, Holloway2008-rr}. In this case, each unique value in the sequence is represented exactly once. \rle~performs best for low-cardinality columns. The method can also be applied to compress sparse bitmaps \cite{Stonebraker2005-qz}.
@@ -251,12 +238,12 @@ Another way that performance is increased in a processor is by having muliple ex
 
 \begin{figure}
   \centering
-  \begin{subfigure}{0.45\textwidth}
+  \begin{subfigure}{0.48\textwidth}
     \includegraphics[width=\textwidth]{img/loop-unrolling-1.png}
     \caption{Original loop}
     \label{fig:loop-unrolling-1} 
   \end{subfigure}
-  \begin{subfigure}{0.45\textwidth}
+  \begin{subfigure}{0.48\textwidth}
     \includegraphics[width=\textwidth]{img/loop-unrolling-2.png}
     \caption{Unrolled loop}
     \label{fig:loop-unrolling-2} 
@@ -275,9 +262,11 @@ The best way to tackle this challenge is to design algorithms and data structure
   \item \textit{Coordinate temporal and spatial locality}. Data processed together should be stored at consecutive memory addresses. Code locality is also important \cite{Neumann2011-uq}.
   \item \textit{Avoid false sharing of cache lines}. Multiple cores in a processor should not write to data belonging to the same cache entry at the same time to avoid unecessary invalidations.
 \end{itemize}
-\textit{Compression}, which we described in Chapter \ref{chap:Data Compression}, and \textit{vectorized execution}, which we discuss in Section \ref{sec:Loop Pipelining and Vectorized Execution}, are two techniques used to improve cache performance \cite{Larson2013-mc, Lemke2010-is}.
+\textit{Compression}, which we described in Section \ref{sec:Compression}, and \textit{vectorized execution}, which we discuss in Section \ref{sec:Loop Pipelining and Vectorized Execution}, are two techniques used to improve cache performance \cite{Larson2013-mc, Lemke2010-is}.
 
 \textit{Prefetching} is another method used to increase cache utilization. Prefetching proactively loads data into caches such that the data is available when an instruction needs it.
+
+Our research has identified several systems that are designed to be cache-aware, including \monetdb~\cite{Boncz2002-yj}, \mssql~\cite{Lahiri2015-mz}, and \ibm~\cite{Raman2013-em}. The developers of \exasol, the top performing database system in the TPC-H benchmark, claim that high level of data locality is one of the key factors to performance.
 
 \subsection{Call Stack and Subroutine Invocations}
 \label{sub:Call Stack and Subroutine Invocations}
@@ -289,53 +278,45 @@ Trading off time with space is usually done to address the above challenge; addi
 
 \textit{Macro expansion} is another form of code generation. Macros are normally specified by the application programmer, and can be used for programmer-controlled inlining of functions or constant values. Macros can also be used to generate multiple versions of function or class definitions (templating), a technique commonly used to let a single implementation support different data types.
 
-\section{Branch Avoidance}
-\label{sec:Branch Avoidance}
-\ffigure{img/branch-selectivity.png}{Predicate evaluation performance for queries with different query selectivities. A \textit{branch version} and a \textit{predicated version} are tested. For the AthlonMP processor, the branch version are 2-3 times slower on queries with 40\%-60\% selectivity, while the Itanium2 processor has constant processing time. The predicated version offers constant processing time for both processors. (Adapted from \cite{Boncz2005-wj})}{fig:branch-selectivity}
+\section{Hardware Utilization}
+\label{sec:Hardware Utilization}
+In this section, we enumerate several topics, techniques, and concepts that are used to utilize the available hardware and maximize CPU throughput.
 
-We saw in the previous section that branches should be avoided due to the penalties of branch misprediction. Besides, branches also cause dependencies between instructions. 
+\subsection{Loop Pipelining}
+\label{sub:Loop Pipelining}
+The absence of loop pipelining can have dramatic effects on query performance \cite{Boncz2005-wj}. Boncz \ea~show that \mysql~uses 49 cycles per tuple because loops are not unrolled. In this system, tuples are processed one at a time with 1-2 function calls to extract the needed data from a tuple per iteration \cite{Abadi2008-dd}. Besides, evaluating a predicate is usually a small operation compared to the overhead associated with calling subroutines. In other words, most of the 49 instructions are spent managing the call stack or waiting for instruction dependencies.
 
-The consequences of inaccurate branch prediction are studied by Neumann \ea~\cite{Neumann2011-uq}. In this research, the performance of queries with various selectivities was tested. As we can see in Figure \ref{fig:branch-selectivity}, queries with 40\%-60\% selectivity executed on an AthlonMP processor are roughly 2-3 times slower than queries with selectivities close to 0\% or 100\%. Hence, selectivity can severely affect the query performance. The Itanium2 processor does not have the same characteristic, as the Itanium architecture allows for both \textit{not taken} and \textit{taken} branches to be executed simultaneously.
+To ensure proper loop pipeline behavior, compilers must be aware that pointers do not overlap, such that loop unrolling can be used \cite{Boncz2005-wj}. Operations in \monetx~are compiled with compiler hints that tell the compiler that processing a tuple is independent of the others. In standard \textit{C} compilers, this can be done by using the \texttt{\_\_restrict\_\_} pointer type.
 
-Neumann \ea~also developed a branchless version (predicated version) to evaluate predicates in the queries. The branchless variant is denoted as \texttt{predicated version} in Figure \ref{fig:branch-selectivity}. For both AthlonMP and Itanium2 processors, this implementation offers constant performance for all selectivities, but is, in general, more expensive.
 
-Branch avoidance is also important in other parts of the system, for instance when decompressing. Zukowski \ea~present a decompression algorithm that is free for \textit{if-then-else} statements \cite{Zukowski2006-oz}. By running the algorithm in two tight loops instead of one, branch misprediction is reduced, and the loops can be pipelined by a compiler.
+\subsection{Vectorized Execution}
+\label{sub:Vectorized Execution}
+To avoid unnecessary subroutine invocation overhead and help the compiler identify which instructions are independent, \textit{vectorized execution} is normally used. Vectorized execution, or block iteration, is the technique where multiple rows are processed at the same time to avoid the overhead associated with tuple-at-a-time processing \cite{Abadi2008-dd}. Vectorized execution enables loop unrolling and memory prefetching, and minimizes cache misses \cite{Larson2013-mc}. Research performed by Abadi \ea~shows that vectorized execution in columns stores improves performance by 50\% on average.
 
-Branches can also be avoided by compiling queries to machine code \cite{Lamb2012-kg}. We will elaborate on this technique in Section \ref{sub:Compiling Queries to Machine Code}.
+% explain who uses it
+Several systems studied our research use vectorized execution. \ibm~and \mssql~work on batches of thousands of row at a time \cite{Larson2013-mc, Raman2013-em}. \monetdb~and \monetx~use vectors instead of single values as their primary structure for storing data \cite{Boncz2005-wj, Boncz2002-yj}. Vectorized execution is also used by \cstore~and \blink~\cite{Johnson2008-cp, Stonebraker2005-qz}.
 
-\subsection{Short-Circuiting}
-\label{sub:Short-Circuiting}
-\begin{figure}
-  \centering
-  \begin{subfigure}{0.45\textwidth}
-    \includegraphics[width=\textwidth]{img/short-circuiting-1.png}
-    \caption{Short-circuiting}
-    \label{fig:short-circuiting-1} 
-  \end{subfigure}
-  \begin{subfigure}{0.45\textwidth}
-    \includegraphics[width=\textwidth]{img/short-circuiting-2.png}
-    \caption{No short-circuiting}
-    \label{fig:short-circuiting-2} 
-  \end{subfigure}
-  \caption{Predicate evaluation for query \texttt{WHERE LastName='Doe' AND FirstName='John' AND Age>21}. (a) skips evaluating rest of the predicates if one predicate is false, while (b) evaluates all predicates regardless of previous results.}
-  \label{fig:short-circuiting} 
-\end{figure}
-\textit{Short-circuiting} is referred to a special case of Boolean operator evaluation in which the next argument is not evaluated if the current argument is sufficient to determine the value of the expression \cite{Wikipedia_contributors2015-rk}. Figure \ref{fig:short-circuiting} illustrates the difference between short-circuit and non-short-circuit predicate evaluation. In short-circuiting, the scan proceeds to the next tuple as soon as one predicate is false, as opposed to the verision without short-circuiting that evaluates all predicates regardless of previous results.
+% Explain how it works.
+\afigure{img/vectorized-execution.png}{\mssql~operators work on row batches. Each row batch contains thousands of rows stored as column vectors. Also, a bit vector indicates which rows that qualifies for a query. Courtesy of \cite{Larson2013-mc}.}{fig:vectorized-execution}{0.4}
+In vectorized execution, blocks of values from the same column are sent to an operator for evaluation \cite{Zukowski2006-oz}. Query operators in \mssql~work on row batches, batches that contain thousands of rows stored in a column format. In addition to the column vectors, an additional \textit{qualifying rows vector} is used to indicate which rows that have been logically purged from the batch when executing a query. Figure \ref{fig:vectorized-execution} shows this structure.
 
-Since short-circuit boolean operators are control structures and not simple arithmetic operators, there is a chance of branch misprediction. That is why \blink~does not short-circuit between tuples \cite{Raman2008-gi, Johnson2008-cp}. If a block is selected for scanning, all fields in the records are checked. According to Raman \ea, short-circuiting only improves performance on low selectivity queries \cite{Raman2008-gi}.
+Regarding the size of the vectors in vectorized execution, we have found that vectors should not be too small due to increased overhead and less parallelism, nor too big, as it should fit in CPU cache \cite{Boncz2005-wj}.
 
-\subsection{Cache Awareness}
-\label{sub:Cache Awareness}
-We saw in Section \ref{sub:CPU Caches} that efficient utilization of caches is important for database performance, so data structures and algorithms should be designed such that they are cache-aware. Our research has identified several systems that are designed to be cache-aware, including \monetdb~\cite{Boncz2002-yj}, \mssql~\cite{Lahiri2015-mz}, and \ibm~\cite{Raman2013-em}. The developers of \exasol, the top performing database system in the TPC-H benchmark, claim that high level of data locality is one of the key factors to performance.
+Although vectorized execution for column stores normally outperforms tuple-at-a-time query processing, there are some disadvantages by using this model. Neumann \ea~claim that vectorized execution eliminates a major strength of the iterator model, namely \textit{pipelining} \cite{Neumann2011-uq}. In this context, pipelining means the ability for an operator to pass tuples to its parent operator without copying the value. When vectorized execution is used, intermediate results have to be stored somewhere (materialized), which consumes memory bandwidth.
 
-\subsection{Macro Expansions}
-\label{sub:Macro Expansions}
-\afigure{img/macro-expansion.png}{Macro expansions in \monetdb. For different algorithms and data types, the \texttt{select} operator has a total of 173 implementations. (Adapted from \cite{Boncz2002-yj})}{fig:macro-expansion}{0.6}
+\subsection{Late Materialization}
+\label{sub:Late Materialization}
+\textit{Late materialization} is the principle of not stitching together tuples before necessary \cite{Abadi2008-dd}. Systems devoted to \textit{late materialization} work on columns for as long as possible. According to a research by Abadi \ea~\textit{late materialization} can increase performance in columns stores by 5\%-50\% depending on the query \cite{Abadi2008-dd}.
 
-\monetdb~uses macro expansion to reduce layers of indirection and to optimize query execution performance \cite{Boncz2002-yj}. Since operators normally are type-generic, \monetdb~has for each algorithm multiple implementations that are specific to a certain type. The implementations are generated automatically using macros, which is why they are called \textit{macro expansions}. Figure \ref{fig:macro-expansion} shows how the \texttt{select} operator is expanded into 173 implementations, depending on which algorithm and data types are queried.
+\textit{Late materialization} is advantegous because \cite{Abadi2008-dd}:
+\begin{itemize}
+  \item Compressed columns must be decompressed before materialization, which eliminate the benefits of working directly on compressed data. 
+  \item Cache performance is better for columns than for rows, which means processing columns are more efficient. 
+  \item Vectorized Execution can be used on columns only. 
+  \item Early materialization might construct tuples that are discarded later in the query execution.
+\end{itemize}
 
-The vector data structure in \ibm~is implemented using C++ templates to support multiple data types.
-
+The \term{late materialization} principle is used by several database systems, including \ibm~\cite{Raman2013-em} and \monetdb~\cite{Boncz2002-yj}. 
 \subsection{SIMD}
 \label{sub:SIMD}
 \afigure{img/simd.png}{SIMD execution model: In scalar mode (a): one operation produces one result. In SIMD mode (b): one operation produces multiple results. (Adapted from \cite{Willhalm2009-hu})}{fig:simd}{0.8}
@@ -368,52 +349,70 @@ Bitpacking of column values further increase SIMD performance, because more valu
 Most literature refers to SIMD parallelization as utilizing special processor and instruction set extensions, like the Intel SSE and Intel AVX2 extension \cite{Willhalm2013-ri, Willhalm2009-hu}. However, general CPU instructions can also be used to evaluate predicates in a \textit{SIMD-like fashion}. In \blink, ordinary CPU instructions work directly on multiple values in a bitpacked column by applying a suitable mask and compare the result with a second mask containing the expected values \cite{Johnson2008-cp}. This technique is very efficient since masks for a column are calculated once per query.
 
 
+\subsection{Branch Avoidance}
+\label{sub:Branch Avoidance}
+\ffigure{img/branch-selectivity.png}{Predicate evaluation performance for queries with different query selectivities. A \textit{branch version} and a \textit{predicated version} are tested. For the AthlonMP processor, the branch version are 2-3 times slower on queries with 40\%-60\% selectivity, while the Itanium2 processor has constant processing time. The predicated version offers constant processing time for both processors. (Adapted from \cite{Boncz2005-wj})}{fig:branch-selectivity}
 
-\section{Other Database Topics}
-\label{sec:Other Database Topics}
+We saw in Section \ref{sec:Modern CPUs and Compilers} that branches should be avoided due to the penalties of branch misprediction. Besides, branches also cause dependencies between instructions. 
 
-\subsection{Late Materialization}
-\label{sub:Late Materialization}
-In the previous chapter, we used the word \textit{materialization} to describe the situation where intermediate results are stored in memory. However, in Section \ref{sub:Row Identifiers and Tuple Materialization} we saw that the word has another meaning; stitching together tuples in a column store. \textit{Late materialization} is the principle of not stitching together tuples before necessary \cite{Abadi2008-dd}.
+The consequences of inaccurate branch prediction are studied by Neumann \ea~\cite{Neumann2011-uq}. In this research, the performance of queries with various selectivities was tested. As we can see in Figure \ref{fig:branch-selectivity}, queries with 40\%-60\% selectivity executed on an AthlonMP processor are roughly 2-3 times slower than queries with selectivities close to 0\% or 100\%. Hence, selectivity can severely affect the query performance. The Itanium2 processor does not have the same characteristic, as the Itanium architecture allows for both \textit{not taken} and \textit{taken} branches to be executed simultaneously.
 
-Systems devoted to \textit{late materialization} work on columns for as long as possible. The \textit{Invisible join} from Section \ref{sub:Invisible Join} is an example of an algorithm that keeps the columns for as long as possible and wait until the last step to materialize tuples. According to a research by Abadi \ea~\textit{late materialization} can increase performance in columns stores by 5\%-50\% depending on the query \cite{Abadi2008-dd}.
+Neumann \ea~also developed a branchless version (predicated version) to evaluate predicates in the queries. The branchless variant is denoted as \texttt{predicated version} in Figure \ref{fig:branch-selectivity}. For both AthlonMP and Itanium2 processors, this implementation offers constant performance for all selectivities, but is, in general, more expensive.
 
-\textit{Late materialization} is advantegous because \cite{Abadi2008-dd}:
-\begin{itemize}
-  \item Compressed columns must be decompressed before materialization, which eliminate the benefits of working directly on compressed data. Working directly on compressed data has been discussed in Section \ref{sub:Working Directly on Compressed Data} and \ref{sec:Querying Directly on Compressed Data}.
-  \item Cache performance is better for columns than for rows, which means processing columns are more efficient. We discussed the effects of columnar storage in Chapter \ref{chap:Data Layout}.
-  \item Vectorized Execution can be used on columns only. We discussed this technique in Section \ref{sec:Loop Pipelining and Vectorized Execution}.
-  \item Early materialization might construct tuples that are discarded later in the query execution.
-\end{itemize}
+Branch avoidance is also important in other parts of the system, for instance when decompressing. Zukowski \ea~present a decompression algorithm that is free for \textit{if-then-else} statements \cite{Zukowski2006-oz}. By running the algorithm in two tight loops instead of one, branch misprediction is reduced, and the loops can be pipelined by a compiler.
+
+\subsection{Macro Expansions}
+\label{sub:Macro Expansions}
+\afigure{img/macro-expansion.png}{Macro expansions in \monetdb. For different algorithms and data types, the \texttt{select} operator has a total of 173 implementations. (Adapted from \cite{Boncz2002-yj})}{fig:macro-expansion}{0.8}
+
+\monetdb~uses macro expansion to reduce layers of indirection and to optimize query execution performance \cite{Boncz2002-yj}. Since operators normally are type-generic, \monetdb~has for each algorithm multiple implementations that are specific to a certain type. The implementations are generated automatically using macros, which is why they are called \textit{macro expansions}. Figure \ref{fig:macro-expansion} shows how the \texttt{select} operator is expanded into 173 implementations, depending on which algorithm and data types are queried.
+
+The vector data structure in \ibm~is implemented using C++ templates to support multiple data types.
 
 
-The \term{late materialization} principle is used by several database systems, including \ibm~\cite{Raman2013-em} and \monetdb~\cite{Boncz2002-yj}. 
+\subsection{Short-Circuiting}
+\label{sub:Short-Circuiting}
+\begin{figure}
+  \centering
+  \begin{subfigure}{0.45\textwidth}
+    \includegraphics[width=\textwidth]{img/short-circuiting-1.png}
+    \caption{Short-circuiting}
+    \label{fig:short-circuiting-1} 
+  \end{subfigure}
+  \begin{subfigure}{0.45\textwidth}
+    \includegraphics[width=\textwidth]{img/short-circuiting-2.png}
+    \caption{No short-circuiting}
+    \label{fig:short-circuiting-2} 
+  \end{subfigure}
+  \caption{Predicate evaluation for query \texttt{WHERE LastName='Doe' AND FirstName='John' AND Age>21}. (a) skips evaluating rest of the predicates if one predicate is false, while (b) evaluates all predicates regardless of previous results.}
+  \label{fig:short-circuiting} 
+\end{figure}
+\textit{Short-circuiting} is referred to a special case of Boolean operator evaluation in which the next argument is not evaluated if the current argument is sufficient to determine the value of the expression \cite{Wikipedia_contributors2015-rk}. Figure \ref{fig:short-circuiting} illustrates the difference between short-circuit and non-short-circuit predicate evaluation. In short-circuiting, the scan proceeds to the next tuple as soon as one predicate is false, as opposed to the verision without short-circuiting that evaluates all predicates regardless of previous results.
 
-\subsection{Bitmap Indexes}
-\label{sub:Bitmap Indexes}
+Since short-circuit boolean operators are control structures and not simple arithmetic operators, there is a chance of branch misprediction. That is why \blink~does not short-circuit between tuples \cite{Raman2008-gi, Johnson2008-cp}. If a block is selected for scanning, all fields in the records are checked. According to Raman \ea, short-circuiting only improves performance on low selectivity queries \cite{Raman2008-gi}.
+
+
+\section{Bitmap Indexes}
+\label{sec:Bitmap Indexes}
 
 \ffigure{img/bitmap-query.png}{Executing a query using bitmap indexes. Queries are efficiently processed using bitwise operations like \texttt{AND} and \texttt{OR}. Adapted from \cite{noauthor_undated-hp})}{fig:bitmap-query}
 
-A \biti~is a particular structure where a bitmap represents each distinct value in a column, and all rows containing that value is set to 1. As we have seen in Section \ref{sec:Compression Using Bitmaps}, replacing columns with bitmaps can reduce the storage requirements for a column. However, the bitmaps can also aid predicate evaluation as the form of a \biti. A \biti~is most efficient on queries that contain multiple \texttt{WHERE} clauses since many candidate rows can be excluded using bitwise \texttt{AND} and \texttt{OR} operations, as seen in Figure \ref{fig:bitmap-query} \cite{noauthor_undated-hp}. Since bitmap indexes combine so easily, composite indexes are extraneous. 
+A \biti~is a particular structure where a bitmap represents each distinct value in a column, and all rows containing that value is set to 1. It can be used to aid predicate evaluation. A \biti~is most efficient on queries that contain multiple \texttt{WHERE} clauses since many candidate rows can be excluded using bitwise \texttt{AND} and \texttt{OR} operations, as seen in Figure \ref{fig:bitmap-query} \cite{noauthor_undated-hp}. Since bitmap indexes combine so easily, composite indexes are extraneous. 
 
-One of our reference products, \qlikview, reports that it uses binary indexes for each field \cite{Qlik2011-ef}, which we believe are the same as bitmap indexes. Some database management systems also support bitmap indexes, including \oracle~\cite{noauthor_undated-hp} and \ibm~\cite{Raman2013-em}.
+\bd~product \qlikview~reports that it uses binary indexes for each field \cite{Qlik2011-ef}, which we believe are the same as bitmap indexes. Some database management systems also support bitmap indexes, including \oracle~\cite{noauthor_undated-hp} and \ibm~\cite{Raman2013-em}.
 
 In general, low-cardinality columns, which is columns with few distinct values, are better suited for bitmap indexes than high-cardinality columns \cite{noauthor_undated-hp}. The reason for this is because a bitmap must be created and maintained for each unique value in the column. Besides, since these indexes are hard to maintain, they are not suited for inserts, updates, and deletes. When deciding whether to add a \biti~to a column, \oracle~recommends at least 100 rows per distinct value. 
 
-Bitmap indexes may also be used as join indexes, and is much more efficient in storage than storing pre-joined materialized views \cite{noauthor_undated-hp}. We study join indexes in Section \ref{sec:Join Indexes}.
-
-\subsection{Joining}
-\label{sub:Joining}
-Joining is a common database operation that combines records from two or more tables. In our research, we have studied several DBMSes, and seen how their join algorithms work. As we saw in Section \ref{sub:Business Discovery, Queries, and SQL}, joining is also needed for a \bd~application such that interaction with one table can affect the selection, filters, or aggregations in other tables.
-
-For joining two tables, three main methods exist \cite{Bratbergsengen2015-ed}: 
+\section{Joining}
+\label{sec:Joining}
+Joining is a common database operation that combines records from two or more tables. In our research, we have studied several DBMSes, and seen how their join algorithms work. For joining two tables, three main methods exist \cite{Bratbergsengen2015-ed}: 
 \begin{itemize}
   \item \textit{Partition-based approach}, where records of both tables are split into groups based on the hash value of the keys. This technique is most effective on data volumes that are too large to fit in main memory.
   \item \textit{Sort-merge approach}, where both tables are sorted and then merge results by concatenating records with equal key values. This approach is most effective when one or both operands are sorted in advance.
   \item \textit{Nested loop approach}, which compares all rows in both tables.
 \end{itemize}
 
-We find the \textit{nested loop} approach to be the most popular joining algorithm for in-memory and parallel databases \cite{Boncz2002-yj}. The rest of Section \ref{sec:Joining} will therefore only discuss this method.
+The \textit{nested loop} approach is the most popular joining algorithm for in-memory databases \cite{Boncz2002-yj}. We therefore only discuss this method.
 
 \subsection{Nested Loop Algorithms}
 \label{sub:Nested Loop Algorithms}
@@ -421,11 +420,9 @@ We find the \textit{nested loop} approach to be the most popular joining algorit
 % Basic nested join functionality
 In its simplest form, the \textit{nested loop} method compares the join key in all rows directly using a double loop. This simple algorithm has a runtime of $O(n*m)$ where $n$ and $m$ is the size of tables A and B respectively. However, to improve performance in a \textit{nested loop} algorithm, hashmaps are commonly used. Usually, the join is performed by hashing the smaller (inner) relation first, then probe the hashmap by scanning the larger (outer) relation. 
 
-In a star or snowflake schema, dimension tables are usually considered as the inner relations \cite{Barber2012-xt, Raman2013-em}. In other words, the keys of these tables will be used to create the hashmaps in the join. In the second phase of the algorithm, the fact table will probe the generated hashmaps to complete the join. 
-
 \ffigure{img/nested-loop.png}{An example nested loop join structure. Records are first tested against a Bloom filter. If found in the filter, the join key is searched in the join structure. Records are first hashed, and then each entry in the hash table is the root of a binary tree. (Adapted from \cite{Bratbergsengen2015-ed})}{fig:nested-loop}
 
-Kjell Bratbergsengen shows how a combination of hash tables, bloom filters, and binary trees can be used in a \textit{nested join} algorithm. In the probe phase, keys are first checked towards a Bloom filter (Section \ref{sub:Bloom Filter}). Bloom filters never return false negatives and is an efficient way of reducing the numbers of keys entering the join. If the key is found in the Bloom filter lookup, it is hashed and checked up against a hybrid hashmap/binary-tree structure. In this structure, each entry in the hashmap is the root node of a binary tree which are used to efficiently look up values. The join algorithm is illustrated in Figure \ref{fig:nested-loop}.
+Kjell Bratbergsengen shows how a combination of hash tables, bloom filters, and binary trees can be used in a \textit{nested join} algorithm. In the probe phase, keys are first checked towards a Bloom filter. Bloom filters never return false negatives and is an efficient way of reducing the numbers of keys entering the join. If the key is found in the Bloom filter lookup, it is hashed and checked up against a hybrid hashmap/binary-tree structure. In this structure, each entry in the hashmap is the root node of a binary tree which are used to efficiently look up values. The join algorithm is illustrated in Figure \ref{fig:nested-loop}.
 
 % Modifications
 In the nested loop approach, one of the operands might be partitioned \cite{Bratbergsengen2015-ed}. For example, a join might be partitioned by only hashing a subset of the inner relation at a time. The entire join algorithm will then include several probe passes over the outer relation, one for each subset. Historically, this technique has been applied to ensure the whole hash structure fits in RAM. We conclude that a similar concept can be applied to CPU caches and that the join algorithm might benefit from partitioning the inner relation such that each subset fits in the CPU cache.
@@ -436,10 +433,8 @@ Our research has shown that one of the key design goals for efficient joining us
 
 Regarding implementation, it is important that the algorithm and the hash table are \textit{cache-aware}. One way to improve cache performance in a \textit{nested loop} join, is to use linear probing instead of open-chain addressing for the hashmap \cite{Raman2008-gi}. Open-chain addressing should only be used for overflow buckets.
 
-Joining should be done in parallel for ultimate performance. For instance, the hash tables can be built using multiple threads \cite{Barber2014-ey}. We see that some \textit{nested loop} based algorithms partition the input to improve cache performance. However, this decision might as well be a parallelization decision \cite{Neumann2011-uq}. A system studied in our research that employs high-performance parallel joining is \ibm~\cite{Raman2013-em}.
-
-\subsection{Database Statistics}
-\label{sub:Database Statistics}
+\section{Database Statistics}
+\label{sec:Database Statistics}
 \term{Database Statistics} are commonly used by a query optimizer to make better decisions about creating efficient execution plans. These statistics may the include number of records, selectivity, column cardinality, value distribution, and more. In our case, \term{Database Statistics} can be used to prune horizontal partions based on the column minimum and maximum values. This technique exploits clustering in the columns, especially when the columns are sorted, or partially sorted, like timestamps. \oracle~\cite{Lahiri2015-mz}, \ibm~\cite{Raman2013-em}, \vertica~\cite{Lamb2012-kg}, \monetx~\cite{Boncz2005-wj}, \mssql~\cite{Larson2013-mc}, and \exasol~\cite{Exasol2014-xh} store partition metadata for quick data pruning.
 
 Most database systems keep the statistics stored together with the table. However, other schemes exist. \ibm~uses a synopsis table to keep track of all column pages (partitions), including minimum and maximum values. This way, irrelevant pages can easily be skipped \cite{Raman2013-em}.
@@ -448,8 +443,8 @@ We have previously discussed how a partition dictionary can be checked for a key
 
 It can sometimes be useful to know a column's value distribution. For instance, the frequency partitioning in \blink~and \ibm~uses the columns' value distributions when determining how to partition the data \cite{Raman2008-gi, Raman2013-em}. The query optimizer in \mssql~also uses the value distributions when creating execution plans \cite{Larson2013-mc}. Value distributions are usually determined by creating histograms, and to make these histograms, random sampling can be used. In \mssql, two techniques are used: One is truly random, where values are picked across the whole column, and one is a grouped version, where a random sample range is picked.
 
-\section{Testing}
-\label{sec:Testing}
+\section{Testing OLAP Databases}
+\label{sec:Testing OLAP Databases}
 The TPC-H benchmark is commonly used to test analytical workloads. The benchmark is made for decision support workloads and consists of a suite of business oriented ad-hoc queries \cite{Transaction_Processing_Performance_Council_TPC2014-ux}. The benchmark has 22 complex read-only queries, which are both memory and CPU bound \cite{Boncz2005-wj}, and two update queries for data refresh. The TPC-H specification says the benchmark illustrates a decision support system that:
 \begin{itemize}
   \item Examine large volumes of data.
