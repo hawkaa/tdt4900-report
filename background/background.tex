@@ -6,21 +6,28 @@ This chapter introduce important background theory relevant to this research. Fi
 \clearpage
 
 
-\section{Model-driven Development}
-\label{sec:Model-driven Development}
-\todo{fix this section}
-Model-driven development is defined as *. Developers have always wanted to raise programming abstraction levels \cite{Atkinson2003-wr}.
+\section{Model-Driven Engineering}
+\label{sec:Model-Driven Engineering}
+Since computers become wide-spread, researchers have been working to raise the abstraction level at which software developers write programs \cite{Atkinson2003-wr}. This research has resulted in compilers and higher-level programming languages which supports object orientation. \mde~is a continuation of this trend, where the goal is to automate many of the complex, but routine, programming tasks. Such tasks include support for system persistence, interoperability, and distribution. \mde~improve developer productivity and has the potential to dramatically change the way we develop applications. One of the technological foundations for \mdd is the support of visual modeling. 
 
-\todo{Insert from Atkinson 2003 here}
+There is a gap between the problem domain and the software implementation domain \cite{France2007-ae}. Research in the field is manly targeted to experimentation and examination. France \ea~say that research should focus on providing technologies that address the recurring problem of bridging the problem-implementation gap. Should develop new technologies that reduce the accidental complexities of the past.
 
-\mendix, one of the market players in \mdd, uses a JavaScript blabla.
+One of the major advantages with \mde~is that we express models with concepts that are much less bound to the underlying implementation technology and are closer to the problem domain relative tho most popular programming languages \cite{Selic2003-qa}. Makes it easier to understand and maintaine. Less sensitive to underlying technology and evolutionary changes to IT infrastructure. \todo{Avskrift} Onother goal is to formalize the various activities and tasks that comprise the software life cycle \cite{Hailpern2006-vm}
 
-We investigate \gap in the following chapter.
+According to Atkinson \ea, \mde has one main short-term and main long-term advantage \cite{Atkinson2003-wr}:
+\begin{itemize}
+    \item In the short term, \mde~increase developer productivity and increase the amount of functionality an IT artifact can deliver.
+    \item In the long term, \mdd~supporting infrastructures are more maintainable, and it takes longer time before the artifact becomes obsolete.
+\end{itemize}
 
-\subsection{Model levels}
-\label{sub:Model levels}
-\afigure{img/linguistic-metamodeling.png}{Linguistic metamodeling view. (Adapted from \cite{Atkinson2003-wr})}{fig:linguistic-metamodeling}{0.7}
-According to Leppänen M, a model is a thing that is used to help the understanding of some other things \cite{Leppanen2006-ay}. In his framework, he describe three different levels of models: The instance model, the type model, and the meta model. A meta model is something used to help the understanding and communication analysis and design of type models. A model on a higher level describes/ prescirbes models on teh next lower level.
+A good model must appeal to our intuition, and it provides a shortuct by reducing the amount of intellectual effort required to understand \cite{Selic2013-qa}.
+
+The performance of \mdd-tools have long been a discussion topic. Critisim has been said since machines cannot optimize code as much as humans can with creativity and clever tricks. However, it is common knowledge that modern optimizing compilers outperform most system developers, and even more important: It does so more reliably. The same is the case for most \mde~supporting infrastructures. Current tools generate programs that are, on average, within 5 to 15 percent of equivalent hand-crafted systems. However, there are still critical cases where manually written code must be used. This is often used as an excuse to reject MDD altogether.
+
+\subsection{Model Levels}
+\label{sub:Model Levels}
+\afigure{img/uml-mof.png}{Traditional \mdd~with Unified Modeling Language (UML) and Meta-Object Factory (MOF) model levels. (Adapted from \cite{Atkinson2003-wr})}{fig:uml-mof}{0.7}
+Central to \mde~is the use of models. According to Leppänen M, a model is a thing that is used to help the understanding of some other things \cite{Leppanen2006-ay}. In \mdd, multiple levels of models are defined. In Leppänen's framework there are three different levels of models: The instance model, the type model, and the meta model. A meta model is something used to help the understanding and communication analysis and design of type models. A model on a higher level describes/ prescirbes models on the next lower level.
 
 % Ønsker å bruke disse nivåene, kanskje med eksempler fra Bergheim.
 They also correspond to the information system layer, information system development layer, the method engineering layer, and research work layer.
@@ -32,6 +39,17 @@ Although there are many ways to define these levels, we list the levels defined 
     \item B-level - how to make programming tool, like the java programming language itself
     \item Higest level is to make intances on feth B level, how to make different formalisms.
 \end{itemize}
+
+The first generation of \mdd~infrastructure is illustrated in Figure \ref{fig:uml-mof} and is Unified Modeling Language (UML) and Meta Object Facility (MOF) \cite{Atkinson2003-wr}. However, although this approach has served well in defining some central components and terminology in \mde, it has been critisized for lacking a description of how the different layers relate to the real world. It also has a single-instace of relationship to define the levels, which causes inconsistencies.
+
+\afigure{img/linguistic-metamodeling.png}{Linguistic metamodeling view. (Adapted from \cite{Atkinson2003-wr})}{fig:linguistic-metamodeling}{0.7}
+To overcome the challenges with UML, linguistic metamodeling to the rescue. This separates linguistic relationships from ontological ones. This is seen in Figure \ref{fig:linguistic-metamodeling}.
+
+\subsection{Model-Driven Engineering in Practice}
+\label{sub:Model-Driven Engineering in Practice}
+\mendix, one of the market players in \mdd, uses a JavaScript blabla.
+
+\gap~is another \mdd~suporting infrastructure, and is studied in Chapter \ref{chap:gap}.
 
 \section{Business Intelligence}
 \label{sec:Business Intelligence}
