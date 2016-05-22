@@ -8,6 +8,7 @@ This chapter introduce important background theory relevant to this research. Fi
 
 \section{Model-driven Development}
 \label{sec:Model-driven Development}
+\todo{fix this section}
 Model-driven development is defined as *. Developers have always wanted to raise programming abstraction levels \cite{Atkinson2003-wr}.
 
 \todo{Insert from Atkinson 2003 here}
@@ -18,7 +19,7 @@ We investigate \gap in the following chapter.
 
 \subsection{Model levels}
 \label{sub:Model levels}
-\afigure{img/linguistic-metamodeling.png}{Linguistic metamodeling view. (Adapted from \cite{Atkinson2003-wr})}{fig:linguistic-metamodeling}{0.8}
+\afigure{img/linguistic-metamodeling.png}{Linguistic metamodeling view. (Adapted from \cite{Atkinson2003-wr})}{fig:linguistic-metamodeling}{0.7}
 According to Leppänen M, a model is a thing that is used to help the understanding of some other things \cite{Leppanen2006-ay}. In his framework, he describe three different levels of models: The instance model, the type model, and the meta model. A meta model is something used to help the understanding and communication analysis and design of type models. A model on a higher level describes/ prescirbes models on teh next lower level.
 
 % Ønsker å bruke disse nivåene, kanskje med eksempler fra Bergheim.
@@ -36,31 +37,13 @@ Although there are many ways to define these levels, we list the levels defined 
 \label{sec:Business Intelligence}
 \bi~is normally described as tools and techniques used to transform unstructured data into useful and meaningful information that can be used to support decisions \cite{Wikipedia_contributors2015-ag}. The goal is to allow for easy interpretation and gain insight in the data, such that businesses end up with a competitive market advantage. \bi~software can assist in making a wide range of business decisions, including strategic decisions as goals and product pricing or positioning, as well as operational decisions like priorities.
 
-\subsection{History}
-\label{sub:History}
-At the beginning of the era of information systems, businesses were busy developing applications that fulfil their everyday needs \cite{Pavlic2002-nm}. However, it soon became apparent that management needed to study business trends within the company to make strategic decisions, something the current applications were unable to provide. Legacy systems commonly used OLTP databases to persist their data, however, doing this had two disadvantages regarding reporting needs: (i) The databases lack support for summarizing data, and (ii) it was tough to combine data from different databases.
-
-Then, to improve business efficiency and to enable \bi, a separation between operational systems and decision support systems (DSS) was made. DSS started out with \textit{multiway data analysis}, which is a method of analyzing data as dimensions in a multidimensional array \cite{Wikipedia_contributors2015-zu}, but very soon after the \textit{business data warehouse} emerged \cite{Devlin1988-yu}. Data warehouses were designed to satisfy companies' need for reporting by collecting data from multiple legacy systems into one large data vault. A data warehouse is no more than a collection of data from different sources in a company, and it is used by the management to make strategic decisions and solve business problems \cite{Pavlic2002-nm}. A data warehouse can contain several data marts; smaller slices of the data warehouse that are usually department-specific.
-
-\subsubsection{Business Intelligence on Real-Time Data}
-Data warehouses help management in making \textit{long-term} decisions by storing historical data for the purpose of studying trends within a business. The \textit{Operational Data Store} (ODS) was developed to serve the needs to make \textit{short-term} operational and tactical decisions \cite{Pavlic2002-nm}. An ODS stores an up to the minute view of the data within an organization to make operational decisions, for instance helping a bank clerk to decide whether a client may cash out a check or not. One of the main differences between a data warehouse and an ODS is that a data warehouse is based on snapshots while the ODS is based on updates. The Operational Data Store can be seen as an important step towards \bi~on real-time data.
-
-Today, we find systems that try to unite OLAP and OLTP systems into DBMSes that handle both workloads equally well. Such mixed-workload (OLXP) systems reduce application complexity and data redundancy and enable real-time reporting on transactional data \cite{Plattner2014-fr}. Examples of OLXP systems are \hyper~and \hyrise~\cite{Kemper2011-ap, Schwalb2014-hn}.
-
-\subsubsection{Self-Service Business Intelligence}
-The data warehouses expose data marts to the departments in a business, however creating reports are still a job for the IT department. It soon became apparent that non-technical professionals needed to be able to create their own reports without assistance from the IT staff \cite{noauthor_undated-fi}. The most recent within self-service \bi~are the \bd~applications we study in this thesis, which we explain in greater detail in Section \ref{sec:Business Discovery}.
-
-\subsection{Star and Snowflake Schema}
-\label{sub:Star and Snowflake Schema}
-Many \bi~applications and data warehouses usually access data that is organized in a \textit{star or snowflake schema} \cite{Barber2012-xt}. Distinct for such schemas is that they have a huge fact table, which can have millions or billions of rows, and smaller dimension tables, each representing some aspect of the fact rows (e.g. category, region, time). The fact table is connected to the dimension tables using foreign keys. A snowflake schema is an extension of the star schema, where one or more dimension tables can have relationships that further describe a dimension.
-
-Star and snowflake schemas are normally used in \bi~applications because they are easier to optimize \cite{Lamb2012-kg}. The query optimizer creates efficient query plans by filtering and applying joins on the most highly selective dimensions first. Secondly, queries on star and snowflake schemas are easier to anticipate, such that indexes, materialized views, and/or denormalization can be applied to improve query efficiency \cite{Barber2012-xt}.
-
-The disadvantage of using star and snowflake schemas for \bi is the lack of flexibility. There are certain situations where there are more than one large fact table and situations where there is no clear distinction between fact and dimension tables.
-
-\subsection{Challenges in Business Intellingence and Traditional Business Intelligence Systems} 
-\label{sub:Challenges in Business Intelligence and Traditional Business Intelligence Systems}
 A challenge in \bi~can be information overflow. To know which information is needed in a \bi~application, decision makers must be aware of which types of decisions they should make, and have a model for each \cite{Ackoff1999-wk}. Since managers rarely fulfil the latter requirement, they add a safety factor and asks the IT department to provide everything. The result is information overload, and the much of the data is irrelevant. 
+
+We introduce \bi~in this thesis to explain a common use-case where the ability to handle and analyze large datasets is required. \bi~reqirements in \gap~is one of the key motivations to this research. \todo{Should this pitch be used?}
+
+\subsection{Data Warehouses}
+\label{sub:Data Warehouses}
+Companies' need for \bi~has traditionally been solved by data warehouses. These data warehouses extract, transform, and load data into structures that are suited for analytical queries and report generation.
 
 The challenges with data warehouses are many, among them, the lack of flexibility. Reports are usually preconfigured and implemented by the IT department, which can result in lengthy reporting backlogs. Besides, the \qlikview~developers have pointed out some other drawbacks of traditional query-based \bi~tools \cite{Qlik2010-ya}:
 \begin{itemize}
@@ -69,7 +52,13 @@ The challenges with data warehouses are many, among them, the lack of flexibilit
   \item Traditional systems do not maintain relationships between queries. A query can be hard to formulate, and it is not always easy to know what to look for. Traditional \bi~applications do not let the user build queries step by step.
 \end{itemize}
 
+\subsection{Star and Snowflake Schema}
+\label{sub:Star and Snowflake Schema}
+Many \bi~applications and data warehouses usually access data that is organized in a \textit{star or snowflake schema} \cite{Barber2012-xt}. Distinct for such schemas is that they have a huge fact table, which can have millions or billions of rows, and smaller dimension tables, each representing some aspect of the fact rows (e.g. category, region, time). The fact table is connected to the dimension tables using foreign keys. A snowflake schema is an extension of the star schema, where one or more dimension tables can have relationships that further describe a dimension.
 
+Star and snowflake schemas are normally used in \bi~applications because they are easier to optimize \cite{Lamb2012-kg}. The query optimizer creates efficient query plans by filtering and applying joins on the most highly selective dimensions first. Secondly, queries on star and snowflake schemas are easier to anticipate, such that indexes, materialized views, and/or denormalization can be applied to improve query efficiency \cite{Barber2012-xt}.
+
+The disadvantage of using star and snowflake schemas for \bi~is the lack of flexibility. There are certain situations where there are more than one large fact table and situations where there is no clear distinction between fact and dimension tables.
 
 \section{Business Discovery}
 \label{sec:Business Discovery}
@@ -84,23 +73,17 @@ In the next sections, we explain how a typical \bd~application works by using \q
 
 \subsection{Data Import}
 \label{sub:Data Import}
+Data is loaded into a \qlikview~document using a data import script that connects the application with data sources like databases or files. The script uses an SQL-like syntax that lets the user specify names of fields and tables that are used in the data analysis. When the data import script is run, data is fetched from the sources and put into the \qlikview~in-memory engine such that data can be queried efficiently. No queries are proxied to the underlying data sources, \qlikview~manage all queries internally.
 
-\ffigure{img/qlikview-script.png}{The \textit{Edit Script} dialog in \qlikview. The import script specifies data sources and defines tables and associations for the data that should be analyzed. (Adapted from \cite{QlikTech_International_AB2011-ov})}{fig:qlikview-script} 
-
-Data is loaded into a \qlikview~document using a data import script that connects the application with data sources like databases or files. The script uses an SQL-like syntax that lets the user specify names of fields and tables that are used in the data analysis. Also, database connection parameters or file paths are stored. Figure \ref{fig:qlikview-script} shows the dialog used in \qlikview~to configure a data import script.
-
-When the data import script is run, data is fetched from the sources and put into the \qlikview~in-memory engine such that data can be queried efficiently. In \qlikview, no queries are executed directly on the underlying data sources. \tableau, however, allows this. In addition to the built-in in-memory engine, the application can be connected directly to live database servers such that companies can utilize investments in high-performance databases \cite{Kamkolkar2015-iq}.
-
-
-\afigure{img/qlikview-association.png}{Four tables: Countries, customers, transactions, and memberships. The fields \textit{Country} and \textit{CustomerID} associate the tables. (Adapted from \cite{QlikTech_International_AB2011-ov})}{fig:qlikview-association}{0.6}
+\afigure{img/qlikview-association.png}{Four tables: Countries, customers, transactions, and memberships. The fields \textit{Country} and \textit{CustomerID} associate the tables. (Adapted from \cite{QlikTech_International_AB2011-ov})}{fig:qlikview-association}{0.7}
 
 The data import script will regularly include more than one table. Multiple tables are \textit{associated} if they have fields with the same name, as seen in Figure \ref{fig:qlikview-association}. Internally, there can be only one data connector between a pair of tables, so if multiple tables refer to a single table, a mechanism (either \textit{synthetic keys} or \textit{loose coupling}) must be applied to logically duplicate the table. This restriction ensures that there exists no more than one possible join path between any pairs of tables \cite{noauthor_undated-js}.
 
-In the data import step, data might be preprocessed and transformed. First, data can be aggregated, for instance by summarizing or grouping, before being loaded into \qlikview. Second, data might be filtered. Both these techniques reduce data volumes. Lastly, data can be denormalized in the import script, i.e. pre-joining tables before import. Denormalizing can be done to lower the number of tables in the data extract and, by doing so, reduce application complexity. We discuss the performance impact of pre-aggregating and denormalization in Section \ref{sec:Application Design} and Section \ref{sec:Denormalization} respectively.
+In the data import step, data might be preprocessed and transformed. First, data can be aggregated, for instance by summarizing or grouping, before being loaded into \qlikview. Second, data might be filtered. Both these techniques reduce data volumes. Lastly, data can be denormalized in the import script, i.e. pre-joining tables before import. Denormalizing can be done to lower the number of tables in the data extract and, by doing so, reduce application complexity.
 
 \subsection{User Interface}
 \label{sub:User Interface}
-\ffigure{img/qlik-panel.png}{\qlikview~dashboard with various GUI elements, like lists and charts. Selections are green, matched data is white, and unrelated data is gray. (Adapted from \cite{Qlik2014-vd})}{fig:qlik-panel}
+\ffigure{img/qlik-panel.png}{\qlikview~dashboard with various GUI elements, like lists and charts. Selections are green, matched data is white, and unrelated data is grey. (Adapted from \cite{Qlik2014-vd})}{fig:qlik-panel}
 Users interact with the \bd~application through a reporting dashboard, as seen in Figure~\ref{fig:qlik-panel}. Requirements for such panel are typically \cite{Qlik2014-vd}:
 \begin{itemize}
   \item Clicking field values in list boxes.
@@ -110,41 +93,14 @@ Users interact with the \bd~application through a reporting dashboard, as seen i
   \item Cycling through different chart types.
 \end{itemize}
 
-Users navigate through the data by making selections in the user interface. When a selection is made, the item is made green, as seen in Figure \ref{fig:qlik-panel}. The current selection is also known as the \term{application state}. Upon selection, the rest of the elements in the panel are updated based on the new application state; aggregations are recalculated, and graphs and lists are updated. \qlikview~colors matched elements white and unmatched elements gray.
+Users navigate through the data by making selections in the user interface. When a selection is made, the item is made green, as seen in Figure \ref{fig:qlik-panel}. The current selection is also known as the \term{application state}. Upon selection, the rest of the elements in the panel are updated based on the new application state; aggregations are recalculated, and graphs and lists are updated. \qlikview~colors matched elements white and unmatched elements gray. Dashboards are typically available from different devices, including desktop comptures, tablets, and mobile phones.
 
-Both \qlikview~and \tableau~publish the reporting dashboards through a server \cite{Kamkolkar2015-iq, Qlik2011-ef}. This way, the dashboards are accessible for multiple users at the same time, and can be accessed from different devices, including desktop computers, tablets, and mobile phones.
+\subsection{Business Discovery and Queries}
+\label{sub:Business Discovery and QueriesL}
 
-\subsection{Security Settings}
-\label{sub:Security Settings}
-In \qlikview, document-level authorization is the main form of access control \cite{Qlik2011-hj}. Here, documents (data extracts and reporting panels) may be restricted and only made available to certain users or user groups. In addition to document-level authorization, applications may also define a dynamic filter that is applied to the data. Using this dynamic filter approach, several user groups can use the same document, only with different restrictions on the data.
-
-\tableau~supports both data-level and user-level security \cite{Kamkolkar2015-iq}. Data can be filtered per user as long as the filter matches a \texttt{WHERE}-clause. Like \qlikview, \tableau~can restrict the access to reports and views to certain users or user groups.
-
-\subsection{Business Discovery, Queries, and SQL}
-\label{sub:Business Discovery, Queries, and SQL}
-We see that \bd~products interact with the data using selections and filters in a reporting panel. This technique is different from database systems designed for OLAP workloads, which normally use a \textit{query-based} interface, usually SQL. Since we study several DBMSes in this report, it is important to know how \bd~products relate to traditional database queries and SQL.
+We see that \bd~products interact with the data using selections and filters in a reporting panel. This technique is different from database systems designed for OLAP workloads, which normally use a \textit{query-based} interface, usually SQL. Still, \bd~products need to provide most functionality that SQL databases do, like row listing, filtering, joining, grouping and aggregation, and sorting.
 
 Queries, or requests, in a \bd~application have certain characteristics. First of all, they cannot be anticipated, more specifically, they are \textit{ad-hoc}. Secondly, there is a limit to the number of returned rows. Users are interested in queries that can be analyzed quickly, so we do not expect a \bd~application to return thousands of rows as a result from a single table \cite{Ferrari2012-hm}. Also, the user interface has limitations in how much data that can be displayed at the same time. 
-
-Even though \bd~applications do not support traditional queries, they still need most of the functionality provided by SQL. Below, we enumerate core SQL functionality and explain why it is necessary in order to create a \bd~application.
-
-\paragraph{Listing of rows}
-\bd~applications require rows in a table to be listed in the user interface. Although this seems like a trivial requirement, there are storage formats (Column Storage, Section \ref{sec:Column Storage}) where listing and "stitching together" tuples are non-trivial. 
-
-\paragraph{Filtering}
-We need data filtering in a \bd~application for several reasons. First and foremost, application state might be specified in terms of a predicate. For instance, the user might want to display transactions between two dates. Secondly, to support security, some data might need to be filtered before sent to the application.
-
-\paragraph{Joining}
-We see that \bd~applications work on several associated tables at a time. Hence, joins are required to connect the tables such that one table can be filtered based on a selection in another table. However, we can limit our join functionality to equijoins over foreign keys. Join functionality is not needed if the imported data is denormalized and put into one single table.
-
-\paragraph{Grouping and aggregation}
-\label{par:Grouping and aggregation}
-As mentioned earlier, we expect \bd~applications to include summaries of data which is the reason grouping and aggregation must be supported. We may limit the grouping keys to foreign key attributes.
-
-\paragraph{Sorting}
-\label{par:Sorting}
-Sorting is required in a \bd~application because there will be GUI elements that keep their data sorted. Although this can be solved in the client, it is better to do this during query processing. Besides, we need sorting if we want to show the top of a selection, for instance, the top ten grossing products.
-
 
 \section{Delphi Programming Language}
 \label{sec:Delphi Programming Language}
