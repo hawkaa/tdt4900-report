@@ -90,6 +90,9 @@ If horizontal partitioning is used, a technique we discuss in the next section, 
 
 \subsection{Horizontal Partitioning}
 \label{sub:Horizontal Partitioning}
+
+\todo{Not sure if I should include horizontal partitioning altogether}
+
 Several systems split columns horizontally. Partitioning data horizontally can be beneficial due to the following reasons:
 \begin{itemize}
   \item Storing metadata, like minimum and maximum values per block, exploits clustering in the data. A partition block can be skipped entirely if a predicate is outside the value range of a block.
@@ -213,6 +216,21 @@ One of the major drawbacks of \dele~is that values cannot be accessed in constan
 \rle~is used in \cstore~\cite{Stonebraker2005-qz}, \vertica~\cite{Lamb2012-kg}, \oracle~\cite{Oracle2015-fs}, and \sapnw~\cite{Lemke2010-is}, but only if the values are sorted. 
 
 \rle~enables the query operators to work directly on the compressed data. For instance, queries can exploit \rle~on sorted columns when performing grouping and aggregation, since the values are already stored as groups. 
+
+\section{Bitmaps and Bitmap Indexes}
+\label{sec:Bitmaps and Bitmap Indexes}
+We saw in Section \ref{sub:Compression Types and Light-Weight Compression} that \cstore~and \vertica~compress foreign-order, low cardinality columns using bitmaps. With this technique, each unique column value is represented as a bitmap where the 1s in the map indicate which rows that have that value. If there are few distinct values in a column, the size of the bitmaps will be smaller than storing the actual values, and compression will be achieved. Since these bitmaps are typically sparse, they can be compressed further with techniques like \rle.
+
+Queries can work directly on the compressed data by combining values using bitwise operations. For instance, all people from Norway, Sweden and Denmark can be found by \texttt{OR}ing together the three bitmaps corresponding to these three contries. This storage format is also known as a \textit{bitmap index}, which we study in Section \ref{sec:Bitmap Indexes}.
+
+\todo{Above two paragraphs must be adjusted to fit in}
+
+\ffigure{img/bitmap-query.png}{Executing a query using bitmap indexes. Queries are efficiently processed using bitwise operations like \texttt{AND} and \texttt{OR}. Adapted from \cite{noauthor_undated-hp})}{fig:bitmap-query}
+A \biti~is a particular structure where a bitmap represents each distinct value in a column, and all rows containing that value is set to 1. It can be used to aid predicate evaluation. A \biti~is most efficient on queries that contain multiple \texttt{WHERE} clauses since many candidate rows can be excluded using bitwise \texttt{AND} and \texttt{OR} operations, as seen in Figure \ref{fig:bitmap-query} \cite{noauthor_undated-hp}. Since bitmap indexes combine so easily, composite indexes are extraneous. 
+
+\bd~product \qlikview~reports that it uses binary indexes for each field \cite{Qlik2011-ef}, which we believe are the same as bitmap indexes. Some database management systems also support bitmap indexes, including \oracle~\cite{noauthor_undated-hp} and \ibm~\cite{Raman2013-em}.
+
+In general, low-cardinality columns, which is columns with few distinct values, are better suited for bitmap indexes than high-cardinality columns \cite{noauthor_undated-hp}. The reason for this is because a bitmap must be created and maintained for each unique value in the column. Besides, since these indexes are hard to maintain, they are not suited for inserts, updates, and deletes. When deciding whether to add a \biti~to a column, \oracle~recommends at least 100 rows per distinct value. 
 
 
 \section{Modern CPUs and Compilers}
@@ -387,17 +405,6 @@ The vector data structure in \ibm~is implemented using C++ templates to support 
 Since short-circuit boolean operators are control structures and not simple arithmetic operators, there is a chance of branch misprediction. That is why \blink~does not short-circuit between tuples \cite{Raman2008-gi, Johnson2008-cp}. If a block is selected for scanning, all fields in the records are checked. According to Raman \ea, short-circuiting only improves performance on low selectivity queries \cite{Raman2008-gi}.
 
 
-\section{Bitmap Indexes}
-\label{sec:Bitmap Indexes}
-
-\ffigure{img/bitmap-query.png}{Executing a query using bitmap indexes. Queries are efficiently processed using bitwise operations like \texttt{AND} and \texttt{OR}. Adapted from \cite{noauthor_undated-hp})}{fig:bitmap-query}
-
-A \biti~is a particular structure where a bitmap represents each distinct value in a column, and all rows containing that value is set to 1. It can be used to aid predicate evaluation. A \biti~is most efficient on queries that contain multiple \texttt{WHERE} clauses since many candidate rows can be excluded using bitwise \texttt{AND} and \texttt{OR} operations, as seen in Figure \ref{fig:bitmap-query} \cite{noauthor_undated-hp}. Since bitmap indexes combine so easily, composite indexes are extraneous. 
-
-\bd~product \qlikview~reports that it uses binary indexes for each field \cite{Qlik2011-ef}, which we believe are the same as bitmap indexes. Some database management systems also support bitmap indexes, including \oracle~\cite{noauthor_undated-hp} and \ibm~\cite{Raman2013-em}.
-
-In general, low-cardinality columns, which is columns with few distinct values, are better suited for bitmap indexes than high-cardinality columns \cite{noauthor_undated-hp}. The reason for this is because a bitmap must be created and maintained for each unique value in the column. Besides, since these indexes are hard to maintain, they are not suited for inserts, updates, and deletes. When deciding whether to add a \biti~to a column, \oracle~recommends at least 100 rows per distinct value. 
-
 \section{Joining}
 \label{sec:Joining}
 Joining is a common database operation that combines records from two or more tables. In our research, we have studied several DBMSes, and seen how their join algorithms work. For joining two tables, three main methods exist \cite{Bratbergsengen2015-ed}: 
@@ -437,6 +444,49 @@ Most database systems keep the statistics stored together with the table. Howeve
 We have previously discussed how a partition dictionary can be checked for a key's existence before scanning an entire block. If a key is not present in the dictionary, the partition can be skipped. We consider this technique as a part of utilizing \term{Database Statistics} to improve performance.
 
 It can sometimes be useful to know a column's value distribution. For instance, the frequency partitioning in \blink~and \ibm~uses the columns' value distributions when determining how to partition the data \cite{Raman2008-gi, Raman2013-em}. The query optimizer in \mssql~also uses the value distributions when creating execution plans \cite{Larson2013-mc}. Value distributions are usually determined by creating histograms, and to make these histograms, random sampling can be used. In \mssql, two techniques are used: One is truly random, where values are picked across the whole column, and one is a grouped version, where a random sample range is picked.
+
+\section{Disk Support}
+\label{sec:Disk Support}
+
+\todo{This section needs to be adjusted}
+
+\afigure{img/page-thrashing.png}{Database performance for systems with and without a buffer manager. This figure shows two things. First, when a database system starts spilling pages to disk, the throughput is drastically reduced. Second, databases without buffer managers perform better when data is in memory, but when the OS starts swapping pages to disk, they are much slower than systems with a buffer manager. Courtesy of \cite{Graefe2014-ds}.}{fig:page-thrashing}{0.8}
+
+In this report, we have assumed that the entire dataset fits in main memory for simplicity and performance reasons. Here, we elaborate on the consequences of relaxing this requirement. 
+
+To support datasets larger than provisioned RAM, the most trivial way is to use the OS' virtual memory. This is done by \monetdb~\cite{Boncz2002-yj}, \blink~\cite{Barber2014-ey} and \qlikview~\cite{Qlik2011-ef}. However, the page replacement algorithms for virtual memory do not work very well on database workloads. The work of Graefe \ea~\cite{Graefe2014-ds} shows that main-memory databases suffers a sudden performance drop when virtual memory mechanism starts swapping pages to disk, as seen in Figure \ref{fig:page-thrashing}. \qlikview~has reported a significant loss in performance once the OS starts paging. 
+
+Falling back to virtual memory are for some systems unacceptable for performance and correctness reasons \cite{Graefe2014-ds}. To overcome these challenges, major database vendors like \oracle~and \mssql~use buffer managers for all their database operations, which we see in Figure \ref{fig:page-thrashing} improves query performance when the working set is larger than the provisioned RAM. However, the same figure also reveals a drawback of using a buffer manager; the extra layer of indirection comes at a performance cost for working sets that fit in memory. The column store engine in \mssql~performs worse than the in-memory \vertipaq~on workloads that fit in memory because the latter does not have a buffer manager \cite{Ferrari2012-hm}
+
+\tableau~claims their system still performs well even if the data does not fit entirely in memory \cite{Kamkolkar2015-iq}. We are not certain whether this system uses a buffer manager or not.
+
+\section{Write Support and Mixed Workloads}
+\label{sec:Write Support and Mixed Workloads}
+
+\todo{Adjust this section}
+
+We have studied several different systems in this report, and many of them have different goals. Some systems, like \cstore~and \monetdb, are optimized for analytical workloads even though they allow for inserts, updates, and deletes \cite{Boncz2002-yj, Stonebraker2005-qz}. Other systems have a design goal to support both transactional and analytical workloads (mixed workloads) equally well. Examples of such systems are \hyrise~and \hyper, and can be referred to as OLXP systems \cite{Plattner2014-fr}. \oracle~and \saph~also support mixed workloads, and they both strive to keep query transparency; applications using the database should not need to rewrite any queries to benefit from the underlying optimizations \cite{Farber2012-vh, Lahiri2015-mz}.
+
+In Section \ref{sub:Read-Only}, we differentiated between \textit{update based write support} and \textit{direct write support}. In \textit{update based write support}, consistency, correctness, and data freshness can be sacrificed at the benefit of better performance; the system can use immutable structures optimized for read throughput. In such system, updates can periodically be merged into the database by for instance replacing one immutable structure with a more up-to-date version. If columns are partitioned horizontally, a column block can be added one at a time.
+
+\hyper~sacrifices correctness and data freshness by using memory snapshots \cite{Kemper2011-ap}. In this system, there are multiple read-only processes, but only one process for writes. The read-only processes periodically fork the main write process to obtain a memory snapshot of the current state of the database. Hardware and OS assisted replication mechanisms make sure the snapshots are created efficiently and consistent with the transactional data.
+
+\subsection{Delta Store}
+\label{sub:Delta Store}
+
+For systems with \textit{direct write support}, a \textit{delta store} is commonly used to handle inserts, updates, and deletes \cite{Raman2013-em, Stonebraker2005-qz}. This structure is sometimes called an insert buffer or a write-optimized store. A delta store is used because structures optimized for read performance are typically immutable or hard to update. For instance, inserting a new key into a sorted dictionary requires most key/value pairs to be reassigned. Besides, a newly inserted value might cause overflow in a bitpacked column.
+
+\ffigure{img/delta-store-index}{Different index implementation for read-optimized store and delta store in \hyrise. The main partition uses an immutable structure for inverted indexes while the delta partition uses a dynamic tree structure. Courtesy of \cite{Schwalb2014-hn}.}{fig:delta-store-index}
+
+Another immutable structure we have seen in this report is the inverted index structure using a position vector and an offset vector (prefix sum). This structure is effective and space efficient, but cannot be changed once created. This is why \hyrise~uses a tree-based dynamic index structure for the delta store, as seen in Figure \ref{fig:delta-store-index}.
+
+
+Delta stores are periodically merged into the main storage, which is often called the read-optimized store. Such operation can either be triggered when the size of the delta store exceeds a certain threshold or through a periodical trickle operation \cite{Lahiri2015-mz, Farber2012-vh}.
+
+In certain conditions, the delta store can be omitted completely on insertion. \mssql~allows bulk inserts to create columns directly without going via the delta store \cite{Larson2013-mc}.
+
+Many systems disallow updates and instead replace an update operation with one deletion and one insert. Deletes are usually implemented as invalidation bit vectors \cite{Lamb2012-kg, Raman2013-em}, and updates are appended to a suitable structure, like an unsorted B+-tree \cite{Psaroudakis2014-ma}, or an uncompressed column \cite{Farber2012-vh}. \textit{Delete-insert} updates has the benefit of allowing time-travel queries \cite{Plattner2014-fr, Schwalb2014-hn}.
+
 
 \section{Testing OLAP Databases}
 \label{sec:Testing OLAP Databases}
