@@ -441,52 +441,29 @@ Regarding implementation, it is important that the algorithm and the hash table 
 
 Most database systems keep the statistics stored together with the table. However, other schemes exist. \ibm~uses a synopsis table to keep track of all column pages (partitions), including minimum and maximum values. This way, irrelevant pages can easily be skipped \cite{Raman2013-em}.
 
-We have previously discussed how a partition dictionary can be checked for a key's existence before scanning an entire block. If a key is not present in the dictionary, the partition can be skipped. We consider this technique as a part of utilizing \term{Database Statistics} to improve performance.
-
 It can sometimes be useful to know a column's value distribution. For instance, the frequency partitioning in \blink~and \ibm~uses the columns' value distributions when determining how to partition the data \cite{Raman2008-gi, Raman2013-em}. The query optimizer in \mssql~also uses the value distributions when creating execution plans \cite{Larson2013-mc}. Value distributions are usually determined by creating histograms, and to make these histograms, random sampling can be used. In \mssql, two techniques are used: One is truly random, where values are picked across the whole column, and one is a grouped version, where a random sample range is picked.
 
 \section{Disk Support}
 \label{sec:Disk Support}
+\afigure{img/page-thrashing.png}{Database performance for systems with and without a buffer manager. This figure shows two things. First, when a database system starts spilling pages to disk, the throughput is drastically reduced. Second, databases without buffer managers perform better when data is in memory, but when the OS starts swapping pages to disk, they are much slower than systems with a buffer manager. (Adapted from \cite{Graefe2014-ds})}{fig:page-thrashing}{0.8}
 
-\todo{This section needs to be adjusted}
-
-\afigure{img/page-thrashing.png}{Database performance for systems with and without a buffer manager. This figure shows two things. First, when a database system starts spilling pages to disk, the throughput is drastically reduced. Second, databases without buffer managers perform better when data is in memory, but when the OS starts swapping pages to disk, they are much slower than systems with a buffer manager. Courtesy of \cite{Graefe2014-ds}.}{fig:page-thrashing}{0.8}
-
-In this report, we have assumed that the entire dataset fits in main memory for simplicity and performance reasons. Here, we elaborate on the consequences of relaxing this requirement. 
-
-To support datasets larger than provisioned RAM, the most trivial way is to use the OS' virtual memory. This is done by \monetdb~\cite{Boncz2002-yj}, \blink~\cite{Barber2014-ey} and \qlikview~\cite{Qlik2011-ef}. However, the page replacement algorithms for virtual memory do not work very well on database workloads. The work of Graefe \ea~\cite{Graefe2014-ds} shows that main-memory databases suffers a sudden performance drop when virtual memory mechanism starts swapping pages to disk, as seen in Figure \ref{fig:page-thrashing}. \qlikview~has reported a significant loss in performance once the OS starts paging. 
+To support datasets larger than provisioned RAM, the most trivial way is to use the OS' virtual memory. This is done by \monetdb~\cite{Boncz2002-yj}, \blink~\cite{Barber2014-ey} and \qlikview~\cite{Qlik2011-ef}. However, the page replacement algorithms for virtual memory do not work very well on database workloads. The work of Graefe \ea~shows that main-memory databases suffers a sudden performance drop when virtual memory mechanism starts swapping pages to disk \cite{Graefe2014-ds} , as seen in Figure \ref{fig:page-thrashing}. \qlikview~has reported a significant loss in performance once the OS starts paging. 
 
 Falling back to virtual memory are for some systems unacceptable for performance and correctness reasons \cite{Graefe2014-ds}. To overcome these challenges, major database vendors like \oracle~and \mssql~use buffer managers for all their database operations, which we see in Figure \ref{fig:page-thrashing} improves query performance when the working set is larger than the provisioned RAM. However, the same figure also reveals a drawback of using a buffer manager; the extra layer of indirection comes at a performance cost for working sets that fit in memory. The column store engine in \mssql~performs worse than the in-memory \vertipaq~on workloads that fit in memory because the latter does not have a buffer manager \cite{Ferrari2012-hm}
 
-\tableau~claims their system still performs well even if the data does not fit entirely in memory \cite{Kamkolkar2015-iq}. We are not certain whether this system uses a buffer manager or not.
+\section{Mixed Workloads}
+\label{sec:Mixed Workloads}
+In this chapter, we have mainly studied read-optimized systems. Still, most of these systems allow for inserts, updates, and deletes,  although these operations are not as efficient as for systems optimized for transactional workloads. However, some systems have a design goal to support both transactional and analytical workloads (mixed workloads) equally well. Examples of such systems are \hyrise~and \hyper, and can be referred to as OLXP systems \cite{Plattner2014-fr}. \oracle~and \saph~also support mixed workloads, and they both strive to keep query transparency; applications using the database should not need to rewrite any queries to benefit from the underlying optimizations \cite{Farber2012-vh, Lahiri2015-mz}.
 
-\section{Write Support and Mixed Workloads}
-\label{sec:Write Support and Mixed Workloads}
-
-\todo{Adjust this section}
-
-We have studied several different systems in this report, and many of them have different goals. Some systems, like \cstore~and \monetdb, are optimized for analytical workloads even though they allow for inserts, updates, and deletes \cite{Boncz2002-yj, Stonebraker2005-qz}. Other systems have a design goal to support both transactional and analytical workloads (mixed workloads) equally well. Examples of such systems are \hyrise~and \hyper, and can be referred to as OLXP systems \cite{Plattner2014-fr}. \oracle~and \saph~also support mixed workloads, and they both strive to keep query transparency; applications using the database should not need to rewrite any queries to benefit from the underlying optimizations \cite{Farber2012-vh, Lahiri2015-mz}.
-
-In Section \ref{sub:Read-Only}, we differentiated between \textit{update based write support} and \textit{direct write support}. In \textit{update based write support}, consistency, correctness, and data freshness can be sacrificed at the benefit of better performance; the system can use immutable structures optimized for read throughput. In such system, updates can periodically be merged into the database by for instance replacing one immutable structure with a more up-to-date version. If columns are partitioned horizontally, a column block can be added one at a time.
-
-\hyper~sacrifices correctness and data freshness by using memory snapshots \cite{Kemper2011-ap}. In this system, there are multiple read-only processes, but only one process for writes. The read-only processes periodically fork the main write process to obtain a memory snapshot of the current state of the database. Hardware and OS assisted replication mechanisms make sure the snapshots are created efficiently and consistent with the transactional data.
+Database consistency, correctness, and data freshness can be sacrificed at the benefit of better performance. For instance, updates can periodically be merged into the database by for instance replacing one immutable structure with a more up-to-date version. \hyper~sacrifices correctness and data freshness by using memory snapshots \cite{Kemper2011-ap}. In this system, there are multiple read-only processes, but only one process for writes. The read-only processes periodically fork the main write process to obtain a memory snapshot of the current state of the database. Hardware and OS assisted replication mechanisms make sure the snapshots are created efficiently and consistent with the transactional data.
 
 \subsection{Delta Store}
 \label{sub:Delta Store}
-
-For systems with \textit{direct write support}, a \textit{delta store} is commonly used to handle inserts, updates, and deletes \cite{Raman2013-em, Stonebraker2005-qz}. This structure is sometimes called an insert buffer or a write-optimized store. A delta store is used because structures optimized for read performance are typically immutable or hard to update. For instance, inserting a new key into a sorted dictionary requires most key/value pairs to be reassigned. Besides, a newly inserted value might cause overflow in a bitpacked column.
-
-\ffigure{img/delta-store-index}{Different index implementation for read-optimized store and delta store in \hyrise. The main partition uses an immutable structure for inverted indexes while the delta partition uses a dynamic tree structure. Courtesy of \cite{Schwalb2014-hn}.}{fig:delta-store-index}
-
-Another immutable structure we have seen in this report is the inverted index structure using a position vector and an offset vector (prefix sum). This structure is effective and space efficient, but cannot be changed once created. This is why \hyrise~uses a tree-based dynamic index structure for the delta store, as seen in Figure \ref{fig:delta-store-index}.
-
+A delta store is commonly used in OLAP systems to accomodate inserts, updates, and deletes \cite{Raman2013-em, Stonebraker2005-qz}. Other names for delta store are insert buffer or write-optimized store. Such store is used because structures optimized for read performance are typically immutable or hard to update. For instance, inserting a new key into a sorted dictionary requires most key/value pairs to be reassigned. Besides, a newly inserted value might cause overflow in a bitpacked column.
 
 Delta stores are periodically merged into the main storage, which is often called the read-optimized store. Such operation can either be triggered when the size of the delta store exceeds a certain threshold or through a periodical trickle operation \cite{Lahiri2015-mz, Farber2012-vh}.
 
-In certain conditions, the delta store can be omitted completely on insertion. \mssql~allows bulk inserts to create columns directly without going via the delta store \cite{Larson2013-mc}.
-
 Many systems disallow updates and instead replace an update operation with one deletion and one insert. Deletes are usually implemented as invalidation bit vectors \cite{Lamb2012-kg, Raman2013-em}, and updates are appended to a suitable structure, like an unsorted B+-tree \cite{Psaroudakis2014-ma}, or an uncompressed column \cite{Farber2012-vh}. \textit{Delete-insert} updates has the benefit of allowing time-travel queries \cite{Plattner2014-fr, Schwalb2014-hn}.
-
 
 \section{Testing OLAP Databases}
 \label{sec:Testing OLAP Databases}
