@@ -61,11 +61,11 @@ When the application is deployed to the model repository, end users can access t
 
 \section{Business Intelligence}
 \label{sec:Business Intelligence}
+We introduce \bi~in this thesis to explain a common use-case where the ability to handle and analyze large datasets is required. \bi~reqirements in \gap~is one of the key motivations to this research. \todo{Should this pitch be used?}
+
 \bi~is normally described as tools and techniques used to transform unstructured data into useful and meaningful information that can be used to support decisions \cite{Wikipedia_contributors2015-ag}. The goal is to allow for easy interpretation and gain insight in the data, such that businesses end up with a competitive market advantage. \bi~software can assist in making a wide range of business decisions, including strategic decisions as goals and product pricing or positioning, as well as operational decisions like priorities.
 
 A challenge in \bi~can be information overflow. To know which information is needed in a \bi~application, decision makers must be aware of which types of decisions they should make, and have a model for each \cite{Ackoff1999-wk}. Since managers rarely fulfil the latter requirement, they add a safety factor and asks the IT department to provide everything. The result is information overload, and the much of the data is irrelevant. 
-
-We introduce \bi~in this thesis to explain a common use-case where the ability to handle and analyze large datasets is required. \bi~reqirements in \gap~is one of the key motivations to this research. \todo{Should this pitch be used?}
 
 \subsection{Data Warehouses}
 \label{sub:Data Warehouses}
@@ -130,23 +130,23 @@ Queries, or requests, in a \bd~application have certain characteristics. First o
 
 \section{Delphi Programming Language}
 \label{sec:Delphi Programming Language}
-The core \gap~source code is written in \delphi. It is, therefore, important to understand how this language works. \delphi~is both a programming language and an integrated development environment \cite{Wikipedia_contributors2016-jk}, however, we will only consider the programming language in this section.
+The core of \gap~is written in \delphi. It is, therefore, important to understand how this language works. \delphi~is both a programming language and an integrated development environment \cite{Wikipedia_contributors2016-jk}, however, we will only consider the programming language in this section.
 
 \delphi~is a strongly typed, high-level, object oriented programming language \cite{noauthor_undated-cn, Wikipedia_contributors2016-jk}. The language supports polymorphism and interfaces, unicode, inline assembly, generic programming, pointer arithmetic, function overloading, and more. Simple preprocessing directives are allowed, but there is no support for macros. The \delphi~compiler is efficient and compiles source code into native binaries for wide variety of platforms, including \textit{Windows} 32- and 64-bit architectures and \textit{OSX} 32-bit architecture.
 
-A program written in \delphi~is composed of different source code units, with two mandatory parts: The \textit{interface}, much like a header in \textit{C}, which declares constants, types, variables, and function signatures, and the \textit{implementation}, which contains the actual executable code \cite{noauthor_undated-pl}. Types, variables, and functions might also be declared in the implementation part. However, these will not be made accessible outside the unit. A unit might also specify an initialization and finalization code chunk to run on unit load and unload respectively. Each unit specifies its dependencies to other units, and the dependency graph is created automatically without using makefiles or similar mechanisms.
+A program written in \delphi~is composed of different source code units, with two mandatory parts: The \textit{interface}, much like a header in \textit{C}, which declares constants, types, variables, and function signatures, and the \textit{implementation}, which contains the actual executable code \cite{noauthor_undated-pl}. Types, variables, and functions might also be declared in the implementation part. However, these will not be made accessible outside the unit. Each unit specifies its dependencies to other units, and the dependency graph is created automatically without using makefiles or similar mechanisms.
 
 \subsection{Delphi Types}
 \label{sub:Delphi Types}
-\delphi~supports a wide range of data types. In the language taxonomy, there is a total of seven different type categories. In this section, we elaborate on the three most important categories.
+\delphi~supports a wide range of data types. In the language taxonomy, there is a total of seven different type categories. In this section, we elaborate on the three most relevant categories for this research.
 
 \subsubsection{Simple Types}
 \label{ssub:Simple Types}
-Simple Types in \delphi, which are sometimes refered to as primitive data types in other programming languages, are divided into two categories: Ordinal and real \cite{noauthor_undated-st}. Simple data types are byte aligned, which means no data type takes less than 1 byte.
+Simple Types in \delphi, which are sometimes referred to as primitive data types in other programming languages, are divided into two categories: Ordinal and real \cite{noauthor_undated-st}. Simple data types are byte aligned, which means no data type takes less than 1 byte.
 
 Ordinal types, which define ordered sets of values, include integer, character, Boolean, enumerated, and subrange types. The different types have different sizes and ranges, for instance, integers can be represented by 32 or 64 bits.
 
-A real data type defines a set of numbers that can be represented with a floating-point notation. Types include single (4 bytes) and double (8 bytes) precision floating point numbers, as well as fixed-point data type for currencies.
+A real data type defines a set of numbers that can be represented with a floating-point notation. Types include single (4 bytes) and double (8 bytes) precision floating point numbers, as well as a fixed-point data type for currencies.
 
 \subsubsection{String Types}
 \label{ssub:String Types}
@@ -159,45 +159,37 @@ There are two major string types in \delphi: \cn{AnsiString} and \cn{UnicodeStri
 \label{ssub:Structured Types}
 For representing more complex data structures, \delphi~provides a type category named \textit{structured types}. This category include set, array, record, file, and class types \cite{noauthor_undated-vu}.
 
-\delphi~has two main array structures: Static and dynamic. Static arrays are allocated with a certain length, and will take up as much memory as the assigned length, even if values are not assigned. Dynamic arrays are more versatile; they are reallocated when you assign a value that has not yet been assigned. Dynamic arrays might also be reallocated using the \fn{SetLength} function. Like strings, dynamic arrays are reference counted, but they do not have compy-on-write semantics.
+\delphi~has two main array structures: Static and dynamic. Static arrays are allocated with a certain length, and will take up as much memory as the assigned length, even if values are not assigned. Dynamic arrays are more versatile; if a value that has not yet been assigned gets assigned, the array is reallocated. Dynamic arrays might also be reallocated using the \fn{SetLength} function. Like strings, dynamic arrays are reference counted, but they do not have copy-on-write semantics.
 
-The \cn{record} type commonly represent a heterogenous set of values. This type has value semantics, i.e. they are not boxed types, which means data is copied on assignment and passed by value as function arguments. Hence, records can both be allocated on the stack and on the heap. Records are byte-aligned by default.
+The \cn{record} type commonly represent a heterogeneous set of values. This type has value semantics, i.e. is not a boxed type, which means data is copied on assignment and passed by value as function arguments. Hence, records can both be allocated on the stack and the heap. Records are byte-aligned by default.
 
-Classes in \delphi~are dynamically allocated blocks of memory whose structure is determined by the class definition \cite{noauthor_undated-un}. Class instances are allocated and deallocated by the memory manager by calling the constructor and destructor respectively. Values are stored in the same order which they are declared in the source code. In addition to the variables, the first 8 bytes of an object points to a virtual method table. Variables of class types are 64-bit pointers and can hold the value \cn{nil}.
+Classes in \delphi~are dynamically allocated blocks of memory whose structure is determined by the class definition \cite{noauthor_undated-un}. Class instances are allocated and deallocated by the memory manager by calling the constructor and destructor respectively. Values are stored in the same order which they are declared in the source code. In addition to the variables, the first 8 bytes of an object points to a virtual method table. Variables of class types are 64-bit pointers and can hold the value \cn{nil}. \todo{Stakkato?}
 
-\subsection{Program Control}
-\label{sub:Program Control}
+
 \subsection{Memory Management}
 \label{sub:Memory Management}
-In \delphi, the memory manager is replacable and dependent on which platform the code is compiled for \cite{noauthor_undated-ys}. Programs compiled for \textit{Windows}, which is the case for \gap, use the \textit{FastMM} memory manager. \textit{FastMM} is optimized for programs that allocate small to medium size blocks and it anticipates future block reallocations which reduces address space fragmentation. Block sizes are rounded up to the nearest 16 bytes. 
-
+In \delphi, the memory manager is replaceable and dependent on which platform the code is compiled for \cite{noauthor_undated-ys}. Programs compiled for \textit{Windows}, which is the case for \gap, use the \textit{FastMM} memory manager. \textit{FastMM} is optimized for programs that allocate small to medium size blocks, and it anticipates future block reallocations which reduce address space fragmentation. Block sizes are rounded up to the nearest 16 bytes. 
 
 \subsection{Calling Conventions and Inlining}
 \label{sub:Calling Conventions and Inlining}
-Parameters are transfered to functions in registers or on the program stack depending on the calling convention of the function and the type of the parameters \cite{noauthor_undated-xi}. Simple data types are passed by value (unless the \cn{var} keyword is specified), while most other values are passed by reference. 
+In \delphi, parameters are transferred to functions in registers, on the program stack, or both \cite{noauthor_undated-xi}. Which one is used is dependent on the calling convention of the function and the type of the parameters. Simple data types, unless the \cn{var} keyword is specified, is passed by value while most other values are passed by reference.
 
-The default calling convention in \delphi~is \textit{register} which uses up to three registers to pass parameters. The remaining parameters, if any, are passed on the program stack. Hence, function calls with less than four parameters are more efficient, since no state must be written to memory.
+The default calling convention is the \textit{register} calling convention. This convention uses up to three registers to pass parameters to functions. The remaining parameters, if any, are passed on the program stack. This convention is the most efficient, as it usually avoids creating a new stack frame \cite{noauthor_undated-xi}. Access methods for class properties must use this convention for this reason.
 
-and some simple functions
-, and the stack 
-
-Generally, simple data types are passed in regi
-
-Value and constant parameters sent to a function is either passed by reference or by value, depending on the size of the variable \cite{noauthor_undated-ae}.
-
-The default calling convention is \texttt{register}, which uses three registers and puts the rest on the stack \cite{noauthor_undated-xi}. This is most efficient, because it does not need to create a stack frame on every function invocation. In addition, all properties contain either none, one, or two parameters, hence are quite efficient. 
-
-Value and constant parameters to a method call is either passed by reference or by value, depending on the size of the variable \cite{noauthor_undated-ae}. By default, the \fn{register} calling convention is used, which means up to three parameters can be stored in registers. Some types, including doubles and 64-bit integers, are always pushed on the stack.
-
-The compiler supports inlining of methods using the \texttt{inline} directive. However, this does not work for virtual methods, across package boundaries \cite{noauthor_undated-rx} \todo{finne mer her}
-
+The \delphi~compiler supports function inlining, which is a measure that may result in faster code at the expense of space \cite{noauthor_undated-rx}. By using the \cn{inline} keyword in a method or function definition, the programmer gives the compiler a hint that the function body should insert directly instead of generating a function call. The keyword is suggestion and there are several conditions where inlining cannot happen. For instance, the compiler will not inline virtual methods or functions containing assembly code.
 
 \subsection{Standard library}
 \label{sub:Standard library}
-Some built-in classes in the standard library include:
-\begin{itemize}
-    \item \cn{TBits} is a built in type that represents a bitmap. It works like an array of booleans, except that it is optimized for speed using assemply code. In addition, it contains an utility method \fn{OpenBit}, which finds the first 0, or the open bit, in the bitmap.
-    \item \cn{TArray} is the generic implementation of \cn{array of *}. It is ref-counted, dynamically allocated using the \texttt{SetLength} function. Its performance is studied in Appendix \ref{app:array-performance}.
-    \item \cn{TList} and \cn{TObjectList} are wrappers for \cn{TArray} that automatically allocates enough space. \cn{TObjectList} is like \cn{TList}, but it assumes ownership over objects and automatically frees objects that are removed from the list.
-\end{itemize}
+\delphi~comes with an extensive standard library. This section lists some built-in classes which we have used in this research.
 
+\subsubsection{TArray}
+\label{ssub:TArray}
+\cn{TArray} is the generic implementation of dynamic arrays (\cn{array of *}), which means it is referrence counted and dynamically allocated. The array is reallocated using the \fn{SetLength} function. Its performance is studied in Appendix \ref{app:array-performance}.
+
+\subsubsection{TList and TObjectList}
+\label{ssub:TList and TObjectList}
+\cn{TList} and \cn{TObjectList} are wrappers for dynamic arrays with built-in memory handling. For instance, elements can be added to the end of the list without any explicit memory reallocation. \cn{TObjectList} is like \cn{TList}, but it assumes ownership over objects and automatically frees objects that are removed from the list. We compare \cn{TList} performance with \cn{TArray} in Appendix \ref{app:array-performance}.
+
+\subsubsection{TBits}
+\label{ssub:TBits}
+\cn{TBits} is a class that represents a bitmap. It has more or less the same interface as a list of booleans, except that this class is optimized for speed and memory using bitwise operations and assembly code. The \fn{OpenBit} method finds the first open bit, or 0, in the bitmap.
