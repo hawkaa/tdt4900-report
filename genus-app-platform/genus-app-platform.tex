@@ -19,9 +19,6 @@ If we relate \gap~to the model layers defined in Section \ref{sub:Models and Mod
 
 \section{Components and Architecture}
 \label{sec:Components and Architecture}
-
- 
-
 \afigure{img/gap-components.png}{Components in \gap. \textit{Genus App Services} connects end user and modeling clients with the underlying database infrastructure, and provides authentication and session management. (Adapted from \cite{Genus_AS2016-kt})}{fig:gap-components}{0.7}
 
 
@@ -88,7 +85,7 @@ The user interface layer fetches data from the data layer through a data source.
 
 \section{Concepts}
 \label{sec:Concepts}
-To better understand how the three application development layers relate to \gap~source code, we elaborate on some important concepts used by the platform.
+To better understand how the three application development layers relate to \gap~source code, we elaborate on some important concepts used in the platform.
 
 \subsection{Object Classes}
 \label{sub:Object Classes}
@@ -106,36 +103,39 @@ An object class property has its own set of security and validation rules, and i
 
 \subsection{Data Source}
 \label{sub:Data Source}
-A \textit{data source} in \gap~is used by effects, tables, and forms to retrieve, create, modify, or delete data. A data source must specify which object class that belongs to the source, whether the data source can have one or multiple instances, and which data should be loaded into the data source. The data in a data source is stored by the clients in main memory. 
 
-Which data that should be loaded into a data source is commonly specified by using a filter. This filter is translated to SQL or other relevant query language and sent to the database infrastructure. Thus, \gap~utilizies efficient database servers, and no more data than needed traverses the network. However, there are no requirements that a data source must load any elements, empty data sources can for instance be used for temporary in-memory processing. \todo{Crap section, rewrite, but important content}
+\todo{content good, language crap. rewrite entire section}
+
+A \textit{data source} in \gap~is used by effects, tables, and forms to retrieve, create, modify, or delete data. A data source must specify which object class that belongs to the source, whether the data source can have one or multiple instances, and which data should be loaded into the data source. The data in a data source is stored by the clients in main memory. \todo{Crap paragraph}
+
+Which data that should be loaded into a data source is commonly specified by using a filter. This filter is translated to SQL or other relevant query language and sent to the database infrastructure. Thus, \gap~utilizies efficient database servers, and no more data than needed traverses the network. However, there are no requirements that a data source must load any elements, empty data sources can for instance be used for temporary in-memory processing. \todo{Crap pargarph, rewrite, but important content}
+
+\subsection{Analysis}
+\label{sub:Analysis}
+\afigure{img/tpc-h-q1-ui.png}{\gap~analysis component. REPLACE IMAGE}{fig:genus-discovery}{0.8}
+The \textit{analysis} component, sometimes refered to as \textit{Genus Discovery}, is the \bd~functionality in \gap. \textit{Genus Discovery} is is very similar to \qlikview, which we studied in \ref{sec:Business Discovery}, but since object classes and relations are already specified in the data layer, no data import script is needed. Like \qlikview, the analysis component allows end users to follow their "information scent" and click their way through the data using an intuitive user interface. An example user interface is seen in Figure \ref{fig:genus-discovery}.
+
+One particular dashboard is referred to as \textit{an analysis}. Each analysis links to a specific data extract, or \textit{data mart}, which we study in the next section.
 
 \subsection{Data Mart}
 \label{sub:Data Mart}
 \afigure{img/gap-data-mart.png}{Data mart for Q1 in \tpch, which contains only the object classes and fields needed to answer that particular query. The mart conforms to a snowfalke schema.}{fig:gap-data-mart}{0.7}
-A data mart defines a data extract that are used by \pn{Genus Discovery}, the integrated \bd~soulution within \gap. A data mart is defined by a set of data sources, and per data source, a list of published fields. Like always, a data source might specify a filter, such that the analyses access only a particular subset of the data.
 
-Besides from the field and data source filtering, a data mart looks very much like like an object diagram, like seen in Figure \ref{fig:gap-data-mart}. Still, there is one important distinction: A data mart must conform to a snowflake schema, that is there can only exist one path through the class diagram. For instance, in Figure \ref{fig:gap-class-diagram}, both customer and suppliers refer to the nation table. In a data mart, there would two nation entitities, a \texttt{CUSTOMER\_NATION} and a \texttt{SUPPLIER\_NATION} table.
+A data mart defines a data extract that is used by the analysis component in \gap. A data mart is specified by a set of data sources, and for each data source, a list of published fields. All data sources in a mart might specify a filter, such that the analyses only access a particular subset of the data. 
 
-\subsection{Analysis}
-\label{sub:Analysis}
-\missingfigure{Genus discovery screenshot}
-\pn{Analysis} is the built-in \bd~solution in the platform, and is ofter referred to as \pn{Genus Discovery}. It is a graphical user interface component that builds on a data mart. Like most similar products, \pn{Genus Discovery} does not rely on aggregated data such that the user can follow his "information scent" and click his way through the data. An example user interface is seen in Figure \ref{fig:genus-discovery}.
+The process and user interface to define a data mart is very similar to defining object classes in an object diagram, like seen in Figure \ref{fig:gap-data-mart}. However, there is one important distinction: A data mart must conform to a snowflake schema, which means there can only exist one path through the class diagram. For instance, in Figure \ref{fig:gap-class-diagram}, both the customer and supplier classes refer to the nation class. In a data mart, there would be two nation entities; one entity for customer nationality and one for supplier nationality.
 
-% Concepts. Ville kanskje samlet task og data source i et eget avsnitt. Task er bare ett av flere konsepter (Web Service, Agent, Rule) som bygger på actions/data sources.
-\subsection{Actions}
-\label{sub:Actions}
-\afigure{img/gap-task.png}{A task definition in \gap. A task may read from and to data sources, enumerate using for or while loops, consume services, import, export, and more.}{fig:gap-task}{1.0}
-An action in \gap~is similar to a procedure or a function in a programming language, and is defined at the logic layer. A task might be triggered manually, or through user interaction in the user interface, or by agents that trigger tasks periodically.
-
-As seen in Figure \ref{fig:gap-task}, the users might specify specific steps that loads data sources, filters, modifies attributes, imports, exports, and more.
-
-\todo{Jobbe litt med tilbakemeldingene til Petter her}
+\subsection{Tasks}
+\label{sub:Tasks}
+\afigure{img/gap-task.png}{A task definition in \gap. A task is composed of actions and effects. This way, a task may read from and to data sources, enumerate using for or while loops, consume services, import, export, and more.}{fig:gap-task}{1.0}
+Tasks in \gap~are similar to a procedure or a function in a programming language, and is defined at the logic layer. Tasks are created through action orchestration where actions and effects are combined to create logic. Action orchestration is done using a user interface, which is depicted in Figure \ref{fig:gap-task}. Tasks use data sources to retrieve, create, modify, or delete data. Tasks might be triggered manually, by user interaction with the user interface, or by agents that run effects periodically. \todo{Still confused on task/effect/action}
 
 \section{Source Code and Classes}
 \label{sec:Source Code and Classes}
-\afigure{img/gap-original-class-diagram.png}{\gap~class diagram}{fig:gap-original-class-diagram}{0.8}
-The core of \gap~is written in \delphi, the programming language we discussed in Section \ref{sec:The Delphi Programming Language}. In this section we list the most important classes in the source code, and how it relates to the concepts from Section \ref{sec:Concepts}. A simplified class diagram is shown in Figure \ref{fig:gap-original-class-diagram}.
+\afigure{img/gap-original-class-diagram.png}{A class diagram containing the most important classes to understand how data is stored and accessed in \gap.}{fig:gap-original-class-diagram}{0.8}
+This section aims to give an overview over the classes in \gap~source code that are used to represent object classes, object instances, and data elements. A class diagram for the classes we discuss is presented in Figure \ref{fig:gap-original-class-diagram}.
+
+The source code of \gap~core is written in \delphi, which we studied in Section \ref{sec:Delphi Programming Language}.
 
 \subsection{GValue}
 \label{sub:GValue}
