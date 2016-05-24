@@ -1,79 +1,114 @@
 \chapter{Genus App Platform}
 \label{chap:gap}
 
-\gap~is a platform for software development that aims to increase developer productivity and simplyfy change management through model-driven development \cite{Genus_AS2016-kt}. End user applications are modeled using a modeling tool instead of being programmed. This enhances collaboration between business and IT, reduces life cycle costs, and lets the application developers focus on business logic instead of implementation details. \gap~uses generic software concepts on a higher level of abstraction than regular programming languages that are precise and non-ambigous \cite{noauthor_undated-qy}. These concepts, and the underlying implementation, have been refined and improved through years of trial and error on real customer use cases. The model contains enough detail to let \gap~run the application.
+This chapter contains a top-down analysis of \gap, containing platform architecture, how applications are developed using the platform, concepts, and source code. The last part of this chapter identifies challenges in Genus App Platform, which motivates the second and primary part of this thesis, which is the design and experiment research.
 
-\gap aims to be a "no code", high-productivity tool.
+We obtained information for this chapter by reading technical briefs, attending platform courses, engaging discussions with \genus' employees, and source code analysis.
 
-Like most tools for model-driven engineering, \gap~spans over three layers of model-driven development: The development of the platform itself is \textit{method engineering}, expert users using the modelling tool work on the \textit{information system development} layer, and the end users are in the \textit{information system} layer.
 
+\clearpage
+\section{Introduction}
+\label{sec:Introduction}
+
+
+\gap~is a platform for software development that aims to increase developer productivity and simplify change management through model-driven development \cite{Genus_AS2016-kt}. \gap~is a "no code" tool, which means end user applications are modeled without writing a single line of code. This approach enhances collaboration between business and IT, reduces life cycle costs, and lets the application developers focus on business logic instead of implementation details. 
+
+\gap~uses generic software concepts on a higher level of abstraction than regular programming languages that are precise and non-ambigous \cite{noauthor_undated-qy}. These concepts, and how they are implemented in the underlying platform, have been refined and improved through years of trial and error on real customer use cases.
+
+If we relate \gap~to the model layers defined in Section \ref{sub:Models and Model Levels}, we see that it spans over three layers: \gap~platform developers work in the \textit{method engineering (ME) layer}, while expert users using the modeling tool to create end user applications work on the \textit{information system development (ISD) layer}. End users are in the \textit{information system (IS) layer}.
 
 \section{Components and Architecture}
 \label{sec:Components and Architecture}
-\afigure{img/gap-components.png}{The components in \gap.}{fig:gap-components}{0.7}
-A system developed with \gap~consists of four major components, as seen in Figure~\ref{fig:gap-components}.
 
-\paragraph{Database Server}
-\label{par:Database Server}
-\gap~stores both the application models and the data for these models in one or more database servers. The platform can extend existing systems by building on top of existing database relations used in other applications, or define a completely new set tables for a new application. Since \gap~handles all integrety checks, validation rules, triggers, duplicates, and foreign keys, these constraints do not need to be defined at the database layer. \genus~has developed adapters, or object relational models, for most major database vendors, including \pn{Oracle Database}, \pn{Microsoft SQL Server}, \pn{IBM DB2}, and \pn{MySQL}. In addition to the traditional relational database providers, \gap~supports NoSQL-databases, REST-services and other APIs. The main point is that it is somewhere the data is persisted.
+ 
 
-\paragraph{Genus App Services}
-\label{par:Genus App Services}
-\pn{Genus App Services} is the server back-end in \gap. It facilitates communication between the client and the database server by multiplexing on application model and different data sets. It also handles authentication and session management. For simplicity and scalability, all \pn{Genus App Services} instances are stateless, which means that even though caching is used to improve performance, all servers may handle all responses. \pn{Genus App Services} is not a single server instance, it can be spread across various nodes, and each node can provide different services. Objects deployed to a node group is processed by any node within that group which provides the requested app service for a give data set.
+\afigure{img/gap-components.png}{Components in \gap. \textit{Genus App Services} connects end user and modeling clients with the underlying database infrastructure, and provides authentication and session management. (Adapted from \cite{Genus_AS2016-kt})}{fig:gap-components}{0.7}
 
-\paragraph{Genus Studio}
-\label{par:Genus Studio}
-\pn{Genus Studio} is the designer tool used by \gap~expert users. This is, in model-driven development terminology, the information system development layer, and the tool is used by modellers. In \pn{Genus Studio}, the customer's application is modelled with business logic using generic software concepts. The software runs on the \pn{Windows} platform.
 
-\paragraph{Genus Desktop and Genus Apps}
-\label{par:Genus Desktop and Genus Apps}
-These are the end user clients for \pn{Windows} and mobile platforms respectively. In model-driven development terminology, this is the information system layer, and is used by the end users. End users access their applications with its respective data set through these clients. One running instance of these clients points to an application model and a dataset. They communicate with \pn{Genus App Services} for authentication and data, and the data received is kept in-memory in the client.
+\gap~consists of five major components, as seen in Figure \ref{fig:gap-components}. These include two backend components, \textit{database infrastructure} and \textit{Genus App Services}, and one component for application modeling, \textit{Genus Studio}. \textit{Genus Desktop} and \textit{Genus Apps} are end user clients for \textit{Windows} and mobile devices respectively.
+
+\subsection{Database Infrastructure}
+\label{sub:Database Infrastructure}
+The database infrastructure stores the application data, as well as the application itself (application model). \gap~connects to a wide variety of data providers, often traditional relational databases such as \pn{Oracle Database}, \pn{Microsoft SQL Server}, and \pn{MySQL}. However, there exists several adapters, or object-relational mappers, for other data sources, including SOAP-based web services. More integrations are planned in the future, which includes adapters for NoSQL databases and RESTful web APIs. 
+
+Applications developed in \gap~may build on already existing data sources or define a new, or partially new, data source to store application data. Since \gap~handles all data integrity with validations, triggers, duplicate handling, and foreign keys, such constraints do not need to be specified and defined in the database infrastructure.
+
+
+\subsection{Genus App Services}
+\label{sub:Genus App Services}
+\pn{Genus App Services} is the main backend component in \gap. It facilitates communication between the clients and the database infrastructure, handles authentication, and manages sessions. \pn{Genus App Services} is made up of several nodes and node groups, where each node in a node group is configured to run one or more services that are required by the application. Requests to \pn{Genus App Services} are sent to the right node group based on application model and application dataset, and to the correct node based on which service is required. 
+
+All nodes in \pn{Genus App Services} are stateless. This principle simplifies horizontal scaling since more nodes may be added if one particular service becomes a bottleneck. Nodes may still use caching mechanisms for performance reasons.
+
+\subsection{Genus Studio}
+\label{sub:Genus Studio}
+\pn{Genus Studio} is the software modeling tool in \gap. In this tool, expert users use models close to the business problem and generic software concepts to create end user applications. In \mde~terminology, this tool belongs to the information system development layer. We study application development in \textit{Genus Studio} in Section \ref{sec:Application Development}.
+
+\textit{Genus Studio} runs on the \textit{Windows} platform.
+
+\subsection{Genus Desktop and Genus Apps}
+\label{sub:Genus Desktop and Genus Apps}
+\textit{Genus Desktop} and \textit{Genus Apps} are the end user clients for \textit{Windows} and mobile platforms respectively. End users access their applications and their respective data using these clients. Instances of these clients point to an application model and a corresponding dataset, and they communicate with \textit{Genus App Services} to receive sufficient model information and data to run the application. 
+
+In \mdd~terminology, \textit{Genus Desktop} and \textit{Genus Apps} correspond to the \textit{Information System Layer}.
 
 \section{Application Development}
 \label{sec:Application Development}
-In this section we study how an application is developed in \gap~using \pn{Genus Studio}. In the platform, there are three  different layers: Data layer, logic layer, and user interface layer.
+\textit{Genus Studio} is the software modeling tool in \gap and is used by expert users to design and develop end user applications. Applications are defined by specifying three different layers: The \textit{data layer}, \textit{logic layer}, and \textit{user interface layer}. These layers are analogous to the information structure, microflow, and form models used by \mendix.
 
 \subsection{Data Layer}
 \label{sub:Data Layer}
-\afigure{img/gap-data-layer.png}{The data layer in \gap. There is built-in security in the framework, in addition to integrity, data validation, and calculation. Courtesy of \cite{Genus_AS2016-kt}.}{fig:gap-data-layer}{0.65}
-In Figure \ref{fig:gap-data-layer}, we see the \gap~data layer. The data layer in an application consists of classes and properties, hierarchies (inheritance) and connections (object class relationships). Schema represents how the object model is represented when exposed through an API, much like an XML schema. Schemas is primarily used to create and consume SOAP based web services that requires XML formatted messages. Each time some data is modified, it is checked for integrety and validity, and new calculations are made for formulas. In addition, events and rules is supported. The data layer is protected by security functionality that limits the access on certain objects or certain properties. The data layer with is modelled in a class diagram, which we will discuss in greater detail in Section \ref{sec:Concepts}.
+\afigure{img/gap-data-layer.png}{The data layer in \gap. This layer defines object classes, object relationships, data integrety and calculation, and security. (Adapted from \cite{Genus_AS2016-kt})}{fig:gap-data-layer}{0.8}
 
-Hierachies and connections works much like foreign keys and relations in a traditional database; it describes how data is connected.
+One of the layers in \gap~application development is the \textit{data layer}, which is seen in Figure \ref{fig:gap-data-layer}. This layer contains object class definitions with properties, as well as hierarchies and connections to explain how object classes relate to each other. The data layer specifies how data is fetched and stored in the underlying database infrastructure, for instance by specifying database connection strings and table names. Schemas in the data layer represents how the object model is represented when exposed through an API, which are primarily used to create and consume SOAP based web services.
 
-This layer, as well as storing data, defines how and on which format data is persisted in the various database and web service backends.
+The data layer provides security functionality. This feature limits access to certain objects or certain properties. Other core functionality specified in the data layer include integrity and validity checks, formulas, triggers, and events.
+
+The data layer with is modelled in a class diagram, which we will discuss in greater detail in Section \ref{sec:Concepts}.
 
 \subsection{Logic Layer}
 \label{sub:Logic Layer}
-\afigure{img/gap-logic-layer.png}{Courtesy of \cite{Genus_AS2016-kt}.}{fig:gap-logic-layer}{1.0}
-The main component in the logic layer is \textit{Action Orchestration}, where the logic is defined, or orchestrated, through programming launguage-like constructs, such as loops, ifs, and exceptions. There is a number of different actions, including object create, object delete, object modification, file creation, and IO operations like writing to files and consuming REST services. These building blocks are referred to ass \textit{effects}, and the process of assembling these building blocks is refered to as \textit{action orchestration}. The Web Service is included in the figure because web services can be interacted with in an effect. A task, defined by an action orchestration, can be run manually, but is more commonly triggered by elements in the user interface level, like a button press, or by other events like recurring events triggered by a timer. The logic layer is depicted in Figure \ref{fig:gap-logic-layer}.
+% Logic layer: Vi kaller byggeklossene for Effects (siden de har «side»-effekter) og prosessen med å sette dem sammen for Action Orchestration.
 
+% skriv om denne etterpå
+\afigure{img/gap-logic-layer.png}{The logic layer in \gap. Here, effects are specified through action orchestration. Effects contain programming-like constructs and is composed of a wide variety of actions. (Adapted from \cite{Genus_AS2016-kt})}{fig:gap-logic-layer}{1.0}
 
+The \textit{logic layer} in \gap~lets the modeller extend the application with custom logic. The main components in this layer are \textit{effects}, which is analogous to the microflows in \mendix.  The logic layer is shown in \ref{fig:gap-logic-layer}.
+
+Effects are created through \textit{Action Orchestration}, which lets the system developer specify logic through programming language-like constructs, such as loops, conditional statements, and exceptions. There is a large number of different actions that might be included in an orchestration, which include object creation, modification, and delete, file handling, and consuming web services. There are several ways to run an effect; for instance through clicks and interaction in the user interface, recurring events triggered by a timer, or triggers caused by changes in the data.
 
 %For our research, the most important parts of the logic layer is the object fetching and manipulation, as well as the data aggregate generation. We study this later in the thesis.
 
 \subsection{User Interface Layer}
 \label{sub:User Interface Layer}
-\afigure{img/gap-user-interface-layer.png}{Courtesy of \cite{Genus_AS2016-kt}.}{fig:gap-user-interface-layer}{1.0}
-The user interface layer, shown in Figure \ref{fig:gap-user-interface-layer}, defines a number of UI components to design an application. The two major components are form views and tables. A view interacts with the logic layer through invoking tasks. One form is designed for either \pn{Genus Desktop} or \pn{Genus Apps}.
+\afigure{img/gap-user-interface-layer.png}{The user interface layer in \gap. In this layer, forms and tables are specified, with a wide variety of available GUI elements. (Adapted from \cite{Genus_AS2016-kt})}{fig:gap-user-interface-layer}{1.0}
+In the \textit{user interface layer}, the UI made available to the end users are specified. The main components in this layer are the form and table views. Form views allow the modeler to specify custom layouts and include a wide variety of different GUI elements. Supported elements, which is seen in Figure \ref{fig:gap-user-interface-layer}, include text boxes, buttons, calendars, maps, and more. A form is designed for either \textit{Genus Desktop} or \textit{Genus Apps}. 
+
+The user interface layer fetches data from the data layer through a data source. The data sources defined for a form or table specifies which data that are available in the user interface. The GUI may interact with the logic layer through user interaction, such as button clicks. \todo{Horrible quality on this section}
 
 \section{Concepts}
 \label{sec:Concepts}
-In this section we list some important concepts used in \gap.
+To better understand how the three application development layers relate to \gap~source code, we elaborate on some important concepts used by the platform.
 
 \subsection{Object Classes}
 \label{sub:Object Classes}
-\afigure{img/gap-class-diagram.png}{Class diagram from \textit{Genus Studio} for the \tpch. Blue units represent object domain compositions which means they are mapped to a database table, and white units represent code domain compositions that are part of the application.}{fig:gap-class-diagram}{1.0}
-An object class in \gap~is the hybrid between a table definition in a database and a class in a programming language, and is defined in the data layer. An object class, or a composition, includes several properties (see Section \ref{sec:Object Class Properties}), information on where the data is provided, integrety constraints, security settings, and other display options. An object class can either be based on one or more tables in a database, which we refer to as the \textit{object domain}, or based on a set of values modelled into the application, which is the \textit{code domain}. The objects are defined in a class diagram, which is illustrated in Figure \ref{fig:gap-class-diagram}.
+\afigure{img/gap-class-diagram.png}{Class diagram from \textit{Genus Studio} for the \tpch. Blue units represent object domain compositions which means they are mapped to the underlying database infrastructure. White units represent code domain compositions where values are "hard coded" and fetched from the application model itself.}{fig:gap-class-diagram}{1.0}
+An object class in \gap~is a hybrid between a table definition in a relational database and a class in a programming language. An object class, sometimes referred to a composition, specifies several class properties (Section \ref{sub:Object Class Properties}), security settings, integrity constraints, formulas, and other display options. An object class can either be in the \textit{object domain} or the \textit{code domain}. Compositions belonging to the object domain must specify how it relates to the underlying database infrastructure, for instance by providing a database connection string and table name, or an XML schema if the data is fetched using a SOAP-based web service. Object classes in the code domain does not have this ability, since these values are "hard coded" into the application model, and not fetched from any data source.
+
+Object classes are defined in the application data layer, and specified in a class diagram, which is depicted in Figure \ref{fig:gap-class-diagram}.
+
 
 \subsection{Object Class Properties}
 \label{sub:Object Class Properties}
-An object class is composed of one or more properties. Such properties can be simple data types, like integers and strings, or a function type, which calculates their value based on other properties in the class. In addition to the type definition, all properties also define a data interpretation. There exist a number of such interpretations, for instance \textit{file}, \textit{password}, \textit{date format}, and \textit{color}. A data interpretation can also be another object class, commonly used on foreign key fields, which creates a relation between the object classes. An object class property defines its own set of security rules, as well as validation and display options.
+An object class is composed of one or more properties. Such properties can be simple data types, like integers and strings, or a function type, which calculates their value based on other properties in the class. In addition to specifying the basic data type that holds the value, properties also define an interpretation of the data. There exists many such interpretations in \gap, including \textit{file}, \textit{password}, \textit{date format}, and \textit{color}. The data interpretation may also be another object class, which is used on foreign key fields. This creates relationships between object classes in the data layer.
+
+An object class property has its own set of security and validation rules, and includes display options like formatting and screen tip.
 
 \subsection{Data Source}
 \label{sub:Data Source}
-A data source is an important concept in \gap, as it is used by tasks and user interface components to define which data should be accessible. Tasks and user interface components define one or more data sources that will provide data from the database, if needed. A data source contains either one object instance or multiple instances of an object class. Data from the database are normally brought up from the database at load time for the specific task or form. A data source stores its data in-memory. Empty data sources might also be defined such that objects can be moved from one source to another, or created, as a part of a task or on a form.
+A \textit{data source} in \gap~is used by effects, tables, and forms to retrieve, create, modify, or delete data. A data source must specify which object class that belongs to the source, whether the data source can have one or multiple instances, and which data should be loaded into the data source. The data in a data source is stored by the clients in main memory. 
 
-A data source might define a filter on which objects that should be loaded. This is directly translated to SQL, such that a data source will only receive objects that conforms to the filter.
+Which data that should be loaded into a data source is commonly specified by using a filter. This filter is translated to SQL or other relevant query language and sent to the database infrastructure. Thus, \gap~utilizies efficient database servers, and no more data than needed traverses the network. However, there are no requirements that a data source must load any elements, empty data sources can for instance be used for temporary in-memory processing. \todo{Crap section, rewrite, but important content}
 
 \subsection{Data Mart}
 \label{sub:Data Mart}
@@ -87,6 +122,7 @@ Besides from the field and data source filtering, a data mart looks very much li
 \missingfigure{Genus discovery screenshot}
 \pn{Analysis} is the built-in \bd~solution in the platform, and is ofter referred to as \pn{Genus Discovery}. It is a graphical user interface component that builds on a data mart. Like most similar products, \pn{Genus Discovery} does not rely on aggregated data such that the user can follow his "information scent" and click his way through the data. An example user interface is seen in Figure \ref{fig:genus-discovery}.
 
+% Concepts. Ville kanskje samlet task og data source i et eget avsnitt. Task er bare ett av flere konsepter (Web Service, Agent, Rule) som bygger på actions/data sources.
 \subsection{Actions}
 \label{sub:Actions}
 \afigure{img/gap-task.png}{A task definition in \gap. A task may read from and to data sources, enumerate using for or while loops, consume services, import, export, and more.}{fig:gap-task}{1.0}

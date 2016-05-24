@@ -2,13 +2,13 @@
 \label{chap:background}
 This chapter introduce important background theory relevant to this research. First, we introduce \mde. Then, to introduce a use-case where handling and analyzis of large datasets is required, we give a brief introduction to \bi~and \bd. Last, we study \delphi, the programming language used in \gap~core.
 
-\todo{Is this a good pitch on why we introduce bi and bd?}
+\todo{Is this a good pitch on why we introduce bi and bd? Mention that gap needs bi?}
 \clearpage
 
 
 \section{Model-Driven Engineering}
 \label{sec:Model-Driven Engineering}
-Since the introduction of computers, researchers have been working to raise the abstraction level at which software developers create programs \cite{Atkinson2003-wr}. One example of this is compilers and how they programmers no longer need to know assembly language for the different processor architectures. Now, object-oriented programming languages enable software developers to create own abstractions and solve more complex problems than ever. \mde~is a continuation of this trend, where the goal is to automate many of the complex, but routine, programming tasks. Such tasks include interoperability, distribution, and persistence. One of the key technological foundations of \mde~is support for visual modeling.
+Since the introduction of computers, researchers have been working to raise the abstraction level at which software developers create programs \cite{Atkinson2003-wr}. One example of this is compilers and how programmers no longer need to know assembly language for the different processor architectures. Now, object-oriented programming languages enable software developers to create own abstractions and solve more complex problems than ever. \mde~is a continuation of this trend, where the goal is to automate many of the complex, but routine, programming tasks. Such tasks include interoperability, distribution, and persistence. One of the key technological foundations of \mde~is support for visual modeling.
 
 \mde~research has identified that there is a gap between the problem domain and the software implementation domain \cite{France2007-ae}. Thus, most research focuses on bridging this gap. This process requires systematic experimentation and accumulation of experience, and new techniques should strive to reduce unecessary complexities.
 
@@ -18,7 +18,7 @@ The ability to express models with concepts that are closer to the problem domai
     \item In the long term, \mdd~supporting infrastructures are more maintainable, and it takes a longer time before the artifact becomes obsolete.
 \end{itemize}
 
-A common discussion topic in the field of \mde~is the efficiency of the modeled programs. Criticism has pointed out that machines cannot optimize code better than a creative human being with clever tricks \cite{Selic2003-qa}. However, it is widely known that modern compilers outperform most system developers, and it does so more reliably. The same observation can be done for most \mdd~supporting infrastructures. Current tools generate programs that are within 5 to 15 percent effective as hand-crafted systems, both regarding memory consumption and performance. However, there are still critical cases where manually written code significantly outperforms \mde, which has often been used as an excuse to discard an \mdd~approach altogether.
+A common discussion topic in the field of \mde~is the efficiency of the modeled programs. Criticism has pointed out that machines cannot optimize code better than a creative human being with clever tricks \cite{Selic2003-qa}. However, it is widely known that modern compilers outperform most system developers, and it does so more reliably. The same observation can be done for most \mdd~supporting infrastructures. Current tools generate programs that are within 5 to 15 percent effective as hand-crafted systems, both regarding memory consumption and performance. However, there are still critical cases where manually written code significantly outperforms \mde, which has often been used as an excuse to discard an \mdd~approach altogether. \todo{We have identified such critical case}
 
 \subsection{Models and Model Levels}
 \label{sub:Models and Model Levels}
@@ -46,7 +46,7 @@ Research on \mde~has resulted in several tools and methods. Some of these build 
 
 Applications in \mendix~are designed using three main models: An \textit{information structure model}, which defines the main data objects in the application, a \textit{microflow model}, which defines logic, and a \textit{form model}, which defines system user interface. Applications are designed in a modeling tool and deployed to a model repository, where they become available for end users.
 
-\afigure{img/mendix-obj.png}{Class diagram in \mendix. (Adapted from \cite{Henkel2010-sy})}{fig:mendix-obj}{0.7}
+\afigure{img/mendix-obj.png}{Class diagram in \mendix. (Adapted from \cite{Henkel2010-sy})}{fig:mendix-obj}{0.8}
 The \textit{information structure model} defines the main data structure in an application, and is designed in an UML-like class diagram. As seen in Figure \ref{fig:mendix-obj}, this model does not only suport class definitions with properties, but also relations between objects. This model may also define validation rules and events which trigger on object creation, modification, and deletion.
 
 \afigure{img/mendix-microflow.png}{A microflow in \mendix. (Adapted from \cite{Henkel2010-sy})}{fig:mendix-microflow}{0.8}
