@@ -23,9 +23,9 @@ A common discussion topic in the field of \mde~is the efficiency of the modeled 
 \subsection{Models and Model Levels}
 \label{sub:Models and Model Levels}
 \afigure{img/uml-mof.png}{Traditional \mdd~with Unified Modeling Language (UML) and Meta-Object Factory (MOF) model levels. (Adapted from \cite{Atkinson2003-wr})}{fig:uml-mof}{0.7}
-Central in \mde~is the use of models. According to Leppänen M, a model is a thing that is used to help the understanding of some other things \cite{Leppanen2006-ay}. A good model must appeal to our intuition, and it should reduce the amount of intellectual effort required to understand \cite{Selic2003-qa}. In the field of \mdd, there are multiple model levels, where a model on a higher level describes/prescribes models on the next lower level. 
+Central in \mde~is the use of models. According to Leppänen M, a model is a thing that is used to help the understanding of some other things \cite{Leppanen2006-ay}. A good model must appeal to our intuition, and it should reduce the amount of intellectual effort required to understand what the model represents \cite{Selic2003-qa}. In the field of \mdd, there are multiple model levels, where a model on a higher level describes/prescribes models on the next lower level. 
 
-Leppänen M distinguish between instance models, type models and meta models \cite{Leppanen2006-ay}. An \textit{instance model} is a model which contains concepts that are instances of some other model, the \textit{type model}. Analogously, the \textit{type model} is an instance of the \textit{meta model}. The latter is used to enable understanding, communication, analysis and design of models. They have an instanceOf relationship. Model levels are composed of models that comprise concepts on the same level. Here there are four: instance level, type level, meta level, and meta-meta level.
+Leppänen M distinguish between instance models, type models and meta models \cite{Leppanen2006-ay}. An \textit{instance model} is a model which contains concepts that are instances of some other model, the \textit{type model}. Analogously, the \textit{type model} is an instance of the \textit{meta model}. The latter is used to enable understanding, communication, analysis and design of models. \textit{Model levels} are composed of models that comprise concepts on the same level. There are four model levels: instance level, type level, meta level, and meta-meta level.
 
 Depending on the research field and what is being represented, the four model levels have different names and interpretation \cite{Leppanen2006-ay}. In information processing, the layers are:
 \begin{itemize}
@@ -50,13 +50,12 @@ Applications in \mendix~are designed using three main models: An \textit{informa
 The \textit{information structure model} defines the main data structure in an application, and is designed in an UML-like class diagram. As seen in Figure \ref{fig:mendix-obj}, this model does not only suport class definitions with properties, but also relations between objects. This model may also define validation rules and events which trigger on object creation, modification, and deletion.
 
 \afigure{img/mendix-microflow.png}{A microflow in \mendix. (Adapted from \cite{Henkel2010-sy})}{fig:mendix-microflow}{0.8}
-In \mendix, the \textit{microflow model} define complex logic in an application and allows the designer to extend the system with custom behaviour. Microflows may change objects, control how and when forms are displayed, call custom Java code, or integrate with external web services. Microflows are designed in a visual editor which we see in Figure \ref{fig:mendix-microflow}.
-
+In \mendix, the \textit{microflow model} define complex logic in an application and allows the designer to extend the system with custom behaviour. Microflows may change objects, control how and when forms are displayed, call custom Java code, or integrate with external web services. Microflows are designed in a visual editor which we see in Figure \ref{fig:mendix-microflow}. 
 
 \afigure{img/mendix-form.png}{Form designer in \mendix. (Adapted from \cite{Henkel2010-sy})}{fig:mendix-form}{1.0}
-Forms and other graphical user elements are designed using a form editing tool, similar to those found in popular programming IDEs. The form editing tool is depicted in Figure \ref{fig:mendix-form}. \mendix~supports basic input field, drop-down lists, tables, and more. A form can be associated with objects, other forms, and microflows. 
+Forms and other graphical user elements are designed using a form editing tool, similar to those found in popular programming IDEs. The form editing tool is depicted in Figure \ref{fig:mendix-form}. \mendix~supports basic input fields, drop-down lists, tables, and more. A form can be associated with objects, other forms, and microflows. 
 
-When the application is deployed to the model repository, end users can access the system using a web browser. When a web page is requested from the server, the HTML and JavaScript required showing the page is created and sent to the model. This interpreted approach is different from other \mde~tools, like OptimalJ, which relies heavily on code generation.
+When the application is deployed to the model repository, end users can access the system using a web browser. When a web page is requested from the server, the HTML and JavaScript required showing the page is created and sent to the model. This interpreted approach is different from other \mde~tools, like OptimalJ, which relies heavily on code generation. \todo{Important content, but rewrite paragaph}
 
 \gap~has many similarities with \mendix. We study \gap~in Chapter \ref{chap:gap}.
 
@@ -131,77 +130,67 @@ Queries, or requests, in a \bd~application have certain characteristics. First o
 
 \section{Delphi Programming Language}
 \label{sec:Delphi Programming Language}
-Since the system we will study in this thesis, the \gap, we need to study some background theory of how this language works. \delphi~is both a programming language and an integrated development environment \cite{Wikipedia_contributors2016-jk}, but we will only consider the programming language in this section. The language is an \name{Object Pascal} dialect and compiles into native code for several platforms, including \name{OSX} 32-bit architecture and \name{Windows} 32- and 64-bit architectures. It has a more efficient compiler than most languages. Delphi is classified as a strongly typed high-level language. Delphi supports object oriented design with polymorphism and interfaces.
+The core \gap~source code is written in \delphi. It is, therefore, important to understand how this language works. \delphi~is both a programming language and an integrated development environment \cite{Wikipedia_contributors2016-jk}, however, we will only consider the programming language in this section.
 
-Delphi support strings with reference counting \cite{Wikipedia_contributors2016-jk}, and the memory for such is managed without programmer intervention. It supports unicode strings.
+\delphi~is a strongly typed, high-level, object oriented programming language \cite{noauthor_undated-cn, Wikipedia_contributors2016-jk}. The language supports polymorphism and interfaces, unicode, inline assembly, generic programming, pointer arithmetic, function overloading, and more. Simple preprocessing directives are allowed, but there is no support for macros. The \delphi~compiler is efficient and compiles source code into native binaries for wide variety of platforms, including \textit{Windows} 32- and 64-bit architectures and \textit{OSX} 32-bit architecture.
 
-In 2009, generics and full unicode support was introduced.
-
-A program in \delphi~is composed of different units, with two mandatory parts: The interface, much like a header in C, that declares constants, types, variables, and functions that are available from the outside, and the implementation, that contains the actual code \cite{noauthor_undated-pl}. Types, variables, etc. that are declared in the implentation part only are inaccesible outside the unit. In addition, each unit might specify an initialization and finalization code chunk to run on unit load and unit unload respectively. One unit may depend on other units by specifying the dependencies in the \texttt{uses}. Hence, the dependency graph is automatically created and no makefiles are needed. Cricular dependencies cause compilation error, and are not resolved automatically \cite{noauthor_undated-sp}.
-
-It supports preprocessing directives, but not macros.
-
-\delphi~has operators for referencing and dereferencing values, and supports basic pointer arithmetic \cite{noauthor_undated-cn}.
+A program written in \delphi~is composed of different source code units, with two mandatory parts: The \textit{interface}, much like a header in \textit{C}, which declares constants, types, variables, and function signatures, and the \textit{implementation}, which contains the actual executable code \cite{noauthor_undated-pl}. Types, variables, and functions might also be declared in the implementation part. However, these will not be made accessible outside the unit. A unit might also specify an initialization and finalization code chunk to run on unit load and unload respectively. Each unit specifies its dependencies to other units, and the dependency graph is created automatically without using makefiles or similar mechanisms.
 
 \subsection{Delphi Types}
 \label{sub:Delphi Types}
+\delphi~supports a wide range of data types. In the language taxonomy, there is a total of seven different type categories. In this section, we elaborate on the three most important categories.
 
-Simple types can be divided into two categories: Ordinal and real \cite{noauthor_undated-st}. Integer types is one of the ordinal value types, and have both platform-dependend and platform-independent implementations. Platform-dependent is always encouraged due to performance benefits.
+\subsubsection{Simple Types}
+\label{ssub:Simple Types}
+Simple Types in \delphi, which are sometimes refered to as primitive data types in other programming languages, are divided into two categories: Ordinal and real \cite{noauthor_undated-st}. Simple data types are byte aligned, which means no data type takes less than 1 byte.
+
+Ordinal types, which define ordered sets of values, include integer, character, Boolean, enumerated, and subrange types. The different types have different sizes and ranges, for instance, integers can be represented by 32 or 64 bits.
+
+A real data type defines a set of numbers that can be represented with a floating-point notation. Types include single (4 bytes) and double (8 bytes) precision floating point numbers, as well as fixed-point data type for currencies.
 
 \subsubsection{String Types}
 \label{ssub:String Types}
-\afigure{img/delphi-strings.png}{Strings in \delphi}{fig:delphi-strings}{0.8}
-There are two major character implementations, \cn{AnsiChar} and \cn{WideChar}, with 1 or 2 bytes each respectively. The latter is default.
+\afigure{img/delphi-strings.png}{String structure in \delphi. All strings are heap allocated, although string pointers may exist both in the stack and on the heap.}{fig:delphi-strings}{1.0}
+\delphi~has string support built into the language. Strings are reference counted and dynamically allocated on the heap by the compiler \cite{Wikipedia_contributors2016-jk}. A string variable is a pointer to a structure that contains a 32-bit length indicator, a 32-bit reference count, a 16-bit data length indicating the number of bytes per character, and a 16-bit code page \cite{noauthor_undated-cp}. This is depicted in Figure \ref{fig:delphi-strings}. There is copy-on-write semantics if one variable that references the string changes the contents of the string.
 
-There is support for both single and double precision floating point numbers.
-
-There are both Ansi and Unicode strings, where the default is Unicode \cite{noauthor_undated-cp}. There is support for both UTF-8 and UTF-16 encodings. The latter is default. Both strings are dynamically allocated, and is limited by the available memory. They are allocated on the heap. A string variable is a pointer with reference counting, length, data length and code page. The compiler tries to exploit the nature of the reference counting, and it has copy-on-write semantics if one reference changes the string. Unicode strings defaults to UTF-16. These string types are not null-terminated. Unicode strings are also managed automatically by the compiler.
+There are two major string types in \delphi: \cn{AnsiString} and \cn{UnicodeString}. \cn{UnicodeString}, which is the default, supports both UTF-8 and UTF-16 encodings, where UTF-16 is default on the \textit{Windows} platform. UTF-16 stores each character with two or four bytes, while UTF-8 stores the first 128 ASCII characters with only one byte. Conversions between string types and encodings happen implicitly.
 
 \subsubsection{Structured Types}
 \label{ssub:Structured Types}
-Commonly used in \delphi. A structured type can be a set, array, record, file, class, and more \cite{noauthor_undated-vu}. A structure is by default byte-aligned.
+For representing more complex data structures, \delphi~provides a type category named \textit{structured types}. This category include set, array, record, file, and class types \cite{noauthor_undated-vu}.
 
-One such structured type, is the array. An array can be static or dynamic. The static arrays are allocated with a certain length, and will take all the space, even if values are not assigned to all indexes. The dynamic arrays are reallocated when you assign a value that is not yet been assigned or you call the \fn{SetLength} method on them. The arrays are ref-counted the same way as a string, but they are not copy-on-write.
+\delphi~has two main array structures: Static and dynamic. Static arrays are allocated with a certain length, and will take up as much memory as the assigned length, even if values are not assigned. Dynamic arrays are more versatile; they are reallocated when you assign a value that has not yet been assigned. Dynamic arrays might also be reallocated using the \fn{SetLength} function. Like strings, dynamic arrays are reference counted, but they do not have compy-on-write semantics.
 
-Another type, the \cn{record} type, commonly represents a heterogenous set of values. A record might also have a variant part, which is not allowed in classes. Records are allocated on the stack by default and has value semantics, like copy on assignment, passed by value etc.
+The \cn{record} type commonly represent a heterogenous set of values. This type has value semantics, i.e. they are not boxed types, which means data is copied on assignment and passed by value as function arguments. Hence, records can both be allocated on the stack and on the heap. Records are byte-aligned by default.
 
-\subsubsection{Pointer Types}
-\label{ssub:Pointer Types}
-A pointer is a 64-bit value on a 64-bit architecture. Pointers are typed to indicate which type they hold, much like C and C++.
-
-Both function and method pointers are supported.
-
-Delphi supports variant types for types that cannot be determined at compile time \cite{noauthor_undated-mx}. Althogh variants are powerful, they consume more memory and are slower than statically bound data types, and errors that earlier were caught compile time, will now happen at run-time.
-
-Variables are allocated on the stack by default, but can also be dynamically created on the heap \cite{noauthor_undated-lw}.
-
-\subsection{Memory Management}
-\label{sub:Memory Management}
-The memory manager is different for different platforms \cite{noauthor_undated-ys}. On Windows, which is the platform used by \gap, the \name{FastMM} memory manager is used. This memory manager is optimized for programs that allocate small to medium size blocks. Block size are rounded up to the nearest 16 bytes. It anticipates future block reallocations which reduces address space fragmentation.
-
-Arrays are also ref-counted.
-
-Classes are 64-bit pointers. Variables are held in the same order which they are declared on the stack. On a 64-bit platform, the first 8 bytes are pointers to a virtual method table.
-
-\subsection{Functions and Methods}
-\label{sub:Functions and Methods}
-The default calling convention is \texttt{register}, which uses three registers and puts the rest on the stack \cite{noauthor_undated-xi}. This is most efficient, because it does not need to create a stack frame on every function invocation. In addition, all properties contain either none, one, or two parameters, hence are quite efficient. 
-
-Function overloading is supported.
-
-\subsection{Inlining}
-\label{sub:Inlining}
-The compiler supports inlining of methods using the \texttt{inline} directive. However, this does not work for virtual methods, across package boundaries \cite{noauthor_undated-rx} \todo{finne mer her}
+Classes in \delphi~are dynamically allocated blocks of memory whose structure is determined by the class definition \cite{noauthor_undated-un}. Class instances are allocated and deallocated by the memory manager by calling the constructor and destructor respectively. Values are stored in the same order which they are declared in the source code. In addition to the variables, the first 8 bytes of an object points to a virtual method table. Variables of class types are 64-bit pointers and can hold the value \cn{nil}.
 
 \subsection{Program Control}
 \label{sub:Program Control}
+\subsection{Memory Management}
+\label{sub:Memory Management}
+In \delphi, the memory manager is replacable and dependent on which platform the code is compiled for \cite{noauthor_undated-ys}. Programs compiled for \textit{Windows}, which is the case for \gap, use the \textit{FastMM} memory manager. \textit{FastMM} is optimized for programs that allocate small to medium size blocks and it anticipates future block reallocations which reduces address space fragmentation. Block sizes are rounded up to the nearest 16 bytes. 
+
+
+\subsection{Calling Conventions and Inlining}
+\label{sub:Calling Conventions and Inlining}
+Parameters are transfered to functions in registers or on the program stack depending on the calling convention of the function and the type of the parameters \cite{noauthor_undated-xi}. Simple data types are passed by value (unless the \cn{var} keyword is specified), while most other values are passed by reference. 
+
+The default calling convention in \delphi~is \textit{register} which uses up to three registers to pass parameters. The remaining parameters, if any, are passed on the program stack. Hence, function calls with less than four parameters are more efficient, since no state must be written to memory.
+
+and some simple functions
+, and the stack 
+
+Generally, simple data types are passed in regi
+
+Value and constant parameters sent to a function is either passed by reference or by value, depending on the size of the variable \cite{noauthor_undated-ae}.
+
+The default calling convention is \texttt{register}, which uses three registers and puts the rest on the stack \cite{noauthor_undated-xi}. This is most efficient, because it does not need to create a stack frame on every function invocation. In addition, all properties contain either none, one, or two parameters, hence are quite efficient. 
+
 Value and constant parameters to a method call is either passed by reference or by value, depending on the size of the variable \cite{noauthor_undated-ae}. By default, the \fn{register} calling convention is used, which means up to three parameters can be stored in registers. Some types, including doubles and 64-bit integers, are always pushed on the stack.
 
-\subsection{Misc}
-\label{sec:Misc}
-\delphi~is object oriented, and supports interfaces, inheritance, polymorphism and generics. In addition, inline assembly is supported, where \delphi~identifiers are allowed \cite{noauthor_undated-px}.
+The compiler supports inlining of methods using the \texttt{inline} directive. However, this does not work for virtual methods, across package boundaries \cite{noauthor_undated-rx} \todo{finne mer her}
 
-There is support for Generics, where things can be parameterized by type \cite{noauthor_undated-sx}. Used to decouple an algorithm from its data structure. On an instantiation, it results in a code duplication.
 
 \subsection{Standard library}
 \label{sub:Standard library}

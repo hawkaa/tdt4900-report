@@ -1,10 +1,12 @@
-\chapter{Implementation Part IV: Column Operations}
+\chapter{Part IV: Column Operations}
 \label{chap:operations}
 
 \afigure{img/memory-performance-graph}{As memory footprint goes down, operation time increases.}{fig:memory-performance-graph}{0.6} 
 So far, we have seen that our implementation has given drastical reduction in memory usage and load time. In general, reduced memory usage normally results in higher program performance. However, we have not yet utilized our new column structure. In Figure \ref{fig:memory-performance-graph}, we see that both lookup index generation and source measure lookup operations has been severly slowed down, with the latter has been slowed down with one order of magnitude.
 
 In this chapter, we implement these operations within the columns to use the potential in the storage format and to avoid creation and deletion of \cn{GValue}s in tight loops. We also create and study the performance impact filtering and index creation mechanisms within the columns.
+
+\clearpage
 
 \section{Source Measure Lookup}
 \label{sec:Source Measure Lookup}

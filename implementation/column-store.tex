@@ -1,4 +1,4 @@
-\chapter{Implementation Part I: The Column Store}
+\chapter{Part I: Column Store}
 \label{chap:column-store}
 % Tell how we want to reduce memory and how database technology comes to the rescue
 For the first part of this thesis, our goal is to reduce memory footprint such that client memory requirements can be relaxed. Reduced memory usage are also likely to increase performance due to increased data locality and the cost of memory management. Inspired by the challenges with the current solution which we saw in Section \ref{sec:Challenges with the current solution}, we proceed to use techniques from the field of Database Technology to reduce memory footprint and increase data locality.
@@ -9,6 +9,7 @@ We choose to implement a column store. The reason for this is two-fold. First, a
 % Tell why we didn't pick a row store
 We believe that transactional processing, where a row store is more suited, will not suffer from using a column-store. On create, update, and delete operations, there constraint checks, validation and memory operations that will make the overhead looking up in multiple columns neglible. Last, row stores mighht rely on indexes that are costly to maintain. Column-stores normally do not need such indexes, because operations on entire columns are efficient \cite{Plattner2014-fr}
 
+\clearpage
 
 \section{CompositionValueCollection}
 \label{sec:CompositionValueCollection}
