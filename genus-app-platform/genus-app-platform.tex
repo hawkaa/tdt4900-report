@@ -133,67 +133,57 @@ Tasks in \gap~are similar to a procedure or a function in a programming language
 \section{Source Code and Classes}
 \label{sec:Source Code and Classes}
 \afigure{img/gap-original-class-diagram.png}{A class diagram containing the most important classes to understand how data is stored and accessed in \gap.}{fig:gap-original-class-diagram}{0.8}
-This section aims to give an overview over the classes in \gap~source code that are used to represent object classes, object instances, and data elements. A class diagram for the classes we discuss is presented in Figure \ref{fig:gap-original-class-diagram}.
+This section aims to give an overview over the classes in \gap~source code that are used to represent object classes, object class properties, object instances, and data elements. A class diagram for the classes we discuss is presented in Figure \ref{fig:gap-original-class-diagram}.
 
 The source code of \gap~core is written in \delphi, which we studied in Section \ref{sec:Delphi Programming Language}.
 
 \subsection{GValue}
 \label{sub:GValue}
-The \cn{GValue} class, short for \textit{Genus Value} is a base class that can contain any value of any type that is supported in the platform. These types include integers, floating point numbers, strings, object handles, dates, and more. The \cn{GValue} class is a necessity in \gap~to omit the rigid type system in \delphi~such that all values can be handled the same way. The class contains comparison methods and utility functions for type conversions. The \cn{GValue} type is used in both information system and information system development layers.
+The \cn{GValue} class, short for \textit{Genus Value} is a base class that can contain any value of any type that is supported by the platform. These types include integers, floating point numbers, strings, object handles, dates, and more. The \cn{GValue} class is a necessity in \gap~to omit the rigid type system in \delphi, and to enable that all values, irrespective of type, are handled the same way.
 
-For all value type supported in the system, there are get and set methods for that specific value type defined in the base class. These methods are not implemented in the \cn{GValue} class, but by subclasses defined for the various data types. For instance, there exists a \cn{IntegerValue} that extends \cn{GValue} which overrides the \cn{GetAsInteger} and \cn{SetAsInteger} methods. Each subclass also contains a member variable to store the actual data.
+For all value types supported in \gap, there are get and set methods for that specific value type, which by default throw exceptions indicating that they are not implemented. Then, for each type, a subclass exists which stores the data and overrides the corresponding get and set methods. For instance, there exists an \cn{IntegerValue} subclass with an integer property that extends \cn{GValue} and overrides the \cn{GetAsInteger} and \cn{SetAsInteger} methods. 
 
 % memory handling
-A \cn{GValue} is a class type and not a record type, hence is allocated by the memory manager and put on the heap. The \cn{GValue} has built-in reference counting to enable cloning.
+A \cn{GValue} is a class type and not a record type, hence is allocated by the memory manager and put on the heap. Thus, a \cn{GValue} variable is a pointer. Like strings and dynamic arrays, \cn{GValue} has built-in reference counting to enable cloning and data re-use. Still, the class is a true value type, which implies that it is immutable.
 
-\subsection{CompositionDescriptor and CompositionObject}
+\subsection{CompositionDescriptor}
 \label{sub:CompositionDescriptor}
-The object class, or composition, which we discussed in Section \ref{sub:Object Classes}, is represented through the \cn{CompositionDescriptor} and \cn{CompositionObject} classes. Since \gap~source code is developed in one layer of abstraction above a regular programming language, we need two classes to support compositions, as we see in Figure \ref{fig:linguistic-metamodeling}. The relationship between the descriptor and the object is normally built into the language as classes and objects, but in a model-driven framework, there must be two explicit constructs.
+The object class, or composition, which we discussed in Section \ref{sub:Object Classes}, is represented by the \cn{CompositionDescriptor} class. Conceptually, this class is the same as a class in a programming language. A \cn{CompositionDescriptor} contains all information needed to describe an object class, for instance which properties, or \cn{CompositionFieldDescriptor}, that belongs to to the composition.
 
-The \cn{CompositionDescriptor} class describes a composition, and represents an object class. Conceptually, such descriptor is the same as a class in a programming language. As described Section \ref{sub:Object Classes}, a composition descriptor contains a list of data descriptors as well as ... \todo{Trenger hjelp her}. A composition descriptor contains data from the information system delevopment layer.
+Since \cn{CompositionDescriptor} instances is a part of the application model, it belongs to the ISD layer, which we discussed in Section \ref{sub:Models and Model Levels}. In the linguistic meta modeling framework, this construct makes up the left part of Figure \ref{fig:linguistic-metamodeling}, which is the "Class" and "Collie" entities.
 
-The \cn{CompositionObject} class represents object instances for object classes. Each object has a reference to its composition descriptor, and in addition, there are other variables that store object state, validation errors, formatting, and more. The properties and data belonging to a composition object instance is stored in a \cn{CompositionObjectValueCollection} class, which we study in Section \ref{sub:CompositionObjectValueCollection}.
+\subsection{CompositionObject}
+\label{sub:CompositionObject}
+Whereas the \cn{CompositionDescriptor} class represents an object class definition, the \cn{CompositionObject} class represent particular instances of that object class. Conceptually, this class is the same as an object, or class instance, in a standard object oriented programming language. A \cn{CompositionObject} stores all data beloning to the particular instance in a \cn{CompositionObjectValueCollection}, as well as other object state variables.
 
+Instances of \cn{CompositionObject}s make up the data in the applicaiton, and is, therefore, associated with the IS layer in \mde. In the linguistic meta modeling framework, this class is depicted on the right part of Figure \ref{fig:linguistic-metamodeling}. \cn{CompositionObject} has an ontological \textit{instance-of} relationship with \cn{CompositionDescriptor}.
 
-\subsection{FieldDescriptor}
-\label{sub:DataDescriptor}
-The \cn{FieldDescriptor} class describes an attribute in a composition, which is the object class property we studied in Section \ref{sub:Object Class Properties}. It holds all revelant data about a property, mainly type and representation, but also constraints and formatting rules. Instances of the \cn{DataDescriptor} class exist in the information system development layer.
+\subsection{CompositionFieldDescriptor}
+\label{sub:CompositionFieldDescriptor}
+The \cn{CompositionFieldDescriptor} class describes an attribute in a composition, which is the object class property we studied in Section \ref{sub:Object Class Properties}. It holds all relevant data about a property, mainly type and representation, but also constraints and formatting rules. Like \cn{CompositionDescriptor}, instances of the \cn{DataDescriptor} class exist in the ISD layer.
 
 \subsection{CompositionObjectValueCollection}
 \label{sub:CompositionObjectValueCollection}
-The \cn{CompositionObjectValueCollection} class holds the data for composition objects, and is equivalent to the data stored in class properties in a regular programming language. Alternatively, this collection class can be thought of as a row in a DBMS. The class contains a list of \cn{GValue}s and a list of \cn{DataDescriptor}s. Values are accessed through querying the \cn{CompositionObjectValueCollection} with a \cn{DataDescriptor}, where the correct value is found using a linear search through the list.
+The \cn{CompositionObjectValueCollection} class holds all data for a composition object, and has a one-to-one relationship with the \cn{CompositionObject} class. Conceptually, this class represents all the properties with corresponding data stored in a class. Like a \cn{CompositionObject}, instatiations of this class belongs in the IS layer.
 
-\begin{table}
-    \begin{tabularx}{\textwidth}{X | X | X}
-        Class Name & Concept & Model-driven development layer \\
-        \hline
-        \hline
-        \cn{GValue} & - & Method engineering layer \\
-        \hline
-        \cn{CompositionDescriptor} & Object Class & Information system development layer \\
-        \hline
-        \cn{CompositionObject} & Instance of Object Class & Information system layer \\
-        \hline
-        \cn{FieldDescriptor} & Object Class Property & Information system development layer \\
-        \hline
-        \cn{CompositionObject- ValueCollection} & Values of Object Class Property & Information system layer
-    \end{tabularx}
-    \caption{Classes and layers}
-    \label{tab:concept-class-mapping}
-\end{table}
+A \cn{CompositionObjectValueCollection} contains two lists, one with object class properties, and one with \cn{GValues}. To look up a particular property, a linear search through the property list is performed, and when the particular property is found, the function returns the corresponding \cn{GValue}. One way to see the \cn{CompositionObjectValueCollection} class, is as a database table with one row.
 
-An overview over classes, and how they relate to \gap~concepts and model-driven engineering layers is found in Table \ref{tab:concept-class-mapping}.
 
 \section{Challenges in Genus App Platform}
 \label{sec:Challenges in Genus App Platform}
-There is a number of challenges in the current design of \gap. The main focus of the source code has been to have a readable code that is easy to maintain \todo{Stemmer dette?}. However, making code readable and mainainable have lead to an implementation that is not optimized for performance. In this section, we discuss some of the challenges in \gap, which are related to memory usage and memory access.
+%«Commonly in Genus App Platform, there are operations that perform calculations or evaluate predicates on a large number of values.”: I Discovery-sammenheng er det riktig, men sjekk med f.eks. Einar om setningen holder vann generelt.
+%3.5: JA; leselighet går alltid på bekostning av performance
+%3.5.3; Uten at jeg er helt sikker; er ikke dette tilfelle med alle programmeringsspråk som har "boxed" typer eller rtti?
 
-\subsection{Excessive amount of pointers}
-\label{sub:Excessive amount of pointers}
-\afigure{img/gap-original-instantiation.png}{Pointers in \gap. For every object, there is not only a list to the values, but also a list to the corresponding data descriptors.}{fig:gap-original-instantiation}{0.8}
-One of the main challenges in \gap~is the large amount of pointers needed to store object data. As we saw in Section \ref{sub:CompositionObjectValueCollection}, each \cn{CompositionObjectValueCollection} not only stores \cn{GValue}s containing the data, but but also pointers to all data descriptors. Although this implementation is flexible because every value collection is self-contained and objects can have a variable number of fields lodaded, the overhead for storing all these pointers is substantial. This is especially true on a 64-bit architecture, where each pointer uses 8 bytes. The pointers are indicated as arrows in Figure \ref{fig:gap-original-instantiation}.
+There are several challenges in the current \gap~design. For years, the main area of focus has been to keep the source code readable and maintainable. However, this approach does not normally lead to an implementation that is optimal performance-wise. In this section, we discuss some parts of the \gap~source code that is not optimal and has resulted in challenges related to high memory usage and poor memory access patterns.
 
-We study the pointer overhead by using a simple example. We assume an object class with 15 class properties. In the data source there are 1,000,000 million elements. Here, we see the amount of pointers needed:
+\subsection{Excessive Amount of Pointers}
+\label{sub:Excessive Amount of Pointers}
+\afigure{img/gap-original-instantiation.png}{A data source with with composition objects. For each object, there is not only value pointers, but also pointers to the corresponding data descriptors.}{fig:gap-original-instantiation}{0.8}
+
+One of the main challenges in \gap~is that a significant amount of pointers is needed to store object data. As we saw in Section \ref{sub:CompositionObjectValueCollection}, each \cn{CompositionObjectValueCollection} not only stores \cn{GValue}s containing the data, but also pointers to all data descriptors. Although this implementation is flexible because every value collection is self-contained and objects can have a variable number of fields loaded, the overhead for storing all these pointers is substantial, especially on a 64-bit architecture where all pointers are 8 bytes. Figure \ref{fig:gap-original-instantiation} illustrates all pointers in play when a data source is filled with data. 
+
+We study the storage overhead caused by pointers using a simple example. In our example, we use an object class with 15 object class properties. In the data source, there are 1,000,000 elements. The pointers needed in this setup are:
 \begin{itemize}
     \item \textbf{1 pointer}, for the data source.
     \item \textbf{2 pointers}, for the composition descriptor and the pointer to the list of data descriptors.
@@ -206,35 +196,47 @@ We study the pointer overhead by using a simple example. We assume an object cla
         \item \textbf{15 pointers}, for all values in the value collection.
     \end{itemize}
 \end{itemize}
-This results in 32,000,018 pointers, which is roughly 244mb on a 64-bit architecture. Keep in mind that this number only contains storage used for pointers, not the actual data itself. If all values are 32-bit integers, the raw data itself would only take up approximately 57mb, which in this example is only 20\% of the pointers.
+The example results in 32,000,018 pointers, which is roughly 244 MB on a 64-bit architecture. Moreover, this is only the overhead caused by pointers, not the actual data. If all values are 32-bit integers, the memory needed store these 15 million numbers is 57 MB, which in this example is 20 \% of the space needed by pointers. For 1 byte booleans, the percentage would be even less.
 
-\subsection{Ineficcient Data Access and Poor Memory Locality}
-\label{sub:Ineficcient Data Access and Poor Memory Locality}
-Sometimes in \gap, there are operations that perform calculations or evaluate predicates on a large number of values. These operations access many values in tight loops, and it is not uncommon they scan all values for a given data descriptor in a data source. For instance, an operation that sums up all numbers for an object property in a data source would for every iteration do the following:
+\subsection{Inefficient Data Access and Poor Memory Locality}
+\label{sub:Inefficient Data Access and Poor Memory Locality}
+Several operations in \gap~work access many values in tight loops, and it is not uncommon they use all values for a given data descriptor in a data source. Examples of such operations are filter and join operations. However, accessing values in the current implementation comes with a substantial overhead. The following steps are performed for every data access:
 \begin{itemize}
     \item The \cn{CompositionObjectValueCollection} is scanned linearly for the correct data descriptor.
     \item The corresponding \cn{GValue} is found, and the accessor method (i.e. \fn{GetAsInteger}) is looked up in the dispatch table.
     \item A new stack frame is put on the stack to run the \fn{GetAsInteger} method.
 \end{itemize}
 
-Although the compiler might be able to optimize some of the steps above, it is far from ideal. For instance, the accessor method for the value is virtual and cannot be inlined. As we saw in Section \ref{sec:Background Information on Modern CPUs and Compilers}, the difference between minimal and maximal CPU utilization can easily be one order of magnitude, where branches and new stack frames may severely hurt performance. Last, the linear search through data descriptors hurts performance.
+The compiler might be able to optimize some of the steps above. For instance, if the \textit{register} calling convention is used, values may be accessed without creating a new stack frame. However, the process of getting a value is far from ideal. As we saw in Section \ref{sec:Background Information on Modern CPUs and Compilers}, the difference between minimal and maximal CPU utilization can easily be one order of magnitude, where branches and new stack frames may severely hurt performance. Last, the linear search through data descriptors hurt performance.
 
-Not only is the data access pattern complex, we may also assume poor memory locality. As \cn{GValue}s are heap allocated and managed my the memory manager, we no longer have control over where the values are located in memory. We must assume the location is arbitrary, and that \cn{GValue}s with temporal locality do not possess spatial locality. As we saw in Chapter \ref{chap:Background}, cache locality is paramount for performance.
+Not only are there many steps required to access data in \gap, but there is also poor memory locality on the data elements. Since \cn{GValue} is a class type, thus allocated on the heap by the memory manager, we no longer have control over where values are located in main memory. We must assume the location is arbitrary, and that \cn{GValue}s with temporal locality are not located next to each other in memory. We read in Chapter \ref{chap:olap} how important cache locality is for performance.
 
-\subsection{Inefficient storage usage}
-\label{sub:Inefficient storage usage}
-\cn{GValue}s have much storage overhead. First, since they are reference counted, each value contains a 4 byte integer. In addition, since a \cn{GValue} is a class type, the first 8 bytes in an object is a pointer to a virtual method table. At last, in order to access values, a pointer to the \cn{GValue} itself must also be stored, which is an additional 8 byte. Hence, for a 32-bit integer, only 4 out of 24 bytes are used to store the actual data.
+\subsection{Storage Overhead}
+\label{sub:Storage Overhead}
+\cn{GValue}s have much storage overhead. First, since they are reference counted, each value contains a 4-byte integer. Second, since a \cn{GValue} is a class type, the first 8 bytes in an object is a pointer to a virtual method table. Last, a \cn{GValue} variable is a pointer to the structure containing the data, a pointer which is an additional 8 bytes. Hence, for a 32-bit integer, only 4 of 24 bytes are used to store the actual data. 
 
-Secondly, \cn{GValues} in a \cn{CompositionObjectValueCollection} does not apply compression. With the same reasoning as above, we see that each 1 byte boolean value in \gap~takes up 21 bytes when put into a \cn{GValue}. In theory, only 1 bit is needed for such value, and we studied techniques in Chapter \ref{chap:Background} how dictionary encoding and bitpacking can help acheive that. Reducing the memory per value from 21 bytes to 1 bit is a memory reduction of almost 200X.
+Secondly, \gap~applies no form of compression. Using the same reasoning as above, we see that each boolean value will require 21 bytes to store. Theoretically, only 1 bit is needed to store such value, and we studied in the section about compression, Section \ref{sec:Compression}, how to achieve this effect. Reducing the memory per value from 21 bytes to 1 bit is a memory reduction of almost 200 times.
 
-We saw in the background section that compression and using storage efficiently can turn a process from I/O bound to CPU bound, and is extremely important for optimal performance.
+We saw in Chapter \ref{chap:olap} that small storage overhead and compression are paramount for read-optimized databases. Efficient data storage may turn a process from being I/O bound to CPU bound.
 
 \section{Research Motivation}
 \label{sec:Research Motivation}
-Now that we have established the relevant use cases for \genus, studied background theory in model-driven engineering and database technology, and analyzied \gap~source code, we may present the thesis motivation.
+This chapter concludes the literature review part of our research. We have studied background theory on \mde~and \bi, elaborated on techniques used by read-optimized databases, and provided an analysis of \gap. The literature review has given us sufficient insight to proceed with the design and experiment part of this research. 
 
-First of all, we observe that \gap~is in fact a sophisticated in-memory database with data that are persisted to SQL-supporting back-ends. The main difference is that \gap~has extensive knowledge about the data, or metadata, as well as full control over where and for what the data is used for. The platform knows more about the data than a regular database using the data interpretation, which databases are normally agnostic. We therefore conclude that theory from database technology can be applied to model-driven development and \gap, and that there is a large potential in the metadata.
+We observe that \gap~is in fact a sophisticated in-memory database. Data sources used in various parts of the platform query the underlying database infrastructure and loads the data into main memory. We also see \gap~source code has several challenges with pointer and storage overhead and data locality. We repeat our research goals:
 
-\todo{Missing paragraph of how DB technology can solve our specific challenges?}
+\setlength{\leftskip}{1cm}
 
-Our second observation is that we have a possibility to implement optimizations from the database technology in the method engineering layer without affecting the information system development layer. Much like a compiler optimizes code better and more reliable \cite{Selic2003-qa}, we see the potential in letting \gap~optimize without programmer or modeller intervention. In this thesis, we focus on the method engineering layer to improve performance for the end-users. We plan to implement our changes such that it affects the information system development layer as little as possible.
+\textbf{G1: Reduce memory consumption in \gap~and increase the platform's ability to handle and analyze large datasets.}
+
+\textbf{G2: Introduce new evidence that \mde~can benefit from in-memory database technologies.}
+
+\setlength{\leftskip}{0pt}
+
+We are motivated to apply techniques used in read-optimized databases to \gap. We believe techniques like column storage and compression can mitigate several problems in \gap~source code, such that memory usage can be reduced, and the platform gains the ability to handle and analyze large datasets. We also believe this approach serves an example of how such problems are solved in the context of \mde. As a result of this, we form our research question:
+
+\textbf{RQ1: How does storage techniques used in an in-memory, analytics-oriented database, like columns and compression, affect \gap's ability to handle large datasets, and how must the application be changed to accommodate and utilize the new storage format?} 
+
+By answering \textbf{RQ1}, we hope to address \textbf{G1} directly by making changes in \gap~that increase the platform's ability to handle large datasets. However, by using our changes in \gap~as a proof-of-concept, we plan to address \textbf{G2} by drawing general conclusions on the combination of \mde~and in-memory database technology.
+
+We plan to optimize \gap~in the method engineering layer, such that the information system development layer is affected as little as possible. Much like a compiler is better at optimizing code than a human programmer, we believe \gap~has the potential to optimize storage format without modeler intervention. This way, \gap~expert users may focus on the business problem and not on the underlying implementation.
