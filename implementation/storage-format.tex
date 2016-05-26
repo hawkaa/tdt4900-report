@@ -9,19 +9,18 @@ This chapter forms the second iteration of our design and experiment part of the
 \label{sec:Introduction}
 In Section \ref{sec:Challenges in Genus App Platform}, we saw that two of the challenges in the original \gap~data representation are poor memory locality and inefficient storage usage. Both challenges are caused by the \cn{GValue} class. In this structure, data is stored inefficiently due to overhead of pointers and reference counting. For example, it takes 24 bytes to store a 4 byte integer. Secondly, since \cn{GValue} is a class type, it is heap allocated by the memory manager, and we have no control over where the values reside in memory. In Chapter \ref{chap:olap}, we saw that spatial and temporal locality is paramount for performance.
 
-One might think that cache locality has been improved by the introduction of \cn{FieldValueCollection} in the previous chapter. This is only partially true; we store value pointers consecutively in memory with the \cn{TArray} type, but the structures containing the data itself reside in arbitrary memory locations.
+One might think that memory locality and cache hit rate have been improved by the introduction of \cn{FieldValueCollection} in the previous chapter. This is only partially true; we store value pointers consecutively in memory with the \cn{TArray} type, but the structures containing the data itself reside in arbitrary memory locations.
 
 Section \ref{sub:Delphi Types} explained that \delphi~supports a wide range of simple, or primitive, data types. These include integer, character, Boolean, real, and more. Common for these data types is that they are value types and a variable with one such type stores the data directly, and not as a pointer. This is also the case for the \delphi~\cn{record} type.
 
-Our observation is simple. If we change the value buffers in \cn{FieldValueCollection} from holding \cn{GValue} references to storing primitive value types directly, we overcome the above challenges. First, we reduce memory consumption by transitioning to primitive data types, since these values have no pointer or reference counting overhead associated with them. Second, since we plan to store the values directly in \delphi~array structures, we improve memory locality.
+We observe that if we change the value buffers in \cn{FieldValueCollection} from holding \cn{GValue} references to storing primitive value types directly, we overcome the above challenges. First, we reduce memory consumption by transitioning to primitive data types, since these values have no pointer or reference counting overhead. Second, since we plan to store the values directly in \delphi~array structures, we improve memory locality.
 
-The data source loading mechanism in \gap~operates using \cn{GValue}s, but since this class is no longer used to store data, we are curious to see whether \cn{GValue}s can be eliminated from the data load process. We believe data load time can be reduced by loading the database values directly from XML instead of using \cn{GValue}s as temporary storage.
-
+The data source loading mechanism in \gap~operates with \cn{GValue}s, but since this class is no longer used to store data, we are curious to see whether \cn{GValue}s can be eliminated from the data load process. We believe data load time can be reduced by loading the database values directly from XML instead of using \cn{GValue}s to load values into columns.
 
 Motivated by the memory reduction and the ability to regain control over memory, we create a new structure based on the \cn{FieldValueCollection} interface, which we denote as \cn{PrimitiveFieldValueCollection}. We also circumvent \cn{GValue} creation in the \gap~load module and pass raw XML values directly to the columns. We hypothesize that these changes will reduce memory consumption and increase load time.
 \section{Implementation}
 \label{sec:Implementation}
-In this section, we start by explaining the \cn{PrimitiveFieldValueCollection} class, and how \gap~selects the correct column type. Then we elaborate on how we circumvent the creation of \cn{GValue}s in the data load module.
+In this section, we start by explaining the \cn{PrimitiveFieldValueCollection} class, and how \gap~selects the correct primitive column type. Then we elaborate on how we circumvent the creation of \cn{GValue}s in the data load module.
 
 \subsection{PrimitiveFieldValueCollection}
 \label{sub:PrimitiveFieldValueCollection}
@@ -94,7 +93,7 @@ We hypothesize that loading XML values directly into a column will speed up load
 \label{sec:storage-format-test-results}
 Like the previous iteration, we test our modifications by using Benchmark \ref{bm:q1}, the \textit{TPC-H Q1 Data Load Benchmark}. We use this benchmark to check our hypothesis that primitive value storage and direct value load contribute to reduced memory footprint and improved load time. 
 
-\cn{GetValue} and \cn{SetValue} in \cn{PrimitiveFieldValueCollection} still use \cn{GValue}, which means memory these values are allocated on access and deallocated when set. We test the effects of this extra memory handling operations with the \textit{Write Benchmark}, benchmark \ref{bm:write}. In addition, the read-intense operations in Benchmark \ref{bm:q1} will also provide insight here.
+\cn{GetValue} and \cn{SetValue} in \cn{PrimitiveFieldValueCollection} still use \cn{GValue}, which means memory for the \cn{GValue} is allocated and deallocated on each method call respectively. We test the effects of this extra memory handling operations with the \textit{Write Benchmark}, benchmark \ref{bm:write}. In addition, the read-intense operations in Benchmark \ref{bm:q1} will also provide insight here.
 
 Full benchmark details are found in Appendix \ref{app:bm}.
 
@@ -166,13 +165,13 @@ Write performance has, as Table \ref{tab:primitive-write} shows, degraded slight
 \section{Discussion}
 \label{sec:part2-discussion}
 
-We see that memory used per \lineitem~for SF0.1 has been reduced by an additional 25 \% compared to the \cn{FieldValueCollection} implementation. This observation means the overhead associated with \cn{GValue}s is significant.
+We see that memory used per \lineitem~for scaling factor 0.1 has been reduced by an additional 25 \% compared to the \cn{FieldValueCollection} implementation. This observation means the overhead associated with \cn{GValue}s is significant.
 
 We observe an increased load time for Benchmark \ref{bm:q1}, where the time it takes to populate the data source is increased from 8.5 seconds to 13.6 seconds. We believe the extra steps needed to extract raw values from \cn{GValue} instances causes this. Still, the load time is lower than the original \gap~implementation.
 
-Circumventing \cn{GValue} creation and loading raw XML string values directly into the column store had no positive effect on the \textit{TPC-H Q1 Data Load Benchmark}. Here, both the number of bytes per \lineitem~and load time increased. We did circumvent the creation of \cn{GValue}s, but by doing so, we also disabled the existing caching mechanism in \gap. Thus, no strings are reused, and no conversion results are cached. It is likely that this is the cause of increased memory usage and load time.
+Circumventing \cn{GValue} creation and loading raw XML string values directly into the column store had no positive effect on the \textit{TPC-H Q1 Data Load Benchmark}. Here, both the number of bytes per \lineitem~and load time increased. We did circumvent the creation of \cn{GValue}s, but by doing so, we also disabled the existing caching mechanism in \gap. Thus, no strings are reused, and no conversion results are cached. It is likely that disabling the cache is the cause of increased memory usage and load time.
 
-We see the consequences of having a \cn{GValue} interface with the columns, which results in frequent allocations and deallocations when accessing values. The \textit{write benchmark} shows slightly reduced write performance. However, we measure the largest performance impact on the read-intensive operations in the \textit{TPC-H Q1 Data Load Benchmark}. For source measure lookup, which creates a real value array for a column using a tight loop, the performance has dropped and is now ten times slower than the \cn{FieldValueCollection} column store due to the frequent memory allocations.
+We see the consequences of having a \cn{GValue} interface on the columns, which results in frequent allocations and deallocations when accessing values. The \textit{write benchmark} shows slightly reduced write performance. However, we measure the largest performance impact on the read-intensive operations in the \textit{TPC-H Q1 Data Load Benchmark}. For source measure lookup, which creates a real value array for a column using a tight loop, the performance has dropped and is now ten times slower than the \cn{FieldValueCollection} column store due to the frequent memory allocations.
 
 %The extra steps of \cn{GValue} allocation and deallocation also affects write performance in Benchmark \ref{bm:write}, although not by more than 15 \%. This indicates that there are much more overhead associated with data write than just allocating \cn{GValue}s.
 
@@ -180,7 +179,7 @@ We see the consequences of having a \cn{GValue} interface with the columns, whic
 \label{sec:Iteration Conclusion}
 We conclude that primitive value column storage successfully reduces memory consumption in \gap. Compared to the original implementation, the bytes used per \lineitem~are reduced from 715 bytes to 374 bytes. Our changes have affected write performance negatively, but not by more than 15 \%. We argue that the significant reduction in memory usage outweighs the slightly negative impact on write performance, and concludes that storing values as primitive data types and using a \cn{GValue} interface is feasible. 
 
-In this iteration, we have laid an important foundation for optimizing the read-intensive operations in the \textit{TPC-H Q1 Data Load Benchmark} by increasing data locality. More specifically, we have replaced the \cn{GValue} pointers and now store values directly in the columns. Until we exploit this storage structure, source measure lookup and lookup index generation, suffer severely due to memory allocation operations on each access. We investigate column operations in Chapter \ref{chap:operations}.
+In this iteration, we have laid an important foundation for optimizing the read-intensive operations in the \textit{TPC-H Q1 Data Load Benchmark} by increasing data locality. More specifically, we have replaced the \cn{GValue} pointers and now store values directly in the columns. Until we exploit this storage structure, source measure lookup and lookup index generation suffer severely due to memory allocation operations on each access. We investigate column operations in Chapter \ref{chap:operations}.
 
 Our hypothesis that loading data as raw XML values into the column would reduce load time was wrong, at least for now. Circumventing \cn{GValue}s also circumvents the built-in caching mechanism in \gap~and results in higher memory usage and slower load times.  
 
@@ -188,4 +187,4 @@ We have cut the application memory requirements in half without applying any for
 
 \subsection{Future Work}
 \label{sub:Future Work}
-We are still keen to investigate the potential of loading XML values directly, but due to time constraints, we are unable to pursue this topic further. Future work should aim to replicate the existing caching mechanisms in \gap, but within the column store and without creation of \cn{GValue}s. Caching could, for instance, only be enabled if the data source is in a feeding state.
+We are still keen to investigate the potential of loading XML values directly, but due to time constraints, we are unable to pursue this topic further. Future work should aim to replicate the existing caching mechanisms in \gap, but within the column store and without creation of \cn{GValue}s. Caching could, for instance, only be enabled if the data source is in a feeding state. Building on the idea of horizontal partitioning from Section \ref{sub:column-store:future-work}, caching could also be used in newly created partitions, and once a partition is full, all caching structures are discarded and the partition is optimized for read-only workloads.
