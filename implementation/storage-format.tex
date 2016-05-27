@@ -95,13 +95,15 @@ Like the previous iteration, we test our modifications by using Benchmark \ref{b
 
 \cn{GetValue} and \cn{SetValue} in \cn{PrimitiveFieldValueCollection} still use \cn{GValue}, which means memory for the \cn{GValue} is allocated and deallocated on each method call respectively. We test the effects of this extra memory handling operations with the \textit{Write Benchmark}, benchmark \ref{bm:write}. In addition, the read-intense operations in Benchmark \ref{bm:q1} will also provide insight here.
 
+In this iteration, we tested our changes with and without loading raw XML values. For Benchmark \ref{bm:q1}, we tested scaling factors 0.01 and 0.1.
+
 Full benchmark details are found in Appendix \ref{app:bm}.
 
 %Like last chapter, we test our implementation with Benchmark \ref{bm:q1} and Benchmark \ref{bm:write}. We are curious to see whether memory has been reduced by avoiding the overhead corresponding with \cn{GValue}s and whether load time has been affected. Write performance is also important to test, since \cn{GValue}s are allocated and deallocated as they are read and written to the columns. Full descriptions of the benchmarks are found in Appendix \ref{app:bm}.
 
 \subsection{TPC-H Q1 Data Load Benchmark}
 \label{sub:storage-format-tpch-results}
-Benchmark \ref{bm:q1}, the \textit{TPC-h Q1 Data Load Benchmark}, was run with our new primitive value column implementation with and without the new loading scheme. Both scaling factor 0.1 and 0.01 were run. Like in Chapter \ref{chap:column-store}, only three tests were run per configuration. However, all results yielded low variance, and no single measurement was more than 15 \% different than the average value.
+Benchmark \ref{bm:q1}, the \textit{TPC-H Q1 Data Load Benchmark}, was run with our new primitive value column implementation with and without the new loading scheme. Both scaling factor 0.1 and 0.01 were run. Like in Chapter \ref{chap:column-store}, only three tests were run per configuration. However, all results yielded low variance, and no single measurement was more than 15 \% different than the average value.
 
 \begin{table}
     \centering
@@ -169,7 +171,7 @@ We see that memory used per \lineitem~for scaling factor 0.1 has been reduced by
 
 We observe an increased load time for Benchmark \ref{bm:q1}, where the time it takes to populate the data source is increased from 8.5 seconds to 13.6 seconds. We believe the extra steps needed to extract raw values from \cn{GValue} instances causes this. Still, the load time is lower than the original \gap~implementation.
 
-Circumventing \cn{GValue} creation and loading raw XML string values directly into the column store had no positive effect on the \textit{TPC-H Q1 Data Load Benchmark}. Here, both the number of bytes per \lineitem~and load time increased. We did circumvent the creation of \cn{GValue}s, but by doing so, we also disabled the existing caching mechanism in \gap. Thus, no strings are reused, and no conversion results are cached. It is likely that disabling the cache is the cause of increased memory usage and load time.
+Circumventing \cn{GValue} creation and loading raw XML string values directly into the column store had no positive effect on the \textit{TPC-H Q1 Data Load Benchmark}. Here, both the number of bytes per \lineitem~and load time increased. We did circumvent the creation of \cn{GValue}s, but by doing so, we also disabled the existing caching mechanism in \gap. Thus, no strings are reused, and no conversion results are cached. It is likely that disabling the cache is the cause of increased memory usage and load time. \todo{Elaborate?}
 
 We see the consequences of having a \cn{GValue} interface on the columns, which results in frequent allocations and deallocations when accessing values. The \textit{write benchmark} shows slightly reduced write performance. However, we measure the largest performance impact on the read-intensive operations in the \textit{TPC-H Q1 Data Load Benchmark}. For source measure lookup, which creates a real value array for a column using a tight loop, the performance has dropped and is now ten times slower than the \cn{FieldValueCollection} column store due to the frequent memory allocations.
 

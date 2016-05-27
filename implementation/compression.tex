@@ -1,11 +1,27 @@
 \chapter{Part III: Compression}
 \label{chap:compression}
-So far we have reduced the bytes per \texttt{LINEITEM} from 715 to 374 in the \textit{TPC-H Q1 Data Load Benchmark}. This corresponds to 48 \%. However, we have yet not explored any compression techniques. In this chapter, we investigate the effects of light-weight comrpessions dictionary encoding and bitpacking. In addition to this, we implement \texttt{null}-pointer compression and store data in a packed fashion.
+So far we have reduced the number of bytes per \lineitem~from 715 bytes to 374 bytes in the \textit{TPC-H Q1 Data Load Bencmark}. This corresponds to a reduction of 48 \%. However, we have not yet explored any compression techniques which we studied in Chapter \ref{chap:olap}. In this chapter, we investigate the effects of light-weight compression methods by implementing dictionary encoding, bitpacking, and property packing. Also, we inquire into a new technique for compressing null pointers, which we denote as \textit{null-pointer compression}. \todo{See if this name can be used}
+
+This chapter forms the third and final iteration where the goal is to reduce memory. There is one more iteration, but this does not seek to reduce memory any further, only utilize the storage structures to increase performance for read-intense operations.
 
 \clearpage
 
-\section{Dictionary Encoding}
-\label{sec:Dictionary Encoding}
+\section{Introduction}
+\label{sec:Introduction}
+In Section \ref{sec:Compression}, we saw that compression not only reduces memory requirements but also comes with the benefit of increased performance. Compression is beneficial because it increases cache locality, turns processes CPU-bound from memory-bound and thus reduces the number of CPU cycles. SIMD instructions might also increase processing throughput on compressed data. According to Abadi \ea, compression increases performance by a factor of two on average \cite{Abadi2008-dd}. For compression to be beneficial the compression must be \textit{light-weight} since the real benefit of compression can only be leveraged if the decompression effort is minimized.
+
+One such light-weight compression technique, is \textit{dictionary encoding}, which we saw in Section \ref{sec:Dictionary Encoding}. In a dictionary encoded column, each distinct value is stored once in a structure known as a dictionary, and instead of storing the actual values, keys to this dictionary are stored in the column. Not only does this technique save space, but it may increase query performance since comparisons are reduced to cheap integer operations. In this iteration, we extend our column store to support dictionary encoding and hope to leverage the benefits this technique gives us.
+
+The second technique we implement in this iteration is bitpacking, which we studied in Section \ref{sec:Bitpacking}. In this compression scheme, no more bits than needed are used to store a value. This improves cache hit-rate and enables SIMD query processing. Bitpacking and dictionary encoding are commonly used in conjunction, and this what we will do in this iteration.
+
+Last, we explore two techniques to save even more memory in \gap. The first is a technique we denote as \textit{null-pointer compression}. It is based on the observation that a \cn{CompositionObject} has several properties, properties that are commonly \nil. Thus, by moving the properties to the column store, we may save space by not allocating any values unless they are set. The second technique we apply is to compress the residual properties in a \cn{packed record}.
+
+\section{Implementation}
+\label{sec:Implementation}
+In this section, we explain how compression is implemented by creating new \cn{FieldValueCollectionBase} subclasses and modifying the column store. We start with dictionary encoding and bitpacking. Then we proceed with null-pointer compression and property packing.
+
+\subsection{Dictionary Encoding}
+\label{sub:Dictionary Encoding}
 % Short introduction on DE
 In Section \ref{sec:Dictionary Encoding}, we saw that dictionary encoding is commonly used to store data in a database, especially read-optimized ones. Such encoding has several benefits, with the main being compression. Some operations are also speeded up by this storage format, especially string predicates. To do a select operation on a dictionary encoded column, the dictionary needs only to be scanned once to find the keys corresponding to the query, then the integer array is scanned. This reduces expensive string operations into cheap integer comparisons.
 
@@ -19,8 +35,8 @@ The integer array, or value buffer, uses the same growth strategy as previous im
 \afigure{img/PrimitiveDictionaryFieldValueCollection.png}{\cn{PrimitiveDictionaryFieldValueCollection} class diagram. The class inherits from \cn{FieldValueCollectionBase}.}{fig:PrimitiveDictionaryFieldValueCollection}{1.0}
 We chose to implement the dicitonary and inverse lookup using \cn{TArray} and \cn{TDictionary} respectively. We also chose to store values as their primitive implementation, like we investigated in Chapter \ref{chap:storage-format}. The class inherits from \cn{FieldValueCollectionBase}, and uses the same primitive value helper delegate class as \cn{PrimitiveDictionaryFieldValueCollection}.
 
-\section{Bitpacking}
-\label{sec:Bitpacking}
+\subsection{Bitpacking}
+\label{sub:Bitpacking}
 % Short introduction on bp
 Bitpacking is a compression technique where values are stored with no more bits than needed. As we saw in Section \ref{sub:Dictionary Encoding and Bitpacking}, dictionary encoding and bitpacking goes hand in hand. We, therefore, implement bitpacking in our dictionary encoded columns to save memory.
 
@@ -36,15 +52,15 @@ The bitpacked column class was implemented using a \cn{TArray<UInt64>} for stori
 
 \missingfigure{Figur om hvordan man henter ut verdier med masken?}
 
-\section{Null-Pointer Compression}
-\label{sec:Null-Pointer Compression}
+\subsection{Null-Pointer Compression}
+\label{sub:Null-Pointer Compression}
 \afigure{img/null-pointer-compression.png}{Null-pointer compression. Based on the observation that most \cn{CompositionObject} properties are normally \texttt{null}, data can be compressed, since columns are not created before the properties are set.}{fig:null-pointer-compression}{0.7}
 So far, we have compressed data from the Information System and Information System Development Layers. However, there are several other structures used by \cn{CompositionObject}s which are used in the Method Engineering layer. These structures include lists of data validation and integrety errors, formatting rules, and more. These attributes are not fundamentally different than attributes from the other model-driven engineering layers, which means we are able to put these pointers into our column store. Although one might initially think that we have only moved the problem, and that the pointers now are stored in the column store instead of at object-level, the compression is based on the observation that these pointers are normally \texttt{null}. This means that these columns does not need to be allocated before a value is actually set. An illustration of this is seen in Figure \ref{fig:null-pointer-compression}.
 
 To enable null pointer compression, we implement a new generic column structure named \cn{DefaultObjectList<TType>}. This is an array structure that can be instantiated with any class type, that will return \texttt{nil} if no values are set. If values are set, the array is allocated. The \cn{CompositionValueCollection} are extended with such attributes for all properties needed in the \cn{CompositionObject}s with corresponding get and set methods that requires datasource index as input.
 
-\section{Packing Data}
-\label{sec:Packing Data}
+\subsection{Property Packing}
+\label{sub:Property Packing}
 \begin{delphicode}{Structure with packed data.}{lst:packed-struct}
 PackedComObjData = packed record
     modifyCount,
@@ -59,9 +75,9 @@ For this to work, the attributes is removed from the \cn{CompositionObject} clas
 
 After applying both null-pointer compression from Section \ref{sec:Null-Pointer Compression}, a \cn{CompositionObject} has no attributes except for a pointer to the column storage and a packed struct with essential state data. \todo{Vet dette ikke er helt sant, men kan jeg skrive det?}
 
-\section{Test Results}
-\label{sec:Test Results}
-We test our implementation using Benchmark \ref{bm:q1} and Benchmark \ref{bm:write}. Like the previous two chapters, we are curious to see how compression techniques affect memory consumption, load time, read operations, and write operations. We test three implementations: Dictionary encoding, dictionary encoding with bitpacking, and dictionary encoding with bitpacking, null pointer compression, and packed object data.
+\section{Results}
+\label{sec:Results}
+We test the changes from this iteration with Benchmark \ref{bm:q1} and Benchmark \ref{bm:write}. Like the previous two iterations, we are curious to see how compression techniques affect memory consumption, load time, read performance, and write performance. 
 
 \begin{table}
     \begin{tabularx}{\textwidth}{X | X X}
@@ -80,11 +96,14 @@ We test our implementation using Benchmark \ref{bm:q1} and Benchmark \ref{bm:wri
     \caption{Column selection for Benchmark \ref{bm:q1}. Low-cardinality columns are dictionary encoded, while the others are not. The numbers are based on Scaling Factor 0.1.}
     \label{tab:column-selection}
 \end{table}
-Like we read in Section \ref{sec:Dictionary Encoding}, dictionary encoding is effective when there is only a small number of distinct values compared to the number of total values. Hence, not all columns should be encoded with dictionary encoding. Therefore, certain properties for \texttt{LINEITEM} were picked by-hand to be dictionary encoded for this test, based on the column cardinality. The dictionary encoded columns with cardinalities are shown in Table \ref{tab:column-selection}. The table shows that most columns are low-cardinality, and will benefit from dictionary encoding. The numbers are based on the \texttt{LINEITEM} table in the \tpch, and the configuration is used in all benchmarks.
 
-\subsection{TPC-H Result}
-\label{sub:TPC-H Result}
-Benchmark \ref{bm:q1}, the \textit{TPC-h Q1 Data Load Benchmark}, was run with all three compression configurations. In addition to this, dictionary encoding was run with raw value load, as explained in Section \ref{sec:Avoiding GValues at Load Time}. Both scaling factors were used for the tests. Like the previous chapters, all tests were run three times per configuration. There was low variance in the results, and no single measurement was more than 15 \% different from the average value.
+Like we read in Section \ref{sec:Dictionary Encoding}, dictionary encoding is only effective when there is a small number of distinct values compared to the number of total values. Hence, not all columns in the \textit{TPC-H Q1 Data Load Benchmark} should be encoded with dictionary encoding. Therefore, we picked certain \lineitem~properties by hand to be dictionary encoded, based on the column cardinality in the \lineitem~table in the \tpch. The dictionary encoded columns with cardinalities are shown in Table \ref{tab:column-selection}, and indicates that most columns benefit from dictionary encoding.
+
+In this iteration, we test four different configurations: Dictionary encoding, dictionary encoding with raw value load, dictionary encoding with bitpacking, and dictionary encoding with bitpacking, null-pointer compression and property packing. For Benchmark \ref{bm:q1}, we test both SF0.01 and SF0.1.
+
+
+\subsection{TPC-H Q1 Data Load Benchmark}
+Benchmark \ref{bm:q1}, the \textit{TPC-H Q1 Data Load Benchmark}, was run with all three compression configurations. In addition to this, dictionary encoding was run with raw value load, as explained in Section \ref{sec:Avoiding GValues at Load Time}. Both scaling factors were used for the tests. Like the previous chapters, all tests were run three times per configuration. There was low variance in the results, and no single measurement was more than 15 \% different from the average value.
 \begin{table}
     \centering
     \begin{tabularx}{\textwidth}{X | X X}
@@ -141,26 +160,26 @@ Write performance has not been significantly changed compared to primitive colum
 
 \section{Discussion}
 \label{sec:compression-discussion}
-We are excited to see the effects data compression. For scaling factor 0.1, the memory used to store each \texttt{LINEITEM} is reduced by 37 \%. In this formula, dictionary encoding, null-pointer compression and attribute packing contribute the most, while bitpacking yields no more than 5 \% total memory savings. 
+We see that dictionary encoding is successful for compressing data, and for SF0.1 in the \textit{TPC-H Q1 Data Load Benchmark}, memory is reduced by 15 \% compared to the primitive column structure from the previous chapter. Bitpacking also contributes to reduced memory footprint, but not more than five percent. The increased compression rates come at the cost of higher load times and is now up to 15,4 seconds to load the entire mart into memory.
 
-We are especially excited to see that compression in the Method Engineering layer, namely null-pointer compression and attribute packing, contribute to large memory savings. This has implications for all system development, not only in the realm of model-driven engineering. We elaborate on these implications further in Section \ref{X}.
+Null-pointer compression and property packing contribute to large memory savings and reduces the storage per \lineitem~from 301 bytes to 237 bytes. We observe that this number makes sense. We removed a total of eight pointers, and with 8 bytes per pointer, 64 bytes are saved. Hence, we are unsure whether property packing had any effect at all. \todo{check how many removed pointers} Either way, these two techniques does not significantly increase load time.
 
-By using dictionary encoding, we have been able to save the same amount of memory as the built-in caching mechanism for data source load. However, data load times are significantly higher by using our new raw data load mechanism. We believe this is because the caching mechanism not only reuse data, but also saves the job of converting XML string values to the primitive data type, a job that can be cumbersome for certain data types, like dates.
+Neither of the applied techniques has changed the write performance, which strengthens our hypothesis that write operations have much overhead associated integrity, data validation, and formula calculation. However, read-intense operations in the \textit{TPC-H Q1 Data Load Benchmark} still suffers severely from the modification applied to \gap~so far, and we believe this is caused by the \cn{GValue} interface.
 
-Write results are not significantly affected by compression, which might indicated that there is much more overhead associated with such operations than only data write and read. Although the results of Benchmark \ref{bm:write} show that write performance is reduced compared to the original implementation, this is no more than 10 \%.
+If we load raw XML string values directly into a dictionary encoded column, we observe that we save the same amount of memory as the built-in caching mechanism in \gap. In other words, the number of bytes for dictionary encoding and dictionary encoding with raw value load is the same. However, the load time is still significantly longer loading raw values. We believe this is because the caching mechanism not only re-uses data but also stores string-to-primitive conversion results. We discuss how a similar caching mechanism can be implemented in our column store in Section \ref{compression:future-work}
 
-\section{Chapter Conclusion}
-\label{sec:Chapter Conclusion}
-We have reduced memory footprint by 67 \% compared to the original implementation by applying compression techniques known by the database technology. Despite of the fact that load time is increased by compression, it is still lower than the original implementation by 33 \%.
+\section{Iteration Conclusion}
+\label{sec:Iteration Conclusion}
+\afigure{img/bytes.png}{The bytes used per \lineitem~during the course of this research.}{fig:bytes}{1.0}
+\afigure{img/load.png}{The number of milliseconds it takes to load the \textit{TPC-H Q1} data mart for the course of this research.}{fig:load}{1.0}
+In this iteration, we have reduced the memory required to load the \textit{TPC-H Q1} mart by 37 \%. This reduction is mainly caused by dictionary encoding and null-pointer compression. Compared to the original \gap~implementation, the bytes per \lineitem~is reduced by 67 \%. The reduction in memory usage is illustrated in Figure \ref{fig:bytes}. Although the introduction of primitive data types and compression has increased load time from the first \cn{FieldValueCollection} implementation, the time it takes to load the \textit{TPC-H Q1} mart is still reduced by 33 \% compared to the original implementation. This is illustrated in Figure \ref{fig:load}.
 
-After this chapter, we are left with two major challenges. First, currently, the correct column structure is picked by hand. However, this is not feasible in the long-run. Although such information could be added to the application model, we should investigate whether \gap~can pick the correct storage format without modeller interaction. We do so in Chapter X.
+Concluding this iteration, we are left with two major challenges. The first challenge was discovered in the previous iteration: Read-intensive operations must be adapted to utilize the new storage format. For instance, one of source measure lookup operations in Benchmark \ref{bm:q1}~now takes 6.9 seconds, an operation which previously took 0.3 seconds. We address this challenge in Chapter \ref{chap:operations}.
 
-Second, and more important, is that we have applied techniques used in read-optimized databases, but so far only been hurt by our new implementation. For instance, the source measure lookup operation now takes 6.9 seconds, which originally only took 0.3 seconds. We claim that these read-intensive operations can be rewritten to utilize our new storage formats. We look into this in Chapter X.
+The second challenge, which is a result of dictionary compression, is to select the correct column format for different object class properties. In this iteration, we picked columns that would benefit from dictionary encoding by hand. With this approach, the \gap~expert users need knowledge about data cardinality, which is, in our opininion, knowledge they should not need to have. In Chapter \ref{chap:misc}, we investigate how \gap~can pick the correct storage format without modeler intervention by using database provided statistics.
 
 \subsection{Future Work}
-\label{sub:Future Work}
-Like last chapter, we encourage studying the built-in caching mechanism on data source load. We have proved that dictionary encoded columns reuse values as efficiently as the already existing mechanism, since, as opposed to for pure primitive value columns, dictionary encoding use the same number of bytes per lineitem regardless of loading mechanisms. However, the time it takes to load the \tpch~Q1 data mart is still more than the original. We, therefore, encourage further scrutinization of the built-in caching mechanism, for instance by caching dictionary keys for raw string values instead of the column primitive type. This way, data conversion results can also be reused.
+\label{compression:future-work}
+Like the last iteration, we encourage studying the built-in caching mechanism in \gap. We have proved that dictionary encoded columns re-use values as efficiently as the existing mechanism, but if caching is disabled, the load time is significantly higher. We believe this is caused by the caching mechanism re-using string-to-primitive value conversions. One straight-forward solution to the problem would be to add a \vn{rawInverseLookup} to the \cn{PrimitiveDictionaryFieldValueCollection} class which translates raw XML strings to dictionary indexes.
 
-In the bitpacked column, cells are added one at a time. This was done for simplicity reasons, and the fact that adding a cell adds more than one value, reducing the number of memory allocations. However, the effects of doubling the array instead of adding one cell at a time should be investigated.
-
-
+In our bitpacking implementation, cells are added one at a time to a column instead of doubling capacity. Although one cell normally contains more than one value, the effects of the doubling growth strategy should be investigated.

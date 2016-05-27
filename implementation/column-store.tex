@@ -99,6 +99,8 @@ The class is extended by creating a \fn{CloneValueCollection} that creates a row
 \label{sec:Results}
 We test the changes done in this iteration by using Benchmark \ref{bm:q1}, the \textit{TPC-H Q1 Data Load Benchmark}. We use this benchmark to see whether memory footprint has been reduced. We are also curious to see the performance impact on data load time, lookup index generation (join), and source measure lookup. To see whether our changes has caused negative effects on write performance, we also run Benchmark \ref{bm:write}, the \textit{Write Benchmark}. 
 
+In this iteration, we tested two configurations, original \gap~and the new column store, and two scaling factors, SF0.01 and SF0.1.
+
 Full benchmark details are found in Appendix \ref{app:bm}.
 
 \subsection{TPC-H Q1 Data Load Benchmark}

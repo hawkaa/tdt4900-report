@@ -7,7 +7,6 @@ In this microbenchmark, we test the performance and memory usage of different nu
 
 The motivation for this microbenchmark is to find the most efficient data types for column storage in \gap, both in terms of memory usage and performance.
 
-\begin{minipage}{\linewidth}
 \begin{delphicode}{Array Performance Benchmark}{lst:array-performance}
   SetLength(l_arrNumbers, 4000000 * 10);
   for l_i := 1 to 4000000 do
@@ -24,7 +23,6 @@ The motivation for this microbenchmark is to find the most efficient data types 
     l_oTimer.Stop('Sum ' + IntToStr(l_i));
   end;
 \end{delphicode}
-\end{minipage}
 \section{Test Setup}
 \label{sec:Test Setup}
 For this microbenchmark, we write a small program that fills the array with numbers from 0 to 9 $n$ times. Then, we sum all numbers into an accumulator variable. We measure memory usage before and after array allocation and population. Then, we measure average time it takes to sum all numbers. We chose $n = 4000000$ for this benchmark. The program is shown in Listing \ref{lst:array-performance}.
