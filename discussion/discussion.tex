@@ -1,19 +1,31 @@
 \chapter{Discussion}
 \label{chap:Discussion}
-We hereby discuss our results
+In this chapter, we discuss our findings in a broader perspective, and study the implications of this research for \gap, \mde, and traditional programming languages. We also provide a section on limitations and critics.
 
-\section{Limitations}
-\label{sec:Limitations}
-Although we have theoretical proof and indications that the approach is fruitful, however we are aware of the limitations. First of all, we have omitted some of the functionality in \gap, like for instance the security functionality. In the original implementation, applications may define a row-wise security layer per user or user group. We are confident that our column store approach will work in these settings.
+\clearpage
 
-\section{Row storage}
-\label{sec:Row storage}
-We have chosen to implement column storage; however a an efficient row-wise storage might also have given much of the benefits that column storage do. However, as we have seen, data update operations are dominated by other operations, like integrety checks and database persistence. However, as we have seen, most operations work on an entire column at a time, rather than an entire row. 
+\section{Implications for Genus App Platform}
+\label{sec:Implications for Genus App Platform}
+% paragraph on performance benefit
+So far in this research, we have reduced memory consumption and load time for our benchmarks, as well as increased performance on read-intense operations. Even though our benchmarks have tested only a small subset of the functionality in \gap, we believe the advantages of this research are appearant throughout the platform. Still, even with the column selector functionality from Section \ref{sec:Column Selection}, primitive columns without compression, or even the original \cn{FieldValueCollection} are good choices storing data. Still, we expect to see cercatin functionality in \gap~slowed down by the column store; like the data source move operation which we studien in Chapter \ref{chap:operations}.
 
-According to our results, no operations have been hurt by the column store. We do, however, believe that there are operations that would benefit from a row store.
+In the thesis introduction, we said that there is a great focus on readability and maintainability in \gap. However, this emphasis has also resulted in performance issues, as we know from from the introduction. Our changes has complicated the code by the introduction of \cn{CompositionValueCollection} and data source indexes. However, the \cn{CompositionObject} class is intact, and it still uses a \cn{GValue} interface. Objects are still accessed the same way. Even thoughthere has been some internal modifications in \cn{CompositionObject}, the interface is intact. The \cn{CompositionValueCollection} which uses nothing but properties and datasource indexes as interface, or columns and rows respectively, provides a clean interface to the composition objects.
 
-\section{Relation to Normal Programming Languages}
-\label{sec:Relation to Normal Programming Languages}
+Further development in \gap~should keep the new structure in mind. Operations that work on multiple data in a data source should seek to exploit the new structure. One should be aware the cost of \cn{GValue}s and the benefits on working on data directly in the column store. 
+
+\section{Implications for Model-Driven Engineering}
+\label{sec:Implications for Model-Driven Engineering}
+This research does not provide an extensive overview over all \mde~products, but we believe that the ability to handle large datasets and analyze them is a case where normal, hand-made programs outperforms \mde. This research shows that, by applying database technology for read-optimized databases, the challenges can be overcome. Hence, other \mdd-tools should take special care on how the data is represented within the tool to overcome the challenges. We have shown that data representation is key for low memory usage and high performance, and can enable a \mde-tool to develop for instance \bd~functionality.
+
+We see obvious performance benefits of using database technology in \mde. In normal programming languages, objects are created to store data and create readable code. However, as we have seen, this might not be the best suitable way to store data. In \mde, you get to have your cake and eat it to. Classes are defined with properties to make it readable and easy to communicate, but the underlying \mde~infrastructure stores the database in a database-like fashion.
+
+\ffigure{img/oracle-dual.png}{The \oracle~dual format. Data is stored as both rows and columns. (Adapted from \cite{Oracle2015-fs})}{fig:oracle-dual}
+\mde-tools comes in all forms and shapes, but for tools like \gap~which builds on a layered architecture, where data is brought up to memory from the underlying structure, there is much potential. In Section \ref{sec:Mixed Workloads}, we read about mixed workloads, and that consistency, correctness, and data freshnes can be sacrificed for performance. Other systems, like Oracle, come with a dual format where both rows and columns are stored to accomodate both workloads \cite{Oracle2015-fs}, like seen in Figure \ref{fig:oracle-dual}. The main point here is that an \mdd~which works similar as \gap~can these tradeoffs and store data in the \textit{best suited storage format for different parts of the application}. For instance, \bd~workloads can store data in immutable columns with sorted dictionarys, hence sacrifice data freshness, and for batch updates, a row storage.
+
+
+
+\section{Implications for Traditional Programming Languages}
+\label{sec:Implications for Traditional Programming Languages}
 We see that we have drastically improved end-user performance without affecting the information system development layer. However, most programming languages do not offer the same functionality. Regular developers would need something that is: i) rapid development, ii) readable, maintainable and debuggable code, and iii) occasionally control over data structures. Implementing column store in a regular application would sacrifice all of these three points. We wonder if this need not be the case.
 
 For instance, the Python programming language has something called \textit{decorators} \cite{noauthor_undated-aq}. A decorator is a software design pattern that dynamically changes the source code of a function or attribute. We believe that a similar pattern can be used to define the storage engine for class properties.
@@ -33,39 +45,13 @@ class Person:
 
 \subsection{Null-pointer Compression}
 \label{sub:Null-pointer Compression}
-In Section \ref{sec:Null-pointer Compression}, we investigated the effects of compressing null pointers. This can be used in other programming languages too.
+In Section \ref{sec:Null-pointer Compression}, we investigated the effects of compressing null pointers. This can be used in other programming languages too. There is a significant memory saving potential in compressing null pointers 
 
-\section{Other room for improvement}
-\label{sec: Other room for improvement}
-More effort should be put into the loading strategy. For instance, they should be put at the correct size immediately.
+\section{Limitations and Critics}
+\label{sec:Limitations and Critics}
+There are several limitations in our research. First of all, is the testing of the framework of . We have only tested a limited subset of the functionality to show the potential. We have tested write performance, but this test is limited in scope. Due to time constraints, all tests were run only three times. Ideally, they should be run more to gain a statistical foundation. At last, we have run all tests in debug-mode. We are unaware of what changes this gives in production. Despite of this, we believe our results serve to show the potential in our techniques. We have measured large differences, differences that are likely to be apperant in non-debugger compiled code.
 
-\subsection{Communication with the server}
-\label{sub:Compressing data at the server}
-Now, data are sent in an inefficient XML stream, and it is the work of the client to parse and load this data into proper memory structures. This causes uneccesary network traffic and data type conversions to and from string data, which reduces response time and cripples scalability.
+The second limitation, is that we have based our entire research on \gap. However \mde~supporting infrastructures comes in all sizes and shapes. Thus, our changes might not be appliccable to all systems. There might be systems out there solving these problems more elegantly, by custom code, or for instance are more connected with a database. Nevertheless, we still believe that our modifications to \gap~serves as a proof-of-concept for \mde-tools challenged with performance and data layout issues.
 
-First, and the XML data format is by far outdated, is very unpragmatic and hard to parse. There are several conversions to and from strings. In addition, XML size are large compared to other formats. A solution would be to transfer the memory structures with alternative formats, like \pn{protocol buffers}, \pn{BSON}, or \pn{JSON}. This would reduce network footprint and simplify parsing. \todo{sources}
-
-Second, since we already have algorithms for data compression, why not compress the columns at the server and transfer the compressed versions to the client. This would reduce network traffic, and generally reduce the hardware requirements of a client.
-
-\subsection{Introducing server state}
-\label{sub:Introducing server state}
-For now, the server does not hold any state. This greatly simplifies the design. However, there are many befefits from putting state on the server. For instance, data can proactively be loaded, analysed, and compressed into memory before it is needed. In addition, most of the state the client would need would be the state of the graphical user interface. This will greatly reduce load time. 
-
-As stated above, there is an option to send compressed columns directly. Introducing server state would help solve this problem.
-
-\subsection{Source Measure Lookup}
-\label{sub:Source Measure Lookup}
-In Section \ref{sec:Pointer Exposure} we reasoned how pointers to value buffers could be passed directly to avoid having them being rebuilt. We did, however, extend this functionality to not only pass pointers, but to create the value buffers efficiently within columns. This, in turn, resulted in data duplication. One as a array of doubles, another as i.e. an array of integers or dictionary encoded values. This was partly mediated by disallowing dictionary encoding for float arrays, as we saw in Section \ref{sec:Column Selection}, but other "measureable" columns, like integer columns, would still be stored twice.
-
-One way to avoid such data duplication, could be to allow the \cn{SourceMeasureLookup} class to drop all data within a column after the value buffer was created. We, therefore, propose to extend the \fn{UnassignAllValues} to not only accept a composition object (row), but also a data descriptor (column). This way, a value would only be stored once.
-
-A better, but a more long-term solution, would be to extend the \bd~implementation. First and foremost, all data types should be supported, like integers. This could, in fact, give other side effects like more efficient calculation \footnote{http://nicolas.limare.net/pro/notes/2014/12/12\_arit\_speed/}. Secondly, the \bd~functionality should be able to utilize the dictionaries. For instance, dictionaries make the perfect basis for joins and aggregations. 
-
-\subsection{Integers instead of strings as identifiers}
-\label{sub:Integers instead of strings as identifiers}
-
-
-\section{Critics}
-\label{sec:Critics}
-We could have checked non-debugger performance. It might be a huge difference, and might clutter the results and make them inaccurate.
+This research has focused on read-optimized databases, which is because this read-operations is where \gap~had the largest performance issues. However, we did not investigate technologies for write-optimized, or OLTP databases. There is absoultely much to get from this, and are convinced that certain \gap~oprations would benefit from such row storage. However, as we have seen, data update operations are dominated by other operations, like integrety checks and database persistence. However, as we have seen, most operations work on an entire column at a time, rather than an entire row. According to our results, no operations have been hurt by the column store. We do, however, believe that there are operations that would benefit from a row store.
 

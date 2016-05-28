@@ -1,9 +1,13 @@
 \chapter{Conclusion}
 \label{chap:Conclusion}
-bla bla bla
+This chapter concludes this research. 
+
+\clearpage
 
 \section{Evaluation}
 \label{sec:Evaluation}
+In this research, we have seen that 
+
 We are confident that \mdd~can learn a lot from the database world.
 
 By implementing such storage in a model-driven development tool, we hope to increase the potential of the tool.
@@ -14,8 +18,37 @@ We have successfully introduced new evidence for the performance benefits of com
 
 \section{Future Work}
 \label{sec:Future Work}
+
+
+
 There are still several issues that needs to be addressed. First, we have only briefly used the metadata to select the correct algorithm. There are several indications of which format is the correct one (code domain or object domain). One may even imagine a system that choses the correct storage format for different tasks.
 
 For now, we have treated user level data and data structures differently. However, these aspects are conceptually the same. One might imagine an implementation where all the pointers also are stored in columns.
 
 Last, but not least, we may look back at the issue that inspired the whole research: \bd. For now, \bd~capabilities have only been improved implicitly by reducing memory usage during runtime. In addition, we have improved load time by providing methods for generating required data arrays and indexes. However, most of the work still happens in a separate module without exploiting the data structures implemented in this research. Future work should implement joining, grouping, and aggregation directly within the columns, such that the proper techniques are used for the various implementations.
+
+\subsection{Specific Ideas}
+\label{sub:Specific Ideas}
+
+
+\subsubsection{Communication with the server}
+\label{sub:Compressing data at the server}
+Now, data are sent in an inefficient XML stream, and it is the work of the client to parse and load this data into proper memory structures. This causes uneccesary network traffic and data type conversions to and from string data, which reduces response time and cripples scalability.
+
+First, and the XML data format is by far outdated, is very unpragmatic and hard to parse. There are several conversions to and from strings. In addition, XML size are large compared to other formats. A solution would be to transfer the memory structures with alternative formats, like \pn{protocol buffers}, \pn{BSON}, or \pn{JSON}. This would reduce network footprint and simplify parsing. \todo{sources}
+
+Second, since we already have algorithms for data compression, why not compress the columns at the server and transfer the compressed versions to the client. This would reduce network traffic, and generally reduce the hardware requirements of a client.
+
+\subsubsection{Introducing server state}
+\label{sub:Introducing server state}
+For now, the server does not hold any state. This greatly simplifies the design. However, there are many befefits from putting state on the server. For instance, data can proactively be loaded, analysed, and compressed into memory before it is needed. In addition, most of the state the client would need would be the state of the graphical user interface. This will greatly reduce load time. 
+
+As stated above, there is an option to send compressed columns directly. Introducing server state would help solve this problem.
+
+\subsubsection{Source Measure Lookup}
+\label{sub:Source Measure Lookup}
+In Section \ref{sec:Pointer Exposure} we reasoned how pointers to value buffers could be passed directly to avoid having them being rebuilt. We did, however, extend this functionality to not only pass pointers, but to create the value buffers efficiently within columns. This, in turn, resulted in data duplication. One as a array of doubles, another as i.e. an array of integers or dictionary encoded values. This was partly mediated by disallowing dictionary encoding for float arrays, as we saw in Section \ref{sec:Column Selection}, but other "measureable" columns, like integer columns, would still be stored twice.
+
+One way to avoid such data duplication, could be to allow the \cn{SourceMeasureLookup} class to drop all data within a column after the value buffer was created. We, therefore, propose to extend the \fn{UnassignAllValues} to not only accept a composition object (row), but also a data descriptor (column). This way, a value would only be stored once.
+
+A better, but a more long-term solution, would be to extend the \bd~implementation. First and foremost, all data types should be supported, like integers. This could, in fact, give other side effects like more efficient calculation \footnote{http://nicolas.limare.net/pro/notes/2014/12/12\_arit\_speed/}. Secondly, the \bd~functionality should be able to utilize the dictionaries. For instance, dictionaries make the perfect basis for joins and aggregations. 

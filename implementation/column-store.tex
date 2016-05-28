@@ -219,7 +219,7 @@ We are unsure why different scaling factors yielded a different number of bytes 
 \label{sec:Iteration Conclusion}
 We conclude this iteration by stating that there is a large potential in column storage regarding memory footprint and load times. Memory used per \lineitem~in the \textit{TPC-H Q1 Data Load Benchmark} has been reduced by 30 - 38 \%, and the time it takes to load all data in this benchmark by 67 \%. Write performance, tested with Benchmark \ref{bm:write}, has not been affected by the new implementation.
 
-Still, both read-intense operations tested in Benchmark \ref{bm:q1}, especially the source measure lookup operation. Here, the time it takes to generate an array of double precision numbers for a data descriptor is doubled with the column store. We believe this changes are caused by a \fn{GetValue} function less efficient than the original.
+Still, both read-intense operations tested in Benchmark \ref{bm:q1} are slowed down, especially the source measure lookup operation. Here, the time it takes to generate an array of double precision numbers for a data descriptor is doubled with the column store. We believe this changes are caused by a \fn{GetValue} function less efficient than the original.
 
 This iteration lays the groundwork for further investigation and to check whether database technologies and column store can help \mdd-tools' ability to handle and analyse large datasets. We believe even more memory can be saved by optimizing storage formats, applying compression, and removing more pointers. We do this in the next iterations, Chapter \ref{chap:storage-format} and Chapter \ref{chap:compression}. 
 

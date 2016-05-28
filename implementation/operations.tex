@@ -20,28 +20,6 @@ We solve the above challenge by introducing \textit{column operations}, or opera
 
 So far, four operations that would benefit from the column store are identified in \gap. These include source measure lookup and join operations from Benchmark \ref{bm:q1}, as well as the generation of identifier indexes and predicate bitmaps. In this iteration, we implement these operations and measure the performance impact using Benchmarks \ref{bm:q1} and \ref{bm:filter}.
 
-%low degree of freedom
-\chapter{Part IV: Column Operations}
-\label{chap:operations}
-
-In this chapter, we investigate the potential in the data structures used by our column store. We do so by defining operations that work on entire columns at a time and show how the changes improve read-intense operations by several orders of magnitude.
-
-This chapter contains the fourth and final iteration of our research.
-
-\clearpage
-
-\section{Introduction}
-\label{sec:Introduction}
-\afigure{img/memory-performance-graph}{As memory footprint has gone down through the course of this research, read-intense operation performance has decreased, especially at the introduction of primitive value storage.}{fig:memory-performance-graph}{1.0} 
-So far, the techniques applied in this research gives a reduction in memory usage and load time. However, as the previous iterations have pointed out, we have not yet exploited the potential the data structures in our column structure. In Figure \ref{fig:memory-performance-graph}, we see that both lookup index generation and source measure lookup performance from Benchmark \ref{bm:q1} has been severely slowed down, especially after the introduction of primitive data values. In this chapter, we aim to increase the performance of these operations.
-
-By exploiting the potential in the data structures, we refer to making operations in \gap~more friendly for modern CPUs. As we saw in Section \ref{sec:Modern CPUs and Compilers}, independent instructions, cache hit-rates, and branch avoidance is key to achieve full CPU throughput. 
-
-Currently, read-intense operations, like source measure lookup and lookup index creation, access values in tight loops using the \fn{GetValue} function. Hence, every loop iteration requires a series of function calls and layers of indirection to access the value, including a dictionary lookup. More importantly, a \cn{GValue} is allocated per iteration, and likely discarded shortly after. As we saw in \ref{sec:Modern CPUs and Compilers}, this is a recipe for poor performance.
-
-We solve the above challenge by introducing \textit{column operations}, or operations that work on all values for an object class property in a data source. In other words, we move certain functionality from outside the \cn{GValue} interface to the column store itself. This modification enables the operations to fully utilize the storage format: Improved cache locality, vectorized execution, and low degree of freedom. Moreover, the column operations are free of branches and function calls, which fills the CPU pipeline, enable loop unrolling, and superscalar processing.
-
-So far, four operations that would benefit from the column store are identified in \gap. These include source measure lookup and join operations from Benchmark \ref{bm:q1}, as well as the generation of identifier indexes and predicate bitmaps. In this iteration, we implement these operations and measure the performance impact using Benchmarks \ref{bm:q1} and \ref{bm:filter}.
 
 %vectorized execution
 %late materialization
