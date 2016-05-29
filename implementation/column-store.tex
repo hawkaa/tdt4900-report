@@ -1,7 +1,7 @@
 \chapter{Part I: Column Store}
 \label{chap:column-store}
 
-In this chapter, we modify how \gap~represents data internally by replacing the original row storage format with a column store. We see how it successfully reduces memory consumption and load times for the \tpch.
+In this chapter, we modify how \gap~represents data internally by replacing the original row storage format with a column store. We see how it successfully reduces memory consumption and load times for the \textit{TPC-H Q1 Data Load Benchmark}.
 
 This chapter makes up the first out of four main iterations in the design and experiment part of this research. As mentioned in the introduction, we aim to reduce memory consumption in the first iterations of the research.
 
@@ -20,8 +20,7 @@ We believe that conventional transactional processing in \gap, where a row store
 
 \section{Implementation}
 \label{sec:Implementation}
-\todo{Go over entire Implementation section}
-
+\todo{Implementation section not complete}
 In this section, we explain how a column store is implemented in \gap~by introducing data source indexes and replacing \cn{CompositionObjectValueCollection}.
 
 \subsection{CompositionValueCollection}

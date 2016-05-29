@@ -5,11 +5,11 @@ In this chapter we explain the background information and motivation of this res
 
 \section{Background and Motivation}
 \label{sec:Background and Motivation}
-There has been an increased interest in database systems that are tuned for ad-hoc analysis and \bi~queries recently. These systems utilizes column storage, compression, and paralellization to maximize CPU and memory throughput, and normally builds on in-memory technologies. In general, because RAM is getting cheaper \cite{Exasol2014-xh}, and 64-bit CPUs has become more wide-spread, in-memory databases increasingly play a more significant role \cite{Delaney2014-ip}. Systems tuned for \bi~and capable of using main memory as primary storage include \oracle~\cite{Lahiri2015-mz}, \saph~\cite{Farber2012-vh}, \gorilla~\cite{Pelkonen2015-ko}, \qlikview~\cite{Qlik2011-ef}, \tableau~\cite{Kamkolkar2015-iq}, \monetdb~\cite{Boncz2002-yj}, \blink~\cite{Barber2012-xt}, and \sapnw~\cite{Lemke2010-is}. In-memory database systems are used where performance and low latency is a key design goal, and on systems that have no need for persistent storage \cite{Zicari2012-is}.
+There has been an increased interest in database systems that are tuned for ad-hoc analysis and \bi~queries recently. These systems utilizes column storage, compression, and paralellization to maximize CPU and memory throughput, and normally builds on in-memory technologies. In general, because RAM is getting cheaper \cite{Exasol2014-xh}, and 64-bit CPUs has become more wide-spread, in-memory databases increasingly play a more significant role \cite{Delaney2014-ip}. Systems tuned for \bi~and capable of using main memory as primary storage include \oracle~\cite{Lahiri2015-mz}, \saph~\cite{Farber2012-vh}, \gorilla~\cite{Pelkonen2015-ko}, \qlikview~\cite{Qlik2011-ef}, \tableau~\cite{Kamkolkar2015-iq}, \monetdb~\cite{Boncz2002-yj}, \blink~\cite{Barber2012-xt}, and \sapnw~\cite{Lemke2010-is}. In-memory database systems are used where performance and low latency is a key design goal, and on systems that have no need for persistent storage \cite{Zicari2012-is}. \todo{This focuses more on in-memory}
 
 \mde, a discipline that aims to increase developer productivity by raising abstraction levels, has identified that there always will be a gap between the business problem and the implementation \cite{France2007-ae}. One of the main goals of \mdd~research is to create technologies that shield software developers from complexities of the underlying platform. To cope with these complexities, and close the gap between the business problem and the implementation, a deep understanding of the gap bridging process is required, an understanding that is gained through experimentation and accumulation of experience. One of the major advantages of \mde~is that models are expressed in such way that they are closer to the problem domain and less bound to the underlying implementation \cite{Selic2003-qa}. At most times, \mdd-tools generate programs that are just as memory and performance efficient as hand-crafted programs, but there are occasional critical cases where \mde~are outperformed by tailored solutions.
 
-\genus~is one of the market players in \mde, and, like most vendors in the field, aim to close the gap between business logic and implementation through abstractions and models. Their platform, \gap, uses generic software concepts on a higher level of abstraction than regular programming languages that are precise and non-ambigous \cite{noauthor_undated-qy}. These concepts, and the underlying implementation, have been refined and improved through years of trial and error on real customer use cases. However, since the main focus of the source code of the platform has been readability and maintainability, no particular attention has been paid to how data is represented internally. This has resulted in a system with high memory usage, a system uncapable of handling large data sets, and a system with poor performance on operations that work on multiple data elements, such as joins and data aggregations.
+\genus~is one of the market players in \mde, and, like most vendors in the field, aim to close the gap between business logic and implementation through abstractions and models. Their platform, \gap, uses generic software concepts on a higher level of abstraction than regular programming languages that are precise and non-ambigous \cite{noauthor_undated-qy}. These concepts, and the underlying implementation, have been refined and improved through years of trial and error on real customer use cases. However, since the main focus of the source code of the platform has been readability and maintainability, no particular attention has been paid to how data is represented internally. This has resulted in a system with high memory usage, a system uncapable of handling large data sets, and a system with poor performance on read-intense operations, such as joins and data aggregations.
 
 Our main motivation for this research is two-fold. First, we have identified a critical case in \gap, and likely \mde~in general, which is memory consumption and handling and analysis of large datasets. We are motivated to seek out how this problem can be solved in the context of \mdd. Second, we observe that \gap~has many similarities with an in-memory database: Data is fetched from persistent data sources, manipulated and analyzed in-memory, before being persisted in the data sources again. We are, therefore, motivated to see whether techniques used in state-of-the-art read-optimized can be applied to a \mde-tool. Overall, our research is of interest because it increases versatility of \mdd-tools and the number of problems where \mde~can be applied.
 
@@ -27,23 +27,23 @@ We set \textbf{G1} not only to improve \gap~and tackle its performance challenge
 
 \setlength{\leftskip}{1cm}
 
-\textbf{G2: Introduce new evidence that \mde~can benefit from in-memory database technologies.}
+\textbf{G2: Introduce new evidence that \mde~can benefit from in-memory, read-optimized database technologies.}
 
 \setlength{\leftskip}{0pt}
 
-As mentioned, \gap, and likely other \mde~tools, have many similarities with in-memory databases. We are curious to see whether techniques used in in-memory databases, mainly those optimized for analytical workloads, can be applied in the context of \mde. 
+As mentioned, \gap, and likely other \mde~supporting platforms, have many similarities with in-memory databases. We are curious to see whether techniques used in in-memory databases, mainly those optimized for analytical workloads, can be applied in the context of \mde. 
 
 To reach \textbf{G1} and \textbf{G2}, we address the following research question:
 
 \setlength{\leftskip}{1cm}
 
-\textbf{RQ1: How does storage techniques used in an in-memory, analytics-oriented database, like columns and compression, affect \gap's ability to handle large datasets, and how must the application be changed to accomodate and utilize the new storage format?} \todo{Needs work, but you get the point? GAP or general mdd?}
+\textbf{RQ1: How can technology used by in-memory, read-optimized databases improve \gap's ability to handle and analyze large datasets, and what can model-driven engineering, in general, learn from database technology?}
 
 \setlength{\leftskip}{0pt}
 
-By answering \textbf{RQ1}, we hope to address \textbf{G1} directly by making changes in \gap~that increase the platform's ability to handle large datasets. However, by using our changes in \gap~as a proof-of-concept, we plan to address \textbf{G2} by drawing general conclusions on the combination of \mde~and in-memory database technology.
+By answering \textbf{RQ1}, we hope to address \textbf{G1} directly by making changes in \gap~that increase the platform's ability to handle large datasets. However, by using our changes in \gap~as a proof-of-concept, we plan to address \textbf{G2} by drawing general conclusions on the combination of \mde~and database technology.
 
-We are aware that our goals and research question are prematurely presented in this section, as they are based on knowledge about \mde, \gap, and read-optimized databases. However, this section becomes more appearent after reading Chapters 2-4. Section \ref{sec:Research Motivation} will again present our goals and research question, but in the light of the discoveries made that far. \todo{Poor paragraph, but cool way to do it?}
+We are aware that our goals and research question are prematurely presented in this section, as they are based on knowledge about \mde, \gap, and read-optimized databases. However, this section becomes more appearent after reading Chapters 2-4. Section \ref{sec:Research Motivation} will again present our goals and research question, but in the light of the discoveries made that far.
 
 \subsection{Research Scope}
 \label{sub:Research Scope}
@@ -55,7 +55,7 @@ To reach our goals and to address our research question, we divide our research 
 
 \subsection{Literature Review}
 \label{sub:Literature Review}
-The main goal of the initial research and literature review is to gain a deeper understanding of in-memory databases and find out which technologies that enable high performance and low memory usage. In Section \ref{sub:Research Scope}, we saw that the original scope of the research was to improve analytical capabilities in \gap. Thus, this part emphasizes techniques used in online analytical processing (OLAP) databases. In this phase of the research, we also study \mde, \bi, \bd, \delphi, and provide an analysis of \gap.
+The main goal of the initial research and literature review is to gain a deeper understanding of read-optimized, in-memory databases and find out which technologies that enable high performance and low memory usage. In Section \ref{sub:Research Scope}, we saw that the original scope of the research was to improve analytical capabilities in \gap. Thus, this part emphasizes techniques used in online analytical processing (OLAP) databases. In this phase of the research, we also study \mde, \bi, \bd, \delphi, and provide an analysis of \gap.
 
 Most of the literature review was performed using a method known as \term{Snowballing}, which is convenient if the scope of the project is uncertain \cite{Ang2014-nm}. The Snowballing method is the process whereby you start with a few number of authoritative papers and based on these you expand your list of readings by relevant work that the papers have cited. The identification of papers can also happen in the other direction, where you look for papers that have used the current one as a reference. Either way, this method is known to generate a large number of papers, so the researcher must be very strict and objective in which papers to read.
 
@@ -69,7 +69,7 @@ The findings from this part of the study result in three chapters in this report
 
 \subsection{Design and Experiment}
 \label{sub:Design and Experiment}
-The second part of the research is a design and experiment type study, where the main goal is to answer \textbf{RQ1}: How does promising topics discovered in the literature study apply to \gap, and which conclusions can be drawn from the intersection between database technology and \mde. According to France \ea, new techniques used in \mde~requires systematic accumulation of experience \cite{France2007-ae}, and this step provides such experience.
+The second part of the research is a design and experiment type study, where the main goal is to answer \textbf{RQ1}. Here, we apply the most promising techniques used by in-memory, read optimized databases to \gap, and see if they increase the platform's ability to handle large datasets. Also, we see wha \mde~in general can learn from database technology. According to France \ea, new techniques used in \mde~requires systematic accumulation of experience \cite{France2007-ae}, and this step provides such experience.
 
 More specifically, we change the internal data representation in \gap. We implement a column store, enhance data formats, and apply compression to reduce \gap's memory usage. Then we make modifications to exploit the new storage format, which enables \gap~to handle and analyze large datasets. We run benchmarks to measure the impact of our changes, both to assess the platform's capabilities to handle and analyze large datasets, but also to ensure that write and update operations have not been affected negatively. \todo{We assume knowledge from the first part. ok?}
 
@@ -79,17 +79,11 @@ After the research implementation iterations, we discuss our results holisticall
 
 \section{Deliverables and Contributions}
 \label{sec:Deliverables and Contributions}
-The main deliverable from this research is this report which contains literature study, implementation details, tests results, and discussions of our findings. The report answers \textbf{RQ1} and address both goals stated in Section \ref{sec:Goals and Research Question} and has an emphasis on the design and experiment part of the research. 
+The main deliverable from this research is this report which contains literature study, implementation details, tests results, and discussions of our findings. The report answers \textbf{RQ1} and address both goals stated in Section \ref{sec:Goals and Research Question} and has an emphasis on the design and experiment part of the research. The source code is not a part of the deliverables for this research, although class diagrams and some listings are provided in the report.
 
-This research work takes a pragmatic approach: It is meant to show the potential of the technology, as well as accumulating experience, not a thorough analysis and experiment that checks all aspects of the applied methods. \todo{Discard?}
+This research contributes to an \textit{improved computer-based product}, and it is mainly \gap~which sees these improvements. However, our goal is to increase the veratility of \mde~supporting architectures, and we hope other \mdd-tools benefit from our findings. 
 
-The source code is not a part of the deliverables for this research, although class diagrams and some listings are provided in the report.
-
-This research contributes to an \textit{improved computer-based product}, and it is mainly \gap~which sees these improvements. However, we hope that other \mde-tools can benefit from our findings. \todo{Work a little more on this paragraph?}
-
-Second, and likely to be more important, is that we \textit{introduce new evidence} that \mde~can benefit from technologies for in-memory databases. In other words, we \textit{re-interpret} the database technology and apply it to the context of \mde~and re-evaluate how \mdd-tools should represent data internally.
-
-\todo{Is background theory a contribution?}
+Second, and more important, is that we \textit{introduce new evidence} that \mde~can benefit from technologies used in read-optimized, in-memory databases. In other words, we \textit{re-interpret} the database technology and apply it to the context of \mde~and re-evaluate how \mdd-tools should represent data internally. We have not found any research taking a similar approach. \todo{Find similarish, and explain why ther are not the same?}
 
 \section{Thesis Structure}
 \label{sec:Thesis Structure}
@@ -100,27 +94,17 @@ The first three chapters of the thesis is associated with the first research pha
     \item \textbf{Chapter 4} contains a top-down analysis \gap, containing platform architecture, application development, concepts, and source code. The last part of this chapter identifies challenges in \gap, which motivates the design and experiment part of the research.
 \end{itemize}
 
-The next four chapters belong to the second and main research phase, where techniques learnt from the litterature review are implemented in \gap. Each chapter contains an introduction, implementation, results, discussion, and conclusion, and corresponds to a research iteration. \todo{Should be done clearer?}
+The next four chapters belong to the second and main research phase, where techniques learnt from the litterature review are implemented in \gap. Each chapter contains an introduction, implementation, results, discussion, and conclusion, and corresponds to a research iteration.
 \begin{itemize}
     \item \textbf{Chapter 5} presents how column store is implemented in \gap.
     \item \textbf{Chapter 6} demonstrates how representing data as primitive data types in the columns reduce memory footprint.
     \item \textbf{Chapter 7} shows how compression techniques reduces \gap~memory consumption.
     \item \textbf{Chapter 8} investigates operations that exploit the column format, like join and filter operations.
 \end{itemize}
-
 \todo{Not sure if I am clear enough on how the thesis is structured. Paper structure said bratsberg?}
 
-Then we include a chapter on techniques that were explored and worthwhile to discuss, however not tested enough to draw any conclusions.
+In \textbf{Chapter 9}, we see techniques that were explored in this research and worthwile to discuss, but not tested enough to draw any conclusions. Here, we examine the implications of UTF-8 string encoding and how database statistics can be used to select the correct storage format. \textbf{Chapter 10} discuss our findings holistically, concludes the research, and points at interesting directions for future work.
 
-\begin{itemize}
-    \item \textbf{Chapter 9} examine the implications of UTF-8 string encoding and how applying database statistics can help selecting the correct storage format.
-\end{itemize}
-
-The remaining part of the thesis contains discussion and conclusion.
-\begin{itemize}
-  \item \textbf{Chapter 10} discuss the results and implications of our findings, and sees our research in a broader perspective. \todo{Rewrite after Ch. 9 is done}
-  \item \textbf{Chapter 11} concludes this research and points at interesting directions for future work.
-\end{itemize}
 
 
 %However, several challenges with \mdd~exist, including performance \cite{Selic2003-qa}. However it is common knowledge that compiler optimization can outperform human creativity, and more recently: \mdd~tools generate code or systems that are faster and more reliable due to years of experimentation and experience. However, there are still problems left which leads developers to ditch the MDD approach all-together

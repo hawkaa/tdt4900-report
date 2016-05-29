@@ -235,8 +235,12 @@ We observe that \gap~is in fact a sophisticated in-memory database. Data sources
 
 We are motivated to apply techniques used in read-optimized databases to \gap. We believe techniques like column storage and compression can mitigate several problems in \gap~source code, such that memory usage can be reduced, and the platform gains the ability to handle and analyze large datasets. We also believe this approach serves an example of how such problems are solved in the context of \mde. As a result of this, we form our research question:
 
-\textbf{RQ1: How does storage techniques used in an in-memory, analytics-oriented database, like columns and compression, affect \gap's ability to handle large datasets, and how must the application be changed to accommodate and utilize the new storage format?} 
+\setlength{\leftskip}{1cm}
 
-By answering \textbf{RQ1}, we hope to address \textbf{G1} directly by making changes in \gap~that increase the platform's ability to handle large datasets. However, by using our changes in \gap~as a proof-of-concept, we plan to address \textbf{G2} by drawing general conclusions on the combination of \mde~and in-memory database technology.
+\textbf{RQ1: How can technology used by in-memory, read-optimized databases improve \gap's ability to handle and analyze large datasets, and what can model-driven engineering, in general, learn from database technology?}
 
-We plan to optimize \gap~in the method engineering layer, such that the information system development layer is affected as little as possible. Much like a compiler is better at optimizing code than a human programmer, we believe \gap~has the potential to optimize storage format without modeler intervention. This way, \gap~expert users may focus on the business problem and not on the underlying implementation.
+\setlength{\leftskip}{0pt}
+
+By answering \textbf{RQ1}, we hope to address \textbf{G1} directly by making changes in \gap~that increase the platform's ability to handle large datasets. However, by using our changes in \gap~as a proof-of-concept, we plan to address \textbf{G2} by drawing general conclusions on the combination of \mde~and database technology.
+
+We plan to optimize \gap~in the method engineering layer, such that the information system development layer is affected as little as possible. Much like a compiler is better at optimizing code than a human programmer, we believe \gap~has the potential to optimize storage format without modeler intervention. This way, \gap~expert users may focus on the business problem and not on the underlying implementation. \todo{Should this be in introduction?}
