@@ -38,10 +38,10 @@ The number of bytes allocated per \texttt{LINEITEM} in the memory-manager is rep
 \label{par:Load Time}
 Load time for the \texttt{LINEITEM} data source is reported. This output only reports the time it takes to load data into composition objects, hence it disregards the overhead in creating composition objects and parsing XML files from the database backend. The result is reported in milliseconds.
 
-\paragraph{Creation of Lookup Indexes}
+\paragraph{Lookup Index Generation (Join)}
 This output shows how many milliseconds it takes to create lookup-indexes, or join the tables in the data mart. A join is performed all relations in the mart, which is \texttt{LINESTATUS}, \texttt{RETURNFLAG}, and \texttt{SHIPDATE}. The output represents the number of milliseconds it took to create each of the mentioned lookups. The \texttt{SHIPDATE} lookup takes longer, since date parsing and comparison is more complex and the date table is larger.
 
-\paragraph{Source Measure Lookup Generation}
+\paragraph{Source Measure Lookup}
 In \gd, all calculations and aggregations are performed on arrays of double precision floating point values. Hence, after all data for a given data source has been loaded, such array is extracted. In this benchmark, such arrays are created for integer column \texttt{QUANTITY} and floating point columns \texttt{EXTENDEDPRICE}, \texttt{DISCOUNT}, and \texttt{TAX}. For each column, the number of milliseconds used to create this lookup is measured.
 
 \paragraph{Total Memory Footprint}
