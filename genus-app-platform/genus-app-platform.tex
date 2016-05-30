@@ -148,7 +148,7 @@ A \cn{GValue} is a class type and not a record type, hence is allocated by the m
 
 \subsection{CompositionDescriptor}
 \label{sub:CompositionDescriptor}
-The object class, or composition, which we discussed in Section \ref{sub:Object Classes}, is represented by the \cn{CompositionDescriptor} class. Conceptually, this class is the same as a class in a programming language. A \cn{CompositionDescriptor} contains all information needed to describe an object class, for instance which properties, or \cn{CompositionFieldDescriptor}, that belongs to to the composition.
+The object class, or composition, which we discussed in Section \ref{sub:Object Classes}, is represented by the \cn{CompositionDescriptor} class. Conceptually, this class is the same as a class in a programming language. A \cn{CompositionDescriptor} contains all information needed to describe an object class, for instance which properties, or \cn{FieldDescriptor}, that belongs to to the composition.
 
 Since \cn{CompositionDescriptor} instances is a part of the application model, it belongs to the ISD layer, which we discussed in Section \ref{sub:Models and Model Levels}. In the linguistic meta modeling framework, this construct makes up the left part of Figure \ref{fig:linguistic-metamodeling}, which is the "Class" and "Collie" entities.
 
@@ -158,9 +158,9 @@ Whereas the \cn{CompositionDescriptor} class represents an object class definiti
 
 Instances of \cn{CompositionObject}s make up the data in the applicaiton, and is, therefore, associated with the IS layer in \mde. In the linguistic meta modeling framework, this class is depicted on the right part of Figure \ref{fig:linguistic-metamodeling}. \cn{CompositionObject} has an ontological \textit{instance-of} relationship with \cn{CompositionDescriptor}.
 
-\subsection{CompositionFieldDescriptor}
-\label{sub:CompositionFieldDescriptor}
-The \cn{CompositionFieldDescriptor} class describes an attribute in a composition, which is the object class property we studied in Section \ref{sub:Object Class Properties}. It holds all relevant data about a property, mainly type and representation, but also constraints and formatting rules. Like \cn{CompositionDescriptor}, instances of the \cn{DataDescriptor} class exist in the ISD layer.
+\subsection{FieldDescriptor}
+\label{sub:FieldDescriptor}
+The \cn{FieldDescriptor} class describes an attribute in a composition, which is the object class property we studied in Section \ref{sub:Object Class Properties}. It holds all relevant data about a property, mainly type and representation, but also constraints and formatting rules. Like \cn{CompositionDescriptor}, instances of the \cn{DataDescriptor} class exist in the ISD layer.
 
 \subsection{CompositionObjectValueCollection}
 \label{sub:CompositionObjectValueCollection}

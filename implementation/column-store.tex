@@ -1,98 +1,98 @@
 \chapter{Part I: Column Store}
 \label{chap:column-store}
 
-In this chapter, we modify how \gap~represents data internally by replacing the original row storage format with a column store. We see how it successfully reduces memory consumption and load times for the \textit{TPC-H Q1 Data Load Benchmark}.
+In this chapter, we modify how \gap~represents data internally by replacing the original row storage format with a column store. We see how it successfully reduces memory consumption and load times for the \textit{TPC-H Q1 Data Load Benchmark}. The work undertaken in this chapter lays some important groundwork for further optimization.
 
-This chapter makes up the first out of four main iterations in the design and experiment part of this research. As mentioned in the introduction, we aim to reduce memory consumption in the first iterations of the research.
+This chapter makes up the first out of four main iterations in the design and experiment part of this research. As mentioned in the introduction, we aim to reduce memory consumption in the first iterations of the research. 
 
 \clearpage
 
 \section{Introduction}
 \label{sec:Introduction}
 % Tell how we want to reduce memory and how database technology comes to the rescue
-In the first part of this thesis, we aim to reduce memory footprint such that memory client memory requirements can be relaxed. As we saw in Section \ref{sec:Compression}, lower memory usage are likely to increase performance because most database processes are memory-bound. Moreover, we hypothesize that memory management is expensive and that the number of allocations, as well as the size of the allocated memory chunks, should be reduced. Inspired by the techniques used by read-optimized databases in Chapter \ref{chap:olap} and motivated by the challenges in \gap, we change how data is represented internally in the platform.
+Starting our main part of the research, we aim to reduce memory footprint in \gap. As we saw in Section \ref{sec:Compression}, lower memory usage are likely to increase performance because most database processes are memory-bound. Moreover, we hypothesize that memory management is expensive and that the number of allocations, as well as the size of the allocated memory chunks, should be reduced. Inspired by the techniques used by read-optimized databases in Chapter \ref{chap:olap} and motivated by the challenges in \gap, we change how data is represented internally within the platform.
 
 % tell why we picked a column store
-We choose to implement a column store, which we read about in Section \ref{sec:Column Storage}. The reason for this is two-fold. First, as we saw in the literature study, columns are inherently more compressible. Hence, a column store is better suited to reduce memory consumption and to test our hypothesis about the costs of memory management. Second, the cases where \genus~has experienced performance issues are in situations where a column store is better suited than a row store, for instance on join and filter operations.
+We choose to implement a column store, which we read about in Section \ref{sec:Column Storage}. The reason for this is two-fold. First, as we saw in the literature study, columns are inherently more compressible. Hence, a column store is better suited to reduce memory consumption and to test our hypothesis about the costs of memory management. Second, the cases where \genus~has experienced performance issues are in situations where a column store is better suited than a row store, for instance the read-intense join and filter operations.
 
 % Tell why we did not pick a row store
-We believe that conventional transactional processing in \gap, where a row store might be better suited, will not suffer from using a column store. There is much overhead on create, update, and delete operations, like constraint checks, data validation, and memory allocations that will make the column store overhead negligible. Also, a row store might require index structures to accommodate certain operations; indexes which, as we have seen in Section \ref{sub:Row Stores vs Column Stores}, are costly to maintain.
+We believe that conventional transactional processing in \gap, where a row store might be better suited, will not suffer from using a column store. In \gap, there is much overhead on object create, update, and delete, like constraint checks, data validation, and memory allocations. Thus, we hypothesize that tuple materialization costs and the effects of decreased memory locality are neglible. Also, a row store might require index structures to accommodate certain operations; indexes which, as we have seen in Section \ref{sub:Row Stores vs Column Stores}, are costly to maintain.
 
 \section{Implementation}
 \label{sec:Implementation}
-\todo{Implementation section not complete}
-In this section, we explain how a column store is implemented in \gap~by introducing data source indexes and replacing \cn{CompositionObjectValueCollection}.
+In this section, we explain how a column store is implemented in \gap. We change the original row store by introducing data source indexes to \cn{CompositionObject}s and replace \cn{CompositionObjectValueCollection} with a new class we denote as \cn{CompositionValueCollection}.
+
 
 \subsection{CompositionValueCollection}
 \label{sub:CompositionValueCollection}
 % Lineout the challenges
-As we saw in Section \ref{sec:Challenges in Genus App Platform}, one of the challenges in \gap~is the \cn{CompositionObjectValueCollection} class that not only holds the data belonging to each object, but also pointers to the data descriptors. Although this class is flexible because it is self-contained, and can be passed among objects to copy values, for most cases, references to the data descriptors does not need to be stored per data collection. 
+As we saw in Section \ref{sec:Challenges in Genus App Platform}, one of the challenges in \gap~is the \cn{CompositionObjectValueCollection} class that has an excessive amount of pointers. Not only does the class hold references to all data for an object, but also pointers to field descriptors. Although this class is self-contained and flexible, there is no need to store the field descriptor references in every row.
+
+
+To reduce the number of pointers, and to create a column store, we replace instances of \cn{CompositionObjectValueCollection} with a new class which we denote as \cn{CompositionValueCollection}. This class represents the data storage container for objects in a data source. Also, we extend the \cn{CompositionObject} class with a new integer attribute, \vn{DatasourceIndex}, to identify which objects belong to which indexes in the data buffers. The data source index can be thought of a row identifier which we saw in Section \ref{sub:Row Identifiers and Tuple Materialization}.
 
 % Conceptually what is done
 \begin{figure}
     \centering
     \begin{subfigure}{1.0\textwidth}
         \includegraphics[width=\textwidth]{img/gap-original-rows.png}
-        \caption{Original implementation with \cn{CompositionObjectValueColletion}. Each object has its own value collection structure, and each value collection contains pointers to the data descriptors and to the data.}
+        \caption{Original implementation with \cn{CompositionObjectValueCollection}. Each object has its own value collection, and each value collection contains references to both data descriptors and the data itself.}
         \label{fig:gap-original-rows}
     \end{subfigure}
     \begin{subfigure}{1.0\textwidth}
         \includegraphics[width=\textwidth]{img/gap-bb-columns.png}
-        \caption{Column store implementation with \cn{CompositionValueColletion} and \cn{FieldValueCollection}. All objects in a data source point to the same value collection, and access data using its datasource index, or row identifier, that indicates which column index holds the data.}
+        \caption{Column store implementation with \cn{CompositionValueCollection} and \cn{FieldValueCollection}. All objects in a data source point to the same value collection, and access data using data source indexes and field descriptors to indicate row and column respectively.}
         \label{fig:gap-bb-columns}
     \end{subfigure}
-    \caption{Comparison of the original implementation and the column store implementation.}
+    \caption{Comparison of the original row store implementation in \gap~and the new column store implementation.}
     \label{fig:gap-storage-comparison}
 \end{figure}
-In our column store, we plan to replace the \cn{CompositionObjectValueCollection} pointer in each \cn{CompositionObject} with a pointer to a \cn{CompositionValueCollection} and an integer, \cn{DatasourceIndex}, that indicates which position in the data source the object has. The data source variable can be thought of as a row identifier, which we studied in Section \ref{sub:Row Identifiers and Tuple Materialization}. All objects within a data source has a pointer to the same \cn{CompositionValueCollection}. This means that composition objects no longer will query its own data collection for values, but rather one common data collection used by all objects. To access a certain value, both \cn{DataDescriptor} and \cn{DatasourceIndex} is required to indicate column and row respectively. A comparison of the old and the new implementation is seen in \ref{fig:gap-storage-comparison}.
 
-\todo{section on tuple materialization?}
+Our modifications imply that composition objects in a data source no longer queries its own data collection, or \cn{CompositionObjectValueCollection}, for values, but instead request values from one shared \cn{CompositionValueCollection}. To access values in the column store, objects must pass their data source index and a field descriptor to indicate row and column respectively. A comparison between the original and the new implementation is seen in Figure \ref{fig:gap-storage-comparison}. Even though the original \cn{CompositionObjectValueCollection} was discarded as the main data source storage structure, the structure is still in use and can created by the objects. \gap~uses \cn{CompositionObjectValueCollection} extensively in various parts of the application, for instance object cloning and data transfer. \todo{Correct?}
 
-% How it impacts memory
-In Section \ref{sub:Excessive Amount Of Pointers}, we saw how a data source with objects with 15 properties each needed 32 pointers, or 256 bytes, per objects just for data and data access. Now, this number is reduced to 17 pointers and an integer, which is 140 bytes. Hence, we have the potential to save 45\% memory by using our new system.
-
-% CompositionObjectValueCollection still exists
-Even though the original \cn{CompositionObjectValueCollection} was discarded as the main storage structure, composition objects can still assemble such structures by querying the \cn{CompositionValueCollection}. This is used in object cloning and to transfer data across different data sources in different parts of the application \todo{Stemmer dette?}.
 
 % class diagram
 % explain the dictionary and the list of data descriptors
 \afigure{img/CompositionValueCollection.png}{\cn{CompositionValueCollection} class diagram.}{fig:CompositionValueCollection}{0.9}
-The \cn{CompositionValueCollection} is a class type. The class diagram is shown in Figure \ref{fig:CompositionValueCollection}.
+The class diagram for \cn{CompositionValueCollection} is seen in Figure \ref{fig:CompositionValueCollection}. The main methods in this class are \fn{GetValue} and \fn{SetValue}. In these methods, a dictionary lookup finds the correct column, or \cn{FieldValueCollection}, and requests the value for the given data source index. \cn{IsAssigned} and \cn{UnassignValue} work similarly. In addition to the access methods for single data elements, row- or column-wise operations like \fn{UnassignAllValues} exist. 
 
-The main methods in the \cn{CompositionValueCollection} class is the \fn{setValue} and \fn{getValue} methods. These functions respectivel set and get \cn{GValues} for a data descriptor and a datasource index. In these operations, the correct column, or \cn{FieldValueCollection}, is looked up in a dictionary, and the index is passed along to the column to get or set the value. If no column exist for a data descriptor, it is created. \fn{isAssigned} and \fn{unassignValue} works similarly. We study the unassigned semantic in Section \ref{sub:Unassigned Values}. 
+Data source indexes are assigned by passing composition objects to the \fn{RegisterObject} method. A private variable, \vn{maxDatasourceIndex} is used to keep track of the maximum index assigned so far. When an object is removed from a data source, \cn{RemoveObject} is called, and this method keeps track of removed objects in the \vn{assignedIndexes} bitmap.
 
-Datasource indexes are assigned by passing composition objects to the  \fn{registerObject} function. A private variable \vn{maxDatasourceIndex} is used to keep track on the maximum index handed out so far. When an object is received, this variable is incremented, and the object is assigned that value. In addition to this, a bitmap \fn{assignedIndexes} is kept to bookkeep which indexes has objects connected to them. When \fn{removeObject} is called, the bit for that index is unset in \fn{assignedIndexes}. Also, all values corresponding to that object are unassigned. Currently, the \fn{assignedIndexes} bitmap is not used to lookup the first available bit, since this triggers a linear search on every insertion. We discuss this further in the chapter conclusion.
+%The \fn{Consolidate} function is called by the data source when it is done loading and is meant to be an operation where the column store restructures and maximizes space utilization. We see how the columns are affected by this operation in the section about growth strategy, Section \ref{sec:Growth Strategy}.
 
-In addition to the above methods, a \cn{CompositionValueCollection} has the ability to unassign an entire row or column by passing in a \cn{CompositionObject} or \cn{DataDescriptor} respectively. We see later in this research where such methods are used.
+%The main methods in the \cn{CompositionValueCollection} class is the \fn{setValue} and \fn{getValue} methods. These functions respectivel set and get \cn{GValues} for a data descriptor and a datasource index. In these operations, the correct column, or \cn{FieldValueCollection}, is looked up in a dictionary, and the index is passed along to the column to get or set the value. If no column exist for a data descriptor, it is created. \fn{isAssigned} and \fn{unassignValue} works similarly. We study the unassigned semantic in Section \ref{sub:Unassigned Values}. 
 
-The \fn{Consolidate} function is called by the data source when it is done loading and is meant to be an operation where the column store restructures and maximizes space utilization. We see how the columns are affected by this operation in the section about growth strategy, Section \ref{sec:Growth Strategy}.
+%Datasource indexes are assigned by passing composition objects to the  \fn{registerObject} function. A private variable \vn{maxDatasourceIndex} is used to keep track on the maximum index handed out so far. When an object is received, this variable is incremented, and the object is assigned that value. In addition to this, a bitmap \fn{assignedIndexes} is kept to bookkeep which indexes has objects connected to them. When \fn{removeObject} is called, the bit for that index is unset in \fn{assignedIndexes}. Also, all values corresponding to that object are unassigned. Currently, the \fn{assignedIndexes} bitmap is not used to lookup the first available bit, since this triggers a linear search on every insertion. We discuss this further in the chapter conclusion.
+
+%In addition to the above methods, a \cn{CompositionValueCollection} has the ability to unassign an entire row or column by passing in a \cn{CompositionObject} or \cn{DataDescriptor} respectively. We see later in this research where such methods are used.
+
 
 
 \subsection{FieldValueCollection}
 \label{sub:FieldValueCollection}
 \afigure{img/FieldValueCollection.png}{\cn{FieldValueCollection} class diagram.}{fig:FieldValueCollection}{0.55}
 
-A column is implemented as a \cn{FieldValueCollection} class, and is an index based list structure that automatically handles reallocation. \cn{GValue}s are stored in a \cn{TArray<GValue>}. This array structure was picked based on the performance benchmark in Appndix \ref{app:array-types}. A class diagram for the \cn{FieldValueCollection} is found in Figure \ref{fig:FieldValueCollection}.
+We implement columns as a class we denote as \cn{FieldValueCollection}. This class represents an index based list structure that automatically handles memory allocation. Internally, values are stored in a \cn{TArray<GValue>} type. We chose that structure based on the performance benchmark in Appendix \ref{app:array-performance}. A class diagram is found in Figure \ref{fig:FieldValueCollection}. 
 
-Setting a value to \vn{null} has different semantics than \fn{UnassignValue}. The latter means that there has previously been a value present, but is now removed for performance reasons. This functionality is implemented using a bitmap, \cn{BasicBitArray}, which is based on \delphi~\cn{TBits} type. \todo{Stemmer dette om Unassigned values?}
+Besides from the value array and corresponding \fn{GetValue} and \fn{SetValue} methods, \cn{FieldValueCollection} contains bitmaps for indicating null values and unassigned values. Keeping track of null values is strictly not needed, since \cn{GValue}s are boxed and can be set to \nil, but it becomes appearent why we need this bookkeeping in Chapter \ref{chap:storage-format}. Unassigned values have a special semantic in \gap: It means that a value exist, but has been unassigned for performance reasons. 
 
 \subsection{Growth Strategy}
 \label{sub:Growth Strategy}
-Since we used native dynamic arrays, we control the array allocation size. For every reallocation, we risk that the entire array needs to be copied from one part of the memory to another. For this reason, one should be generous when allocating, ideally, allocate the correct size immediately. However, since we read a stream of data objects, we are not sure how large our buffers should until the very end. 
 
-\afigure{img/gap-growth-strategy.png}{Growth strategy for buffers. In the load phase, the buffer doubles every time more space is needed. After the load phase, a consolidation is performed which reduces the buffer size to the exact number which is contained in a column.}{fig:gap-growth-strategy}{0.6}
-Therefore, we chose a strategy where we double the buffer size every time we need more space. This way, the number of reallocation operations are kept to a minimum. However, this strategy might result in lots of unused buffer space. We, therefore, add a \fn{Consolidate} function to our column store that resizes all buffers to fit its data. The strategy is depicted in \ref{gap-growth-strategy}.
+In \cn{FieldValueCollection} we use \delphi~dynamic arrays for data and are, therefore, in control over array allocation size. Since objects arrive in a data stream, we are not sure how large our buffers should be until we receive all objects. Hence, we must find an efficient growth strategy for the column store.
 
-\subsection{Modifying CompositionObject}
-\label{sub:Modifying CompositionObject}
-% Change value collections and add index
-In order for the \cn{CompositionObject} class, some some adjustments are made. First and foremost, the \cn{CompositionObjectValueCollection} are replaced with a \cn{CompositionValueCollection} class. All code that accesses the original structure are rewritten to use the column store, where the data source index is passed as a parameter. The \cn{CompositionValueCollection} is already created by the data source, and is sent in as a parameter in the constructor. It must no longer ask its value collection; it must send itself and its data source index into the GetValue. It no longer holds ownership to a collection but has a pointer to a value collection shared by all composition objects.
+For every array resize, we run the risk that all data in the array must be copied from one smaller memory chunk to a larger one. Since this is a costly operation, one should be generous when resizing arrays. Commonly used in such problems is a doubling strategy, where array buffer size double each time an index outside of array bounds appear. We implement this behaviour in \cn{CompositionValueCollection} too, in the \fn{EnsureCapacity} method. This function is called to avoid index-out-of-range exceptions by all methods that access the data array or bitmaps.
 
-% Constructor and destructor calls
-Second, \fn{RegisterObject} is called within the constructor such that the \cn{CompositionObject} get a datasource index. Analogously, \fn{RemoveObject} is called in the destructor.
+\afigure{img/gap-growth-strategy.png}{Growth strategy for value buffers and bitmaps. In the load phase, the buffers double every time more space is needed. After the load phase, a consolidation is performed which reduces buffer size to the exact size of the data source.}{fig:gap-growth-strategy}{0.6}
+Using the doubling strategy for column growth, we run the risk of allocating twice as much memory needed for a data source. We, therefore, implement a \cn{Consolidate} method which resizes all value buffers and bitmaps to the exact size of the data source. The full growth strategy in depicted in Figure \ref{fig:gap-growth-strategy}
 
-% Adapt to the existing value collections with adapts and clone
-The class is extended by creating a \fn{CloneValueCollection} that creates a row in the original format. Similarly, a method \fn{AdoptValueCollection} is set up to fill in data from a row structure.
+In \cn{CompositionValueCollection}, columns are created on-demand as composition objects set values. If an object requests a value from a column that does not exist, \nil~is returned.
+
+\subsection{CompositionObject Modification}
+\label{sub:CompositionObject Modification}
+To accommodate the new \cn{CompositionValueCollection} class, we perform some modifications to the \cn{CompositionObject} class. First and foremost, we replace the \cn{CompositionObjectValueCollection} member variable with a pointer to the column store. At the same time, we remove all code that accesses the original row structure and replace it with calls to the \cn{CompositionValueCollection} instance. For all interaction with this class, the data source index is passed to indicate which row the composition object belongs. Second, we call \fn{RegisterObject} within the constructor of the \cn{CompositionObject} class, such that a data source index is assigned. Analogously, \fn{RemoveObject} is called in the destructor.
+
+Some methods in \cn{CompositionObject} require a new implementation as a result of the column store. These methods include \fn{CloneValueCollectcion} and \fn{AdoptValueCollection}. Earlier, these methods were trivial, as they only cloned and replaced \cn{CompositionObjectValueCollection} instances. However, since composition objects no longer have ownership in such structures, they must be cloned or adapted by iterating field descriptors and reading or writing data in the column store.
 
 \section{Results}
 \label{sec:Results}
@@ -204,6 +204,9 @@ The results are presented in Table \ref{tab:non-blackbox-write}. There are not m
 
 \section{Discussion}
 \label{sec:Discussion}
+% How it impacts memory
+In Section \ref{sub:Excessive Amount Of Pointers}, we saw how a data source with objects with 15 properties each needed 32 pointers, or 256 bytes, per objects just for data and data access. Now, this number is reduced to 17 pointers and an integer, which is 140 bytes. Hence, we have the potential to save 45\% memory by using our new system.
+
 We see that the memory used per object in the \textit{TPC-H Q1 Data Load Benchmark} is reduced by 30 \% and 38 \% for scaling factors 0.1 and 0.01 respectively. We attribute the memory reduction to the column store, and how it reduces the number of pointers needed to represent data in a data source.
 
 We are excited to observe that the data source load time is drastically reduced as a consequence of our new \cn{CompositionValueCollection} and \cn{FieldValueCollection} classes. This observation strengthens our hypothesis that memory management is expensive: The original implementation allocated one row-structure per object, whereas the doubling strategy in our column store keeps the number of allocations at a minimum. Moreover, the reduced load time in Benchmark \ref{bm:q1}~might also imply that reduced memory usage is directly correlated with performance and that our new implementation has better memory locality and cache hit rate.
