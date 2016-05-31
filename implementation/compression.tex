@@ -14,54 +14,54 @@ One such light-weight compression technique, is \textit{dictionary encoding}, wh
 
 The second technique we implement in this iteration is bitpacking, which we studied in Section \ref{sec:Bitpacking}. In this compression scheme, no more bits than needed are used to store a value. This improves cache hit-rate and enables SIMD query processing. Bitpacking and dictionary encoding are commonly used in conjunction, and this what we will do in this iteration.
 
-Last, we explore two techniques to save even more memory in \gap. The first is a technique we denote as \textit{null-pointer compression}. It is based on the observation that a \cn{CompositionObject} has several properties, properties that are commonly \nil. Thus, by moving the properties to the column store, we may save space by not allocating any values unless they are set. The second technique we apply is to compress the residual properties in a \cn{packed record}.
+Last, we explore two techniques to save even more memory in \gap. The first is a technique we denote as \textit{null-pointer compression}. It is based on the observation that a \cn{CompositionObject} has several properties, properties that are commonly \null. Thus, by moving the properties to the column store, we may save space by not allocating any values unless they are set. The second technique we apply is to compress the residual member variables in the \cn{CompositionObject} class with a \cn{packed record}.
 
 \section{Implementation}
 \label{sec:Implementation}
-In this section, we explain how compression is implemented by creating new \cn{FieldValueCollectionBase} subclasses and modifying the column store. We start with dictionary encoding and bitpacking. Then we proceed with null-pointer compression and property packing.
+In this section, we explain how compression is implemented by creating new \cn{FieldValueCollectionBase} subclasses for dictionary encoding. Then we proceed with null-pointer compression and property packing.
 
 \subsection{Dictionary Encoding}
-\label{sub:Dictionary Encoding}
+\label{compression:dictionary-encoding}
 % Short introduction on DE
-In Section \ref{sec:Dictionary Encoding}, we saw that dictionary encoding is commonly used to store data in a database, especially read-optimized ones. Such encoding has several benefits, with the main being compression. Some operations are also speeded up by this storage format, especially string predicates. To do a select operation on a dictionary encoded column, the dictionary needs only to be scanned once to find the keys corresponding to the query, then the integer array is scanned. This reduces expensive string operations into cheap integer comparisons.
+In Section \ref{sec:Dictionary Encoding}, we saw that dictionary encoding is commonly applied as a compression technique in OLAP-databases. There are many benefits with dictionary encoding in addition to a reduction in memory usage, like improved data locality and query speedup. For instance, expensive string operations can be reduced to cheap integer comparisons by scanning the dictionary for keys first.
 
-In a dictionary encoded column, the dictionary can be structured either for read or write performance. For read operations, there is a lookup from a dictionary index and the actual value. For such operations, implementing the dictionary as a list would suffice, adding new keys to the end of the list as they appear. Hence, lookups happen in constant time. However, with this implementation, assuming that the dictionary is not sorted, a linear search through the dictionary is triggered every time there is a write operation to the column, because the correct dictionary key must be found. 
+In a dictionary encoded column, the dictionary can be structured either for read or write performance, or both. For read performance, there must exist a lookup from a dictionary index to the actual value. For such lookup, a simple index-based list suffices, adding new keys to the end of the list as they appear. Hence, value lookups happen in constant time. However, with this implementation, a linear search to find the correct key in the dictionary is performed every time there is a write operation on the column. Here, an inverse lookup from dictionary values to indexes would be beneficial.
 
-\afigure{img/dict-inverse.png}{Dictionary Encoding. There exists a constant time lookup mechanism not only from dictionary keys to values, but also a lookup mechanism from values to dictionary keys.}{fig:dict-inverse}{0.8}
-Since data sources in \gap~can be used in many different places, some write-intense, others read-intense, we implement a dictionary that can do both read and write operations in constant time. This comes at the cost of increased memory; a mapping from values to keys must be maintained. This is depicted in Figure \ref{fig:dict-inverse}. For the value-to-key lookup, a dictionary is used, such that lookups can be performed in constant time. When \fn{Consolidate} is called, the inverse dictionary lookup is discarded to save memory. 
+\afigure{img/dict-inverse.png}{Dictionary encoded column implementation. Both value buffer and dictionary are stored using \cn{TArray}. To ensure constant time write operations, we keep an inverse lookup from values to dictionary keys, which is implemented as a \cn{TDictionary}. Read-only data sources may drop the inverse lookup to save memory.}{fig:dict-inverse}{1.0}
+Since \gap~must handle both transactional and analytical workloads, we implement a dictionary encoded column with both lookup structures, such that both read and write operations happen in constant time. We have depicted this in Figure \ref{fig:dict-inverse}. However, keeping both structures comes at the cost of increased memory. Thus, for read-only workloads, like \gd, we would like to discard the inverse lookup. We implement this in \fn{Consolidate}; when this function is called, we deallocate the inverse lookup.
 
-The integer array, or value buffer, uses the same growth strategy as previous implementations. Like \cn{FieldValueCollection} and \cn{PrimitiveFieldValueCollection}, buffers are doubled on index overflow. The \fn{Consolidate} resizes the key array to the correct size after the data source has been loaded.
+\afigure{img/PrimitiveDictionaryFieldValueCollection.png}{\cn{PrimitiveDictionaryFieldValueCollection} class diagram. The class inherits from \cn{FieldValueCollectionBase}, and has a subclass for each supported primitive type.}{fig:PrimitiveDictionaryFieldValueCollection}{0.9}
+We implement a new class, \cn{PrimitiveDictionaryFieldValueCollection}, to be our dictionary encoded column class. The class uses \cn{TArray} for both values, or dictionary keys, and the dictionary itself. We chose this array type based on the performance assessment from Appendix \ref{app:array-types}. For the inverse lookup, we use a \cn{TDictionary}. For different primitive types, \cn{PrimitiveDictionaryFieldValueCollection} has a subclass for each supported type which uses the same value helper as we introduced in the previous section. \cn{PrimitiveDictionaryFieldValueCollection} extends \cn{FieldValueCollectionBase}. A full class diagram is shown in Figure \ref{fig:PrimitiveDictionaryFieldValueCollection}.
 
-\afigure{img/PrimitiveDictionaryFieldValueCollection.png}{\cn{PrimitiveDictionaryFieldValueCollection} class diagram. The class inherits from \cn{FieldValueCollectionBase}.}{fig:PrimitiveDictionaryFieldValueCollection}{1.0}
-We chose to implement the dicitonary and inverse lookup using \cn{TArray} and \cn{TDictionary} respectively. We also chose to store values as their primitive implementation, like we investigated in Chapter \ref{chap:storage-format}. The class inherits from \cn{FieldValueCollectionBase}, and uses the same primitive value helper delegate class as \cn{PrimitiveDictionaryFieldValueCollection}.
+The array with dictionary keys, or value buffer, uses the same growth strategy as we discussed in Section \ref{sub:Growth Strategy}. Like \cn{FieldValueCollection} and \cn{PrimitiveFieldValueCollection}, the value buffer is doubled on index overflow, and the \fn{Consolidate} method resize the column to the exact data source size.
 
 \subsection{Bitpacking}
 \label{sub:Bitpacking}
+
 % Short introduction on bp
 Bitpacking is a compression technique where values are stored with no more bits than needed. As we saw in Section \ref{sub:Dictionary Encoding and Bitpacking}, dictionary encoding and bitpacking goes hand in hand. We, therefore, implement bitpacking in our dictionary encoded columns to save memory.
 
 % Main implementation
-\afigure{img/bp-overflow.png}{Bitpacking overflow. First, the value buffer is rebuilt to accomodate a new key in the dictionary that caused an overflow. Here, the array contents are copied to another buffer with extra padding. Second, if needed, a new cell is added for the new value.}{fig:bp-overflow}{1.0}
-The value buffer is implemented as an array of 64-bits values which each value is denoted as a \textit{cell}. Unlike previous column implementations, a cell is added one at a time, instead of the doubling strategy. This was done for simplicity reasons. Depending on the number of bits used per value, this means that more values can be added per reallocation. On dictionary overflow, the new number of bits per value is calculated, and the entire value buffer is rebuilt. Both buffer and dictionary overflow is depicted in Figure \ref{fig:bp-overflow}. Like the non-packed version, \cn{PrimitivePackedDictionaryFieldValueCollection} uses an inverse lookup which are discarded on \fn{Consolidate}.
+\afigure{img/bp-overflow.png}{Bitpacked value buffer. First, we see a dictionary overflow, where the value buffer is rebuilt with extra padding. Second, if needed, a new cell is added to hold the new value.}{fig:bp-overflow}{1.0}
+We implement the value buffer as an array of 8 byte chucks, where we denote each chunk as a \textit{cell}. Unlike previous column implementations, a cell is added one at a time, instead of using a doubling strategy. We did this for simplicity reasons, and, since each cell contains multiple values, array reallocation happens less frequent than for an uncompressed column.
 
-% Dictionary overflow
-One of the main challenges with bitpacking, is word alignment. If keys are allowed to cross word boundaries, not only performance might degrade, but it increase implementation and code complexity. Therefore, we take a simpler approach, where the number of bits used to store each value must be a power of 2. As seen in Figure \ref{fig:bp-overflow}, a dictionary overflow causes the bits per value to go from two to four to avoid values stored across word boundaries.
+One of the main challenges with bitpacking, is word alignment. If keys are allowed to cross machine word boundaries, not only performance will suffer, but the implementation complexity increase drastically. Therefore, we take a simpler approach, where the number of bits used to store each value must be a power of 2. As seen in Figure \ref{fig:bp-overflow}, a dictionary overflow causes the bits per value to go from two to four to avoid values stored across machine word boundaries. When a dictionary overflows, the columns rebuilds the entirev value buffer using the new number of bits per value.
 
-\afigure{img/PrimitivePackedDictionaryFieldValueCollection.png}{\cn{PrimitivePackedDictionaryFieldValueCollection} class diagram. The class is very similar to \cn{PrimitiveDictionaryFieldValueCollection}, but it has a different storage structure for its values.}{fig:PrimitivePackedDictionaryFieldValueCollection}{0.7}
-The bitpacked column class was implemented using a \cn{TArray<UInt64>} for storing data. Like the non-packed version, a \cn{TArray} was used for the dictionary and \cn{TDictionary} for the inverse lookup. In addition to this, it holds some state regarding the bitpacking, and a private function \fn{IncreaseDictionaryCapacity} which rebuilds the value buffer on dictionary overflow. The class diagram is seen in Figure \ref{fig:PrimitivePackedDictionaryFieldValueCollection}.
+\afigure{img/PrimitivePackedDictionaryFieldValueCollection.png}{\cn{PrimitivePackedDictionaryFieldValueCollection} class diagram. The class is very similar to \cn{PrimitiveDictionaryFieldValueCollection}, but it has a different storage structure for its values and holds some state variables needed for bitpacking.}{fig:PrimitivePackedDictionaryFieldValueCollection}{0.7}
+We name our bitpacked dictionary encoded column class \cn{PrimitivePackedDictionaryFieldValueCollection}, and, like always, the class inherits from \cn{FieldValueCollectionBase}. The value buffer was implemented using a \cn{TArray<UInt64>}. Like the non-packed version, a \cn{TArray} was used for the dictionary and \cn{TDictionary} for the inverse lookup. In addition to this, the class holds some state regarding the bitpacking, and a private function \fn{IncreaseDictionaryCapacity} which rebuilds the value buffer on dictionary overflow. The class diagram is seen in Figure \ref{fig:PrimitivePackedDictionaryFieldValueCollection}.
 
-\missingfigure{Figur om hvordan man henter ut verdier med masken?}
+\subsection{Null Pointer Compression}
+\label{sub:Null Pointer Compression}
 
-\subsection{Null-Pointer Compression}
-\label{sub:Null-Pointer Compression}
-\afigure{img/null-pointer-compression.png}{Null-pointer compression. Based on the observation that most \cn{CompositionObject} properties are normally \texttt{null}, data can be compressed, since columns are not created before the properties are set.}{fig:null-pointer-compression}{0.7}
-So far, we have compressed data from the Information System and Information System Development Layers. However, there are several other structures used by \cn{CompositionObject}s which are used in the Method Engineering layer. These structures include lists of data validation and integrety errors, formatting rules, and more. These attributes are not fundamentally different than attributes from the other model-driven engineering layers, which means we are able to put these pointers into our column store. Although one might initially think that we have only moved the problem, and that the pointers now are stored in the column store instead of at object-level, the compression is based on the observation that these pointers are normally \texttt{null}. This means that these columns does not need to be allocated before a value is actually set. An illustration of this is seen in Figure \ref{fig:null-pointer-compression}.
+\afigure{img/null-pointer-compression.png}{Null pointer compression. Based on the observation that most \cn{CompositionObject} properties are normally \nil, data can be compressed by not allocating value buffers until the properties are set.}{fig:null-pointer-compression}{0.9}
 
-To enable null pointer compression, we implement a new generic column structure named \cn{DefaultObjectList<TType>}. This is an array structure that can be instantiated with any class type, that will return \texttt{nil} if no values are set. If values are set, the array is allocated. The \cn{CompositionValueCollection} are extended with such attributes for all properties needed in the \cn{CompositionObject}s with corresponding get and set methods that requires datasource index as input.
+So far, we have compressed data from the Information System and Information System Development Layers. However, there are several other structures that belong to \cn{CompositionObject}s which are used in the Method Engineering layer. These structures include lists of data validation and integrity errors, formatting rules, and more. Our observation is that these attributes are not fundamentally different from attributes from the other model-driven engineering layers, which means we are able to put these pointers into our column store too. Although one might initially think that we have only moved the problem and that the pointers now are stored in the column store instead in the composition objects, we may save memory based on the observation that these pointers are usually \nil. In other words, these pointer columns do not need to be allocated before any values are set. We illustrate this scenario in Figure \ref{fig:null-pointer-compression}.
+
+To enable null pointer compression, we implement a new generic column structure named \cn{DefaultObjectList<TType>}. This class is an array structure that can be instantiated with any class type that will return \nil~if no values are set. If values are set, the array, or column, is allocated to accommodate these values. We extend the base column store class, \cn{CompositionValueCollection}, with one such \cn{DefaultObjectList} for each pointer variable in \cn{CompositionObject}. Hence, objects must now query the column store and provide a data source index to access structures used in the method engineering layer, like validation errors and formatting rules. A total of six member variables from \cn{CompositionObject} was moved to the column store.
 
 \subsection{Property Packing}
 \label{sub:Property Packing}
-\begin{delphicode}{Structure with packed data.}{lst:packed-struct}
+\begin{delphicode}{Structure with packed data for \cn{CompositionObject}.}{lst:packed-struct}
 PackedComObjData = packed record
     modifyCount,
     datasourceIndex    : integer; 
@@ -69,38 +69,46 @@ PackedComObjData = packed record
     filterStatus       : EFilterStatus;
 end;
 \end{delphicode}
-Some properties on a \cn{CompositionObject} are always set. This include a modified counter, some state variables, and of course the data source index. To reduce the memory footprint used by these attributes, they are packed in a struct using \delphi's \fn{packed} keyword. See Listing \ref{lst:packed-struct}. This packs the data and tells the compiler to disregard word boundaries \cite{noauthor_undated-vu}.
+In the last section, we saw how null pointers could be compressed by moving member variables in \cn{CompositionObject} to the column store. However, the \cn{CompositionObject} class has some value type properties that are always set, which includes a modify count, some state variables, and the much-needed data source index. Since these variables are always set, they cannot be compressed with null pointer compression.
 
-For this to work, the attributes is removed from the \cn{CompositionObject} class and moved to a \cn{PackedComObjData} record type. All read and write properties in \cn{CompositionObject} is rewritten to access this new structure.
+To reduce the memory footprint used by these attributes, we compress them in a \delphi~record type with the \vn{packed} keyword. This keyword tells the compiler to pack data and disregard word boundaries \cite{noauthor_undated-vu}. Thus, we take all the residual properties from the \cn{CompositionObject} class and move it to a \cn{PackedComObjData} record type. Listing \ref{lst:packed-struct} shows the structure.
 
-After applying both null-pointer compression from Section \ref{sec:Null-Pointer Compression}, a \cn{CompositionObject} has no attributes except for a pointer to the column storage and a packed struct with essential state data. \todo{Vet dette ikke er helt sant, men kan jeg skrive det?}
+As a result of both null pointer compression from Section \ref{sec:Null Pointer Compression} and the property packing from this section, a \cn{CompositionObject} has no member variables except for the \cn{PackedComObjData} record and a pointer to the column store.
 
 \section{Results}
 \label{sec:Results}
-We test the changes from this iteration with Benchmark \ref{bm:q1} and Benchmark \ref{bm:write}. Like the previous two iterations, we are curious to see how compression techniques affect memory consumption, load time, read performance, and write performance. 
+We test the changes from this iteration with the \tpchdl, Benchmark \ref{bm:q1} and the \textit{Write Benchmark}, Benchmark \ref{bm:write}. Like the previous two iterations, we are curious to see how compression techniques affect memory consumption, load time, read performance, and write performance. 
+
+
 
 \begin{table}
     \begin{tabularx}{\textwidth}{X | X X}
         & Distinct Values & Dictionary Encoding? \\ 
         \hline
         \hline
-        LINEITEMKEY & 600,000 & No \\
-        LINESTATUS & 3 & Yes \\
-        RETURNFLAG & 3 & Yes \\
-        SHIPDATE & 2526 & Yes \\
-        QUANTITY & 50 & Yes \\
-        EXTENDEDPRICE & 598,966 & No \\
-        DISCOUNT & 11 & Yes \\
-        TAX & 9 & Yes
+        \texttt{LINEITEMKEY} & 600,000 & No \\
+        \texttt{LINESTATUS} & 3 & Yes \\
+        \texttt{RETURNFLAG} & 3 & Yes \\
+        \texttt{SHIPDATE} & 2526 & Yes \\
+        \texttt{QUANTITY} & 50 & Yes \\
+        \texttt{EXTENDEDPRICE} & 598,966 & No \\
+        \texttt{DISCOUNT} & 11 & Yes \\
+        \texttt{TAX} & 9 & Yes
     \end{tabularx}
-    \caption{Column selection for Benchmark \ref{bm:q1}. Low-cardinality columns are dictionary encoded, while the others are not. The numbers are based on Scaling Factor 0.1.}
+    \caption{Column selection for Benchmark \ref{bm:q1}. Low-cardinality columns are dictionary encoded, while the others are not. The numbers are based on Scaling Factor SF0.1, where there is a total of 600,000 \lineitem~rows.}
     \label{tab:column-selection}
 \end{table}
 
-Like we read in Section \ref{sec:Dictionary Encoding}, dictionary encoding is only effective when there is a small number of distinct values compared to the number of total values. Hence, not all columns in the \textit{TPC-H Q1 Data Load Benchmark} should be encoded with dictionary encoding. Therefore, we picked certain \lineitem~properties by hand to be dictionary encoded, based on the column cardinality in the \lineitem~table in the \tpch. The dictionary encoded columns with cardinalities are shown in Table \ref{tab:column-selection}, and indicates that most columns benefit from dictionary encoding.
+We read in Section \ref{sec:Dictionary Encoding} that dictionary encoding is only effective when there is a small number of distinct values compared to the number of total values. Hence, not all columns in the \tpchdl~should be encoded with dictionary encoding. Therefore, we pick certain \lineitem~properties by hand to be dictionary encoded, based on the column cardinality in the \lineitem~table. Table \ref{tab:column-selection} shows the results, and indicates that most columns benefit from dictionary encoding.
 
-In this iteration, we test four different configurations: Dictionary encoding, dictionary encoding with raw value load, dictionary encoding with bitpacking, and dictionary encoding with bitpacking, null-pointer compression and property packing. For Benchmark \ref{bm:q1}, we test both SF0.01 and SF0.1.
-
+In this iteration, we test four new configurations in addition to the primitive column configuration from the previous chapter:
+\begin{itemize}
+    \item \textbf{Primitive} is the configuration from the last iteration, which is column store with non-compressed, primitive values.
+    \item \textbf{Dictionary} uses dictionary compression from Section \ref{compression:dictionary-encoding]}. No bitpacking.
+    \item \textbf{Dictionary /w Raw Load} is the same dictionary compression configuration as above, but with raw XML string value load as outlined in Section \ref{storage-format:raw-xml}.
+    \item \textbf{Packed Dictionary} is the bitpacked dictionary compression from Section \ref{compression:bitpacking}.
+    \item \textbf{Full Compression} uses bitpacked dictionary as well as null pointer compression and property packing.
+\end{itemize}
 
 \subsection{TPC-H Q1 Data Load Benchmark}
 Benchmark \ref{bm:q1}, the \textit{TPC-H Q1 Data Load Benchmark}, was run with all three compression configurations. In addition to this, dictionary encoding was run with raw value load, as explained in Section \ref{sec:Avoiding GValues at Load Time}. Both scaling factors were used for the tests. Like the previous chapters, all tests were run three times per configuration. There was low variance in the results, and no single measurement was more than 15 \% different from the average value.

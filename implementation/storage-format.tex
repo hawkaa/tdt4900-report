@@ -54,7 +54,7 @@ Even though they are not considered as simple data types in \delphi, we apply th
 To make the new \cn{PrimitiveFieldValueCollection} class work, we must pick the correct primitive type subclass for the different data descriptors in a data source. This is the responsibility of the column store. We extend \cn{CompositionValueCollection} with a \fn{GetFieldValueCollection} which takes a data descriptor as an input and returns the correct column. In this method, the data descriptor is queried for its data type, and it picks the correct \cn{PrimitiveFieldValueCollection} subclass. If no matching primitive data type column is found, the method falls back on the original \cn{FieldValueCollection} from Chapter \ref{chap:column-store}.
 
 \subsection{Loading Raw XML Values Directly}
-\label{sub:Loading Raw XML Values Directly}
+\label{storage-format:raw-xml}
 \begin{figure}
     \centering
     \begin{subfigure}{\textwidth}
