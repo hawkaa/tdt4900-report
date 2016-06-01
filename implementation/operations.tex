@@ -9,16 +9,16 @@ This chapter contains the fourth and final iteration of our research.
 
 \section{Introduction}
 \label{sec:Introduction}
-\afigure{img/memory-performance-graph}{As memory footprint has gone down through the course of this research, read-intense operation performance has decreased, especially at the introduction of primitive value storage.}{fig:memory-performance-graph}{1.0} 
-So far, the techniques applied in this research gives a reduction in memory usage and load time. However, as the previous iterations have pointed out, we have not yet exploited the potential the data structures in our column structure. In Figure \ref{fig:memory-performance-graph}, we see that both lookup index generation and source measure lookup performance from Benchmark \ref{bm:q1} has been severely slowed down, especially after the introduction of primitive data values. In this chapter, we aim to increase the performance of these operations.
+\afigure{img/memory-performance-graph}{As memory footprint has gone down through the course of this research, read-intense operation performance has decreased, especially after the the introduction of primitive value storage.}{fig:memory-performance-graph}{1.0} 
+So far, the techniques applied in this research gives a reduction in memory usage and load time. However, as the previous iterations have pointed out, we have not yet exploited the potential the data structures in our column structure. In Figure \ref{fig:memory-performance-graph}, we see that both lookup index generation and source measure lookup performance from Benchmark \ref{bm:q1} has been severely slowed down, especially after the introduction of primitive value storage. In this chapter, we aim to increase the performance of these operations.
 
-By exploiting the potential in the data structures, we refer to making operations in \gap~more friendly for modern CPUs. As we saw in Section \ref{sec:Modern CPUs and Compilers}, independent instructions, cache hit-rates, and branch avoidance is key to achieve full CPU throughput. 
+When we say \textit{exploiting the potential in the data structures}, we refer to making operations in \gap~more friendly for modern CPUs. As we saw in Section \ref{sec:Modern CPUs and Compilers}, independent instructions, cache hit-rates, and branch avoidance is key to achieve full CPU throughput. 
 
-Currently, read-intense operations, like source measure lookup and lookup index creation, access values in tight loops using the \fn{GetValue} function. Hence, every loop iteration requires a series of function calls and layers of indirection to access the value, including a dictionary lookup. More importantly, a \cn{GValue} is allocated per iteration, and likely discarded shortly after. As we saw in \ref{sec:Modern CPUs and Compilers}, this is a recipe for poor performance.
+Currently, read-intense operations, like source measure lookup and lookup index generation in Benchmark \ref{bm:q1}, access values in tight loops using the \fn{GetValue} function. Hence, every loop iteration requires a series of function calls and layers of indirection to access the value, including a dictionary lookup. More importantly, a \cn{GValue} is allocated per iteration, and likely discarded shortly after. As we saw in \ref{sec:Modern CPUs and Compilers}, this is a recipe for poor performance.
 
 We solve the above challenge by introducing \textit{column operations}, or operations that work on all values for an object class property in a data source. In other words, we move certain functionality from outside the \cn{GValue} interface to the column store itself. This modification enables the operations to fully utilize the storage format: Improved cache locality, vectorized execution, and low degree of freedom. Moreover, the column operations are free of branches and function calls, which fills the CPU pipeline, enable loop unrolling, and superscalar processing.
 
-So far, four operations that would benefit from the column store are identified in \gap. These include source measure lookup and join operations from Benchmark \ref{bm:q1}, as well as the generation of identifier indexes and predicate bitmaps. In this iteration, we implement these operations and measure the performance impact using Benchmarks \ref{bm:q1} and \ref{bm:filter}.
+So far, four operations that would benefit from the column store are identified in \gap. These include source measure lookup and join operations from Benchmark \ref{bm:q1}, as well as the generation of identifier indexes and predicate bitmaps. In this iteration, we implement these operations and measure the performance impact using Benchmarks \ref{bm:q1}, \ref{bm:filter}, and \ref{bm:odin-load}.
 
 
 %vectorized execution
@@ -35,27 +35,20 @@ So far, four operations that would benefit from the column store are identified 
 
 %In this chapter, we implement these operations within the columns to use the potential in the storage format and to avoid creation and deletion of \cn{GValue}s in tight loops. We also create and study the performance impact filtering and index creation mechanisms within the columns.
 
-
-\section{Implementation}
-\label{sec:Implementation}
-This section contains implementation details for the four column operations identified so far.
-
-\todo{Make sure to link all optimizations to theory}
-
 \subsection{Source Measure Lookup}
 \label{sub:Source Measure Lookup}
-As we read in Appendix \ref{app:bm}, the source measure lookup operation creates an array of double precision floating point values for a column in a data source. It uses such array as a basic unit for calculations and aggregations within \gd. For simplicity reasons, all numeric types that work as measures in a data mart are converted to 64-bit floating point numbers, even 32-bit integers. Our observation is that we already have these arrays available within the \cn{RealFieldValueCollection} and that there is no longer need for using the column \fn{Get} function to access values one by one.
+As written in Appendix \ref{app:bm}, the source measure lookup operation creates an array of double precision floating point values for a column in a data source. This array is the base unit in \gd~and is used for calculations, grouping and aggregation. For simplicity reasons, all numeric types which work as measures in a data mart are converted to 64-bit floating point numbers, even 32-bit integers. In the primitive and uncompressed column class \cn{RealFieldValueCollection}, we already use such array to store the data, so ideally there should be no need to generate a new array by accessing values one-by-one using \cn{GetValue}.
 
-%The \bd~functionality in \gap~works strictly on arrays of floating point values (\cn{TArray<double>}). This buffer is created with a \cn{SourceMeasureProvider} class which is linked to a data descriptor. For every composition object in the data source, it calls the \fn{GetValue} method, which returns a \cn{GValue}. The buffer is then filled by calling \fn{GetAsFloat} on all values. 
 
-\begin{delphicode}{Getting an array of doubles using pointer exposure.}{lst:get-double-array}
+\begin{delphicode}{Returning the value buffer pointer in a \cn{RealFieldValueCollection}.}{lst:get-double-array}
 function RealFieldValueCollection.GetDoubleArray
 : TArray<double> ;
 begin
   Result := values;
 end;
 \end{delphicode}
-We implement a new function, \fn{GetDoubleArray} in \cn{FieldValueCollection}. This function will, for all supported column types, return a \delphi~array of \cn{double}. If the operation is not supported by a column, \texttt{nil} is returned. For a \cn{RealFieldValueCollection}, it is only a matter of returning a pointer to its internal value buffer.  This is seen in Listing \ref{lst:get-double-array}.
+We implement a new function, \fn{GetDoubleArray} in \cn{FieldValueCollection}. This function will, for all supported column types, return a \delphi~array of \cn{double}. If the column does not support the operation, \nil~is returned. For a \cn{RealFieldValueCollection}, the method needs only to return a pointer to its internal value buffer, as seen in Listing \ref{lst:get-double-array}.
+
 \begin{delphicode}{Getting an array of doubles using creation.}{lst:get-double-array-create}
 function IntegerDictionaryFieldValueCollection.GetDoubleArray
 : TArray<double>;
@@ -65,16 +58,13 @@ begin
     Result[i] := dictionary[values[i]];
 end;
 \end{delphicode}
-However, since this operation is also called on integer columns, we see the potential of creating the array within the column nevertheless, such that the column structure can be utilized. We, therefore, implement this operation for other applicable columns, including dictionary encoded columns. The implementation is seen in Listing \ref{lst:get-double-array-create}.
-%As seen in Table X, there are drastic differences between native floating point columns and everything else. For instance, the \texttt{QUANTITY} column, which is an integer, it takes \~ 1500ms to create a source measure index. The same is the case for tax, which is floating-point but dictionary encoded. We hypothesize that the reason for this is a significant amount of memory allocations for \cn{GValue}s and access patterns and that we can do better by operating on the whole column in a batch.
+However, since the array of double precision floating point numbers is also required on integer columns, we see the potential of creating the array inside the columns. By iterating all values and converting them to floating point numbers \textit{within} the column, there is no branches or function invocations, nor any layers of indirection. This implementation enables loop unrolling and instruction pipelining, which in turn maximizes CPU throughput. We also implement \fn{GetDoubleArray} in dictionary encoded columns, as seen in Listing \ref{lst:get-double-array-create}.
 
 \subsection{Lookup Index}
 \label{sub:Lookup Index}
-A common operation in \bd~is to create a lookup index from one table to another, which maps data source indexes from one data source to another. The operation is considered as a join operation. In the realm of database technology, such join function takes two columns as input and outputs a mapping from one table to another. There are several algorithms for joining, however, the \pn{nested loop} one is the most popular. This algorithm creates a lookup from values to data source indexes for the smaller column and then scans the largest column by probing the lookup.  
+A common operation in \bd~is to create a lookup index from one table to another, which maps data source indexes from one data source to another. Another name for this operation is \textit{join}. In databases, a join normally takes two columns as input and outputs a mapping between the columns. There are several algorithms for joining, however, as we saw in Section \ref{sec:Joining}, the \pn{nested loop} is most popular for in-memory databases. This algorithm creates a hashmap the inner, or smaller, relation first and then probes this hashmap with values from the outer relation.
 
-\gd~uses such lookup index to join tables within a data mart, but creating such index is inefficient with the current implementation. We observe that this operation can benefit from the column structure, and avoid the unnecessary middle step of creating \cn{GValue}s. Although such operation normally requires two columns as input, \gap~already has a structure, \textit{identifier index}, available for us to use, a structure used several places in the platform \todo{Where?}. The structure is created on demand, and might already exist when needed.
-
-\begin{delphicode}{\fn{GetLookupIndex} implementation}{lst:get-lookup-index}
+\begin{delphicode}{\fn{GetLookupIndex} implementation.}{lst:get-lookup-index}
 function ObjectHandleFieldValueCollection.GetLookupIndex
 ( identifierIndex : TDictionary<string, CompositionObject>)
 : TArray<integer>;
@@ -89,13 +79,13 @@ begin
   end;
 end;
 \end{delphicode}
-We proceed to implement \cn{GetLookupIndex} in \cn{FieldValueCollection}, which accepts the the identifier index as input and outputs a \cn{TArray<integer>} that maps datasource indexes from the current column to the other. The implementation is seen in Listing \ref{lst:get-lookup-index}.  
+\gd~uses a lookup index to join tables within a data mart, but as we have seen, creating such index is inefficient with the current implementation. We observe that this operation can benefit from the column store structure and avoid the unnecessary \cn{GValue} and \cn{GetValue} interface. Therefore, we define a new column operation, \fn{GetLookupIndex}. Luckily, the hashmap of the inner relation is already available for us in \gap, in the form of an \textit{identifier index}. We may, therefore, use this structure as an input argument in \fn{GetLookupIndex}. The operation returns a \cn{TArray<integer>} which contains a mapping from the data source indexes of the column to the data source indexes in the identifier index. Listing \ref{lst:get-lookup-index} shows the implementation.
+
 
 \subsection{Identifier Index}
 \label{sub:Identifier Index}
-We read about the \textit{identifier index} structure in the previous section, and how it was used in the \fn{GetLookupIndex} operation. This structure maps an identifier, typically a database primary key, to composition objects, and is used to... \todo{Hvor?}. Whenever needed, the structure is created within a data source on-demand. We believe this operation can benefit from column storage.
-
-\begin{delphicode}{Creating an identifier index in a primitive column}{lst:create-identifier-index}
+We read about the \textit{identifier index} in the previous section, and how it was used in the \fn{GetLookupIndex} operation. This structure maps an identifier, typically a database primary key, to composition objects, and is used several places in \gap. The structure is created by the data source on-demand.
+\begin{delphicode}{\fn{GetIdentifierIndex} implementation.}{lst:create-identifier-index}
 function PrimitiveFieldValueCollection<TType>.GetIdentifierIndex
 ( compositionObjects : CompositionObjectCollection )
 : TDictionary<string, CompositionObject>;
@@ -103,28 +93,20 @@ begin
   Result := TDictionary<string, CCompositionObject>.Create;
   for comObj in compositionObjects do
   begin
-    id := valueHelper.ValueToString(values[comObj.DatasourceIndex]);
+    id := valueHelper.ToString(values[comObj.DatasourceIndex]);
     Result.Add(id, comObj);
   end;
 end;
 \end{delphicode}
-We implement an operation named \cn{GetIdentifierIndex} in \fn{PrimitiveFieldValueCollection}. This iterates a list of composition objects, looks up the column value based on the datasource index. All identifiers in \gap~are strings, which means that the value helper class must convert the column contents to string before using it as a key in the dictionary. Most objects come in ordered by their datasource index, which means cache locality is maximized.
+We implement an operation named \cn{GetIdentifierIndex} in \fn{PrimitiveFieldValueCollection}. This method iterates a list of composition objects, looks up the column value based on the datasource index, and creates a mapping between the identifier and object. Since all identifiers in \gap~are strings, the value helper class must convert the column contents before using it as a key in the dictionary. Most objects are ordered by their datasource index, which means cache locality is maximized. We see the \cn{GetIdentifierIndex} implementation in Listing \ref{lst:create-identifier-index}.
 
-The \cn{GetIdentifierIndex} is not implemented in the dictionary encoded columns because it is not needed: If a column works as an identifier column or a primary key, there will only be unique values, which means such column will never benefit from a dictionary.
+The \cn{GetIdentifierIndex} is not implemented in the dictionary encoded column classes because it is not needed: If a column contains object identifiers, or primary keys, there will be nothing but unique values in the column, and such column never benefits from dictionary encoding.
 
 \subsection{Predicate Evaluation}
 \label{sub:Predicate Evaluation}
-One common operation in \gap~is to move certain objects from one data source to another based on a filter. This is used in actions. We believe the column structure can help this operation by avoiding unnecessary memory allocations and layers of indirection. The filters used in such operation are composed by one or more predicates, which can compare values with equal, not equal, greater than, less than, and other comparisons operators. 
+Until now, we have focused on \gd~and the \tpchdl. However, one common operation in \gap~is to move certain objects from one data source to another based on a filter, an operation normally performed in tasks. Filters are composed of several predicates, including equal, not equal, greater than, less than, null, and other comparisons.
 
-% CONSIDER EXPLAINING THIS
-%Inspired to look into other places in \gap~to utilize our new storage structure, we look at the filter mechanisms in the task execution unit. One common operation is to add objects to a data source and then do something with a subset of these. This subset is defined by a filter. Previously, the entire data source was enumerated, and each object was compared. For each object.
-%\begin{enumerate}
-    %\item The \cn{GValue} for the Data Descriptor is fetched. Depending on the implementation, this is either a search through pointers or a memory allocation.
-    %\item The \cn{GValue} is compared using the comparison methods in the class.
-    %\item This is repeated for every predicated that is evaluated. \todo{Figure out what happened on different predicates}
-%\end{enumerate}
-
-\begin{delphicode}{Creating a bitmap for the Equal operator.}{lst:create-equal-bitmap}
+\begin{delphicode}{Creating a bitmap for the equal operator.}{lst:create-equal-bitmap}
 function PrimitiveFieldValueCollection<TType>.GetEqualBitmap
 ( value : CGValue )
 : BasicBitArray;
@@ -136,118 +118,126 @@ begin
 end;
 \end{delphicode}
 
-We introduce a new column operator, \fn{GetBitmap}, that takes an operator and a value as input, and returns a bitmap of matching rows. An implementation of the equal operator is shown in Listing \ref{lst:create-equal-bitmap}. The bitmaps can then be combined efficiently using \texttt{AND} and \texttt{OR} operations, much like bitmap indexes depicted in Figure \ref{fig:bitmap-query}.
+We believe our column store can aid this filter operation by implementing predicate evaluation in the \fn{FieldValueCollection} interface, such that unnecessary memory allocations and layers of indirection are avoided. Hence, we introduce a new column operator, \fn{GetBitmap}, that takes an operator and a value as input, and returns a bitmap of matching rows. An implementation of the equal predicate evaluation is shown in Listing \ref{lst:create-equal-bitmap}. If a filter contains more than one predicate, they can be efficiently combined with bitwise \texttt{AND} and \texttt{OR} operations, much like bitmap indexes depicted in Figure \ref{fig:bitmap-query}.
 
-In Listing \ref{lst:create-equal-bitmap}, we see the implementation in the generic \cn{PrimitiveFieldValueCollection} class, which means the value helper class must be used to evaluate the predicate. This causes extra overhead in calling the \fn{ValueEqual} function. To avoid this, column operations can be implemented in the sub-classes, such that the \delphi~value comparison operator can be used.
+In Listing \ref{lst:create-equal-bitmap}, we see the implementation in the generic \cn{PrimitiveFieldValueCollection} class, which means the value helper class must be used to evaluate the predicate. Using this class causes extra overhead in calling the \fn{ValueEqual} function, particularly as it is a virtual function which cannot be inlined. However, all \cn{PrimitiveFieldValueCollection} subclasses are free to override the predicate evaluation methods to use the \delphi~comparison operators directly.
+
+We also implement predicate evaluation in the dictionary encoded columns. Here, we first scan the dictionary and add keys satisfying the predicate to a set. Then we create the bitmap by iterating the value buffer and probing the set of keys.
 
 \section{Results}
 \label{sec:Results}
-In this section, we test the performance impact of column operations in \gap. For this, we used a combination of Benchmarks \ref{bm:q1}, \ref{bm:filter}, and \ref{bm:odin-load}, depending on the operation.
-
-
-%To test source measure lookup and lookup index operations, Benchmark \ref{bm:q1} was used. In addition to this, Benchmark \ref{bm:odin-load} was used to test identifier index generation, and Benchmark \ref{bm:filter} was used to test predicate evaluation.
+In this section, we test the performance impact of the column operations we introduced in this iteration. For this, we use a combination of Benchmarks \ref{bm:q1}, \ref{bm:filter}, and \ref{bm:odin-load}, depending on the operation. Most results are presented on a logarithmic scale.
 
 \subsection{Source Measure Lookup}
 \label{sub:Source Measure Lookup}
-\begin{table}
-    \centering
-    \begin{tabularx}{\textwidth}{X | X X X X}
-        SF0.01 & \texttt{QUANTITY} & \texttt{EXTENDEDPRICE} & \texttt{DISCOUNT} & \texttt{TAX}\\ 
-        \hline
-        \hline
-        Original & 302 ms & 385 ms & 312 ms & 369 ms \\
-        Compressed & 6975 ms & 7233 ms & 7189 ms & 7223 ms \\
-        \fn{GetDoubleArray} & 18 ms & 8 ms & 19 ms & 18 ms \\
-    \end{tabularx}
-    \caption{Source measure lookup for \texttt{QUANTITY} \texttt{EXTENDEDPRICE}, \texttt{DISCOUNT}, and \texttt{TAX} for SF0.1.} 
-    \label{tab:operations-sml}
-\end{table}
+\afigure{img/operations-get-double-array.png}{source measure lookup time for original, compressed column store, and compressed column store with \fn{GetDoubleArray} column operation, Benchmark \ref{bm:q1}, SF0.1. Logarithmic scale.}{fig:operations-get-double-array}{1.0}
 
-We used Benchmark \ref{bm:q1} with scaling factor SF0.1 to measure the performance impact of using \fn{GetDoubleArray} in the source measure lookup operation. As seen in Table \ref{tab:operations-sml}, the time it takes to perform the operation is reduced by more than one order of magnitude from the original implementation, and more than two orders of magnitude from the compressed implementation. The non-compressed \texttt{EXTENDEDPRICE} column~yields the best performance result, where the source measure lookup operation has gone from 385 ms to 8 ms.
+We use Benchmark \ref{bm:q1} with scaling factor SF0.1 to measure the performance impact of using \fn{GetDoubleArray} in the source measure lookup operation. As seen in Figure \ref{tab:operations-get-double-array}, the time it takes to perform the operation is reduced by more than one order of magnitude from the original implementation, and more than two orders of magnitude from the compressed implementation. The non-compressed \texttt{EXTENDEDPRICE} column yields the best performance result, where the source measure lookup operation now takes 8 ms for 600,000 elements.
 
 \subsection{Lookup Index}
 \label{sub:Lookup Index}
 
-\begin{table}
-    \centering
-    \begin{tabularx}{\textwidth}{X | X X X}
-        & \texttt{LINESTATUS} & \texttt{RETURNFLAG} & \texttt{SHIPDATE}\\ 
-        \hline
-        \hline
-        Original & 2939 ms & 2849 ms & 13144 ms \\
-        Compressed & 12,291 ms & 12,688 ms & 19,674 ms \\
-        \fn{GetLookupIndex} & 26 ms & 26 ms & 220 ms \\
-    \end{tabularx}
-    \caption{Lookup index generation operation for SF0.1 in Benchmark \ref{bm:q1}}
-    \label{tab:operations-lig}
-\end{table}
+\afigure{img/operations-get-lookup-index.png}{Lookup index generation time for original, compressed column store, and compressed column store with \fn{GetLookupIndex} column operation, Benchmark \ref{bm:q1}, SF0.1. Logarithmic scale.}{fig:operations-get-lookup-index}{1.0}
 
-Like for source measure lookup, we used the \textit{TPC-H Q1 Data Load Benchmark} SF0.1 to investigate the performance benefits of the \fn{GetLookupIndex} operation. Table \ref{tab:operations-lig} shows the result of this benchmark. The time it takes to perform the join operation is reduced by two orders of magnitude compared to the original implementation, and almost three orders of magnitude compared to the compressed implementation.
+Like as for source measure lookup, we used the \tpchdl~SF0.1 to investigate the performance benefits of the \fn{GetLookupIndex} operation. Figure \ref{tab:operations-lig} shows the result of this benchmark. The time it takes to perform the join operation is reduced by two orders of magnitude compared to the original implementation, and almost three orders of magnitude compared to the compressed implementation.
 
 \subsection{Identifier Index}
 \label{sub:Identifier Index}
-To test the performance of the identifier index operation, we use a benchmark which we have not yet used in this research; Benchmark \ref{bm:odin-load}. Like the \textit{TPC-H Q1 Data Load Benchmark}, this benchmark also loads data into a data mart for an analysis, and measure the join performance. However, in this benchmark there is a join that joins 200,000 rows with 400,00+ rows, thus making the effects of \cn{GetIdentifierIndex} more significant.
+To test the performance of the identifier index operation, we use a benchmark which we have not yet employed in this research; Benchmark \ref{bm:odin-load}. This benchmark is similar to \tpchdl, but this benchmark contains a join between two tables with 200,000 rows and 400,000 rows respectively. Thus, by using this benchmark, we expect to make the effects of \cn{GetIdentifierIndex} more apparent. Here, we only compare operation time with the \textit{full compression} configuration.
 
-\begin{table}
-    \centering
-    \begin{tabularx}{\textwidth}{X | X X}
-        & \texttt{Fund} & \texttt{Customer} \\
-        \hline
-        \hline
-        Compressed & 11 ms & 10,040 ms \\
-        \fn{GetIdentifierIndex} & 9 ms & 2863 ms \\
-    \end{tabularx}
-    \caption{Lookup index generation for Benchmark \ref{bm:odin-load} with the new \fn{GetIdentifierIndex} operation.}
-    \label{tab:operations-odin-lig}
-\end{table}
+\afigure{img/operations-get-identifier-index.png}{Lookup index generation time for compressed column store and compressed column store with \fn{GetIdentifierIndex} column operation, Benchmark \ref{bm:odin-load}. Logarithmic scale.}{fig:operations-get-identifier-index}{0.7}
 
-Table \ref{tab:operations-odin-lig} shows the results of Benchmark \ref{bm:odin-load}. The time it takes to join \texttt{Customer Balance Daily} with \texttt{Customer} has been reduced with almost four times. The smaller join, between \texttt{Fund} and \texttt{Customer Balance Daily}, goes from 11 ms to 9 ms, but this might be caused by inaccuracy in the measurements.
+Figure \ref{fig:operations-get-identifier-index} shows the results of Benchmark \ref{bm:odin-load}. The time it takes to join \texttt{Customer Balance Daily} with \texttt{Customer} has been reduced with almost four times. The smaller join, between \texttt{Fund} and \texttt{Customer Balance Daily}, goes from 11 ms to 9 ms, but this is likely to be caused by inaccuracy in the measurements.
 
 \subsection{Predicate Evaluation}
 \label{sub:Predicate Evaluation}
-\begin{table}
-    \centering
-    \begin{tabularx}{\textwidth}{X | X X X}
-        Predicate & Original & Compressed & Predicate Operator \\
-        \hline
-        \hline
-        \texttt{LINESTATUS = F} & 10,540 ms & 19,115 ms & 14,776 ms\\
-        \texttt{TAX >= 0.02} & 9102 ms & 17,538 ms & 16,387 ms \\
-        \texttt{EXTENDEDPRICE >= 1000} & 12,306 ms & 26,031 ms & 26,249 ms \\
-        \texttt{EXTENDEDPRICE >= 40000} & 6946 ms & 13,682 ms & 11,475 ms \\
-        \texttt{EXTENDEDPRICE < 1000} & 3535 ms & 4455 ms & 811 ms \\
-        \texttt{EXTENDEDPRICE = 42995.94} & 53,291 ms & 55,291 ms & 29 ms \\
-        \texttt{SHIPDATE IN 1995} & 13,286 ms & 17,748 ms & 5591 ms \\
-        \texttt{SHIPINSTRUCT\_NULL HAS VALUE} & 7853 ms & 19,656 ms & 19,107 ms 
-    \end{tabularx}
-    \caption{Test results for Benchmark \ref{bm:filter} for originaland compressed column implementation, with and without predicate evaluation operators.}
-    \label{tab:operations-filter}
-\end{table}
-To test predicate evaluation operators, we use the \textit{Filter Benchmark}, Benchmark \ref{bm:filter}. This benchmark moves data from one datasource to another based on a filter. The results are presented in Table \ref{tab:operations-filter}.
 
-For all high-selectivity predicate evaluations, the new predicate operator function increases performance, but is, in general, slower than the original implementation. Low selectivity predicates, like \texttt{EXTENDEDPRICE < 10000} (44) and \texttt{EXTENDEDPRICE = 42995.94} (1) are faster than the initial implementation, with the latter three orders of magnitude faster.
+\afigure{img/operations-predicate-evaluation.png}{Predicate evaluation results for original, compressed column store, and compressed column store with predicate evaluation operators, Benchmark \ref{bm:odin-load}.}{fig:operations-predicate-evaluation}{1.0}
+
+To test predicate evaluation operators, we use the \textit{Filter Benchmark}, Benchmark \ref{bm:filter}. This benchmark moves data from one data source to another based on a filter. The results are presented in Figure \ref{fig:operations-predicate-evaluation}.
+
+For all high-selectivity predicate evaluations, the new predicate operator function increases performance, but is, in general, slower than the original implementation. Low selectivity predicates, like \texttt{EXTENDEDPRICE < 10000} (selects 44) and \texttt{EXTENDEDPRICE = 42995.94} (selects one) are faster than the initial implementation, where the latter is three orders of magnitude faster.
 
 \section{Discussion}
 \label{sec:Discussion}
-The benefits of utilizing the data structures available in the column store and making operations that are friendly to modern CPUs are significant. Both read-intensive operations in Benchmark \ref{bm:q1} have had their performance increased by two orders of magnitude compared to the original \gap~implementation. Performance on large joins is even further improved by the \cn{GetIdentifierIndex} operation, where the join time is reduced to 25 \%.
+The benefits of utilizing the data structure available in the column store and making column operations that are friendly to modern CPUs are significant. Column operations have resulted in both read-intensive operations in Benchmark \ref{bm:q1} have had their performance increased by one or two orders of magnitude compared to the original \gap~implementation. Performance on large joins is even further improved by the \cn{GetIdentifierIndex} operation, where the join time Benchmark \ref{bm:odin-load} is reduced by 75 \%.
 
-In Table \ref{tab:operations-sml}, we observe that source measure lookup on \texttt{EXTENDEDPRICE} is twice as fast as for the other three columns. This is because \texttt{QUANTITY}, \texttt{DISCOUNT}, and \texttt{TAX} columns are dictionary encoded. \texttt{EXTENDEDPRICE} only needs to pass its array pointer to the lookup operation, while the other columns must allocate and populate this double array using the dictionary. However, this operation is still fast; it takes \~20 ms to populate 600,000 elements. For \texttt{QUANTITY} column, values must be converted from integers to floating point numbers, but this does not affect performance.
+In Figure \ref{fig:operations-get-double-array}, we observe that source measure lookup on \texttt{EXTENDEDPRICE} is twice as fast as for the other three columns. This is because \texttt{QUANTITY}, \texttt{DISCOUNT}, and \texttt{TAX} columns are dictionary encoded. \texttt{EXTENDEDPRICE} only needs to pass its array pointer to the lookup operation, while the other columns must allocate and populate this double array using the dictionary. However, this operation is still fast; it takes \~20 ms to populate 600,000 elements. For \texttt{QUANTITY} column, values must be converted from integers to floating point numbers, but this does not affect performance.
 
-In the column store, the predicate evaluation operators have speeded up the operation where objects are moved from one data source to another based on a filter operation. However, most of these operations are still slower than the original \gap~implementation. We believe this is because \gap~is not designed for the new storage format; data is moved from one source to another using rows, or \cn{CompositionFieldValueCollection}s, filled with \cn{GValue}s. However, the potential in column predicate evaluation is apparent on low-selectivity filters: The time it takes to evaluate \texttt{EXTENDEDPRICE = 42995.94} is reduced from 53.3 seconds to 29 ms, almost ~2000 X.
+In the column store, the predicate evaluation operators from Section \ref{sec:Predicate Evaluation} have speeded up Benchmark \ref{bm:filter} if using a compressed column store. However, most of these operations are still slower than the original \gap~implementation. We believe this is because \gap~is not designed for the new storage format; data is moved from one data source to another using rows, or \cn{CompositionFieldValueCollection}s, filled with \cn{GValue}s. However, the potential in column predicate evaluation is apparent on low-selectivity filters: The time it takes to evaluate \texttt{EXTENDEDPRICE = 42995.94} is reduced from 53.3 seconds to 29 ms, almost 2000 times faster.
 
 \section{Iteration Conclusion}
 \label{sec:Chapter Conclusion}
-There is much to gain on exploiting the potential in the data structures in our column store. By introducing \textit{column operations}, we see that several read-intensive are speeded up by several orders of magnitude. We see the largest performance impact in this iteration on an equality predicate evaluation in the \textit{Load Benchmark}, where the time it takes to perform the operation has been reduced by ~2000 X.
+There is much to gain by exploiting the potential in the data structures in our column store. By introducing \textit{column operations}, we see that several read-intensive are speeded up by several orders of magnitude. We see the largest performance impact in this iteration on an equality predicate evaluation in the \textit{Load Benchmark}, where the time it takes to perform the operation has been reduced by ~2000 X.
 
-The four column operations described in this chapter serve as a proof-of-concept on the potential in column storage; they are just the tip of the iceberg. Other parts of \gap~should be rewritten to use these operations, and new column store functionality should be defined. We elaborate in Section \ref{operations:future-work}.
+The four column operations described in this chapter serve as a proof-of-concept on the potential in column storage; they are just the tip of the iceberg. Other parts of \gap~should be rewritten to use these operations and new column store functionality should be defined. We elaborate in Section \ref{operations:future-work}.
 
-This chapter concludes our design and experiment part of the research. We have reduced memory by 67 \%, increased load time by 36 \%, and the performance for most operations benchmarked in this research has been increased. Some operations are still slower than the original \gap~implementation, like those in Benchmark \ref{bm:filter}. However, we have laid some important groundwork for restoring and improving performance of these operations.
+This chapter concludes our design and experiment part of the research. We have reduced memory by 67 \%, increased load time by 36 \%, and the performance for most operations benchmarked in this research has been increased. Some operations are still slower than the original \gap~implementation, like those in Benchmark \ref{bm:filter}. However, we have laid some important groundwork for restoring and improving the performance of these operations.
 
-The next chapter discuss other interesting topics investigation in this research, which is column selection and UTF-8 strings. 
+The next chapter discusses other interesting topics investigated in this research, which is column selection and UTF-8 strings. 
 
 \subsection{Future Work}
 \label{operations:future-work}
-Future work should aim to identify more column operators that can increase performance in \gap. As we have seen so throughout the research iterations, read-intensive operations suffer from the \cn{GValue} interface, and if no attention is paid to such operations, performance decrease by as much as one order of magnitude. These read-intensive operations, however, are also the operations that has the potential to benefit the most from columns. Hence, future work should identify such operations, implement them in the \fn{FieldValueCollection} class, and apply them in \gap. 
+Future work should aim to identify more column operators that can increase performance in \gap. As we have seen throughout the research iterations, read-intensive operations suffer from the \cn{GValue} interface, and if no attention is paid to such operations, performance decrease by as much as one order of magnitude. These read-intensive operations, however, are also the operations that have the potential to benefit the most from columns. Hence, future work should identify such operations, implement them in the \fn{FieldValueCollection} class, and apply them in \gap. 
 
-\missingfigure{Explain ExtractFromBitmap}
-For instance, we have seen the potential in the predicate evaluation operation, where Benchmark \ref{bm:filter} yielded a \~2000 X performance improvement for a low-selectivity predicate. However, since \gap~have not been adapted to the column store, moving data from one data source to another generally takes longer time than the original implementation. We believe this operation can be significantly faster by creating an \fn{ExtractFromBitmap} function in \cn{CompositionValueCollection}; a function that takes a bitmap as input and returns a new \cn{CompositionValueCollection} with a subset of the data based on the bitmap. This way, composite queries can evaluate predicates using the \fn{GetBitmap}, combine them with \texttt{AND} and \texttt{OR} operations, and extract data using \fn{ExtractFromBitmap} and the combined bitmap. Figure X depicts this. We link such approach to the \textit{late materialization principle} from Section \ref{sub:Late Materialization}, where no rows are materialized until needed, or in this case; never.
+For instance, we have seen the potential in the predicate evaluation operation, where Benchmark \ref{bm:filter} yielded a \~2000 X performance improvement for a low-selectivity predicate. However, since \gap~have not been adapted to the column store, moving data from one data source to another generally takes longer time than the original implementation. We believe this operation can be significantly faster by creating an \fn{ExtractFromBitmap} function in \cn{CompositionValueCollection}; a function that takes a bitmap as input and returns a new \cn{CompositionValueCollection} with a subset of the data based on the bitmap. This way, composite queries can evaluate predicates using the \fn{GetBitmap}, combine them with \texttt{AND} and \texttt{OR} operations, and extract data using the new \fn{ExtractFromBitmap} method. We link such approach to the \textit{late materialization principle} from Section \ref{sub:Late Materialization}, where no rows are materialized until needed, or in this case; never.
+
+%\begin{table}
+%    \centering
+%    \begin{tabularx}{\textwidth}{X | X X X X}
+%        SF0.01 & \texttt{QUANTITY} & \texttt{EXTENDEDPRICE} & \texttt{DISCOUNT} & \texttt{TAX}\\ 
+%        \hline
+%        \hline
+%        Original & 302 ms & 385 ms & 312 ms & 369 ms \\
+%        Compressed & 6975 ms & 7233 ms & 7189 ms & 7223 ms \\
+%        \fn{GetDoubleArray} & 18 ms & 8 ms & 19 ms & 18 ms \\
+%    \end{tabularx}
+%    \caption{Source measure lookup for \texttt{QUANTITY} \texttt{EXTENDEDPRICE}, \texttt{DISCOUNT}, and \texttt{TAX} for SF0.1.} 
+%    \label{tab:operations-sml}
+%\end{table}
+
+%\begin{table}
+%    \centering
+%    \begin{tabularx}{\textwidth}{X | X X X}
+%        & \texttt{LINESTATUS} & \texttt{RETURNFLAG} & \texttt{SHIPDATE}\\ 
+%        \hline
+%        \hline
+%        Original & 2939 ms & 2849 ms & 13144 ms \\
+%        Compressed & 12,291 ms & 12,688 ms & 19,674 ms \\
+%        \fn{GetLookupIndex} & 26 ms & 26 ms & 220 ms \\
+%    \end{tabularx}
+%    \caption{Lookup index generation operation for SF0.1 in Benchmark \ref{bm:q1}}
+%    \label{tab:operations-lig}
+%\end{table}
+
+%\begin{table}
+%    \centering
+%    \begin{tabularx}{\textwidth}{X | X X}
+%        & \texttt{Fund} & \texttt{Customer} \\
+%        \hline
+%        \hline
+%        Compressed & 11 ms & 10,040 ms \\
+%        \fn{GetIdentifierIndex} & 9 ms & 2863 ms \\
+%    \end{tabularx}
+%    \caption{Lookup index generation for Benchmark \ref{bm:odin-load} with the new \fn{GetIdentifierIndex} operation.}
+%    \label{tab:operations-odin-lig}
+%\end{table}
+
+%\begin{table}
+%    \centering
+%    \begin{tabularx}{\textwidth}{X | X X X}
+%        Predicate & Original & Compressed & Predicate Operator \\
+%        \hline
+%        \hline
+%        \texttt{LINESTATUS = F} & 10,540 ms & 19,115 ms & 14,776 ms\\
+%        \texttt{TAX >= 0.02} & 9102 ms & 17,538 ms & 16,387 ms \\
+%        \texttt{EXTENDEDPRICE >= 1000} & 12,306 ms & 26,031 ms & 26,249 ms \\
+%        \texttt{EXTENDEDPRICE >= 40000} & 6946 ms & 13,682 ms & 11,475 ms \\
+%        \texttt{EXTENDEDPRICE < 1000} & 3535 ms & 4455 ms & 811 ms \\
+%        \texttt{EXTENDEDPRICE = 42995.94} & 53,291 ms & 55,291 ms & 29 ms \\
+%        \texttt{SHIPDATE IN 1995} & 13,286 ms & 17,748 ms & 5591 ms \\
+%        \texttt{SHIPINSTRUCT\_NULL HAS VALUE} & 7853 ms & 19,656 ms & 19,107 ms 
+%    \end{tabularx}
+%    \caption{Test results for Benchmark \ref{bm:filter} for originaland compressed column implementation, with and without predicate evaluation operators.}
+%    \label{tab:operations-filter}
+%\end{table}
