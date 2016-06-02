@@ -1,111 +1,134 @@
 \chapter{Other Topics}
 \label{chap:misc}
-In this chapter, we cover some other topics investigated in this research. First, we see how memory are reduced by applying UTF-8 instead of UTF-16 encoding to strings in the column store. Second, we discuss how database statistics can be used to select the correct column implementation automatically.
+In this chapter, we cover some other topics investigated in this research. First, we see how memory usage is reduced by applying UTF-8 instead of UTF-16 encoding to strings in the column store. Second, we discuss how database statistics can be used to select the correct column implementation automatically.
 
-The topics in this chapter yielded some interesting results which are worthwhile to discuss. However, the techniques were not tested thoroughly enough to draw any general conclusions.
+The topics in this chapter yield some interesting results which are worthwhile to discuss. However, the techniques are not tested thoroughly enough to draw any general conclusions.
 
 \clearpage
 
 \section{UTF-8}
 \label{sec:UTF-8}
-The built-in \cn{string} class in \delphi~is UTF-16 encoded \cite{noauthor_undated-cp}. This is a Unicode encoding that uses two bytes per character and is used because Win32 platform uses this format. However, another encoding, UTF-8, exists for the Unicode charset. This encodes the first 127 ASCII characters with only one byte. 
+According to the \delphi~documentation, the built-in \cn{string} type uses UTF-16, because the Win32 platform uses this format \cite{noauthor_undated-cp}. UTF-16 is a Unicode encoding which uses two or four bytes per character. However, another encoding, UTF-8, exists for the Unicode charset, which encodes the 128 ASCII characters with one byte only.
 
-Our observation is that most strings only use the first 127 ASCII characters, which means we can cut the memory footprint of strings in half. \delphi~has a built-in type for this, \cn{UTF8String}, which we use to implement the string columns. String conversions between the different string formats are handled by \delphi.
+Our observation is that most strings used in \gap~only use these 128 ASCII characters, which means a transition from UTF-16 to UTF-8 could potentially reduce the memory requirements for strings in half. Therefore, we extend our primitive column subclasses with one more type: \delphi's \cn{UTF8String}. Then, we see how load time and memory usage are affected.
 
 \subsection{Test Results}
 \label{sub:Test Results}
-\begin{table}
-    \begin{tabularx}{0.75\textwidth}{X | X X}
-        & SF0.01 & SF0.1 \\ 
-        \hline
-        \hline
-        Compressed & 226 bytes & 237 bytes \\
-        Compressed w/ UTF-8 Store & 210 bytes & 221 bytes \\
-        \% reduction & 7 \% & 7 \% \\
-    \end{tabularx}
-    \caption{UTF-8 test results for Benchmark \ref{bm:q1} for SF0.1 and SF0.01.}
-    \label{tab:utf-8-bpl}
-\end{table}
-\begin{table}
-    \begin{tabularx}{0.75\textwidth}{X | X X}
-        & SF0.01 & SF0.1 \\ 
-        \hline
-        \hline
-        Compressed & 1389 ms & 15584 ms \\
-        Compressed w/ UTF-8 Store & 1749 ms & 17718 ms \\
-    \end{tabularx}
-    \caption{UTF-8 test results for Benchmark \ref{bm:q1}}
-    \label{tab:utf-8-load}
-\end{table}
-Table \ref{tab:utf-8-bpl} shows that the number of bytes used per \texttt{LINEITEM} is reduced by 7 \% for both scaling factors. However, as Table \ref{tab:utf-8-load} shows, load times are slightly increased.
+\afigure{img/utf8-bpl.png}{Bytes per \lineitem~used by with and without UTF-8 string encoding, Benchmark \ref{bm:q1} with scaling factors SF0.01 and SF0.1.}{fig:utf8-bpl}{0.9}
+\afigure{img/utf8-load.png}{Data source load time for full compression with and without UTF-8 string encoding, Benchmark \ref{bm:q1}, SF0.1.}{fig:utf8-load}{0.6}
+
+Figure \ref{fig:utf8-bpl} shows that the number of bytes used per \texttt{LINEITEM} is reduced by 7 \% for both scaling factors. However, as seen in Figure \ref{fig:utf8-load}, load times are increased by roughly 14 \%. 
 
 \subsection{Discussion, Conclusion, and Future Work}
 \label{sub:Discussion, Conclusion, and Future Work}
-We observe that UTF-8 encoding reduces memory consumption slightly. However, this comes at the cost of increased load time. We believe that the increased load time is caused by the fact that \gap~consequently uses UTF-16 encoded strings throughout the application source code. Hence, when data is loaded into a data source, there are many conversions between UTF-8 and UTF-16 that causes performance to go down. The results from Benchmark \ref{bm:q1} might also be the tip of the iceberg; the entire platform might be slowed down due to encoding conversions between \vn{string} and \vn{UTF8String}.
+We observe that UTF-8 encoding reduces memory consumption slightly. However, this comes at the cost of increased load time. We believe that the increased load time is caused by the fact that \gap~consequently uses UTF-16 encoded strings throughout the application source code. Hence, when data is loaded into a data source, there are many conversions between UTF-8 and UTF-16 that causes performance to slow down. The results from Benchmark \ref{bm:q1} might also be the tip of an iceberg; the entire platform might be slowed down due to encoding conversions between \vn{string} and \vn{UTF8String}. Also, UTF-16 is the default encoding in \delphi~because it is supported by the underlying system. In other words, all communication with the OS must convert all strings to UTF-16. 
 
-Secondly, UTF-16 is the default encoding in \delphi~for a reason: It is the format which all communication with the OS uses. UTF-8 likely slows down certain operations, and might not be worth the reduced memory consumption.
-
-If one decide to pursue this topic further, all strings in \gap~must be changed to \vn{UTF8String}. Only then can a true performance assessment be made.
+If this topic is to be pursued further, all strings in \gap~must be changed to the \cn{UTF8String} type. Only then can a true performance assessment be made, and to see if the reduced memory consumption outweighs the benefits of having strings stored as the same format as the underlying operating system.
 
 \section{Column Selection}
 \label{sec:Column Selection}
-Now, we have four different \cn{FieldValueCollection} to choose from. Until now, which columns have been used have been selected by hand. However, this disregards an important aspect of \mdd: The users should not need to know anything about the implementation to make good programs. In other words, it is up to \gap~to decide which storage format is best suited for the different use cases.
+Throughout the research, we have implemented different column formats with the \cn{FieldValueCollection} interface. Until now, we have selected by hand which properties in an object class uses which storage format. However, this disregards an important aspect of \mdd: The modelers should be shielded from the underlying complexities of data storage and should not need to know anything about how the data is best represented internally. In other words, \gap~should ideally decide which \cn{FieldValueCollection} implementation which is better suited for different use cases and object class properties.
 
-First, we observe that our column store has no negative impact on the application. Hence, we may safely assume that all Composition Objects may store their data using our new column Composition Value Collection. Second, we have not experienced any performance reduction by using native data types. We may, therefore, assume that we can use this implementation whenever we can. Third, there is no negative performance impact on the bitpacked dictionary versus the non-packed one.
+First, according to our benchmarks, we concluded in Chapter \ref{chap:column-store} that the column store did not hurt performance. Hence, we may safely use \cn{CompositionValueCollection} for representing data. Second, we concluded in Chapter \ref{chap:storage-format} that discarding \cn{GValue}s and instead storing data as primitive data types significantly reduce memory consumption and does not affect write performance by much. We may, therefore, use the \cn{PrimitiveFieldValueCollection} class on all supported types. Third, we observed no negative performance impact on the bitpacked dictionary compared to the non-packed dictionary. 
 
-However, we have seen a significant space saving by choosing dictionary columns on low and medium-cardinality columns. However, for some columns with high cardinality, a dictionary column will not save space, since most values are stored in the dictionary nevertheless. Also, the load time of the columns (due to the linear dictionary lookup) has an exponential growth on such columns.
+We saw a significant space saving by choosing dictionary columns on low and medium cardinality rows. However, for columns with high cardinality, a dictionary is not beneficial due to increased memory usage and load time.
 
-\afigure{img/gap-statistics.png}{Using statistics to select the proper storage format. A statistics provider service will, for a given Data Descriptor, return relevant statistics, preferably number of rows and number of unique values. The service might cache, restructure and calculate some of the statistics manually, as the different database providers have different interfaces.}{fig:gap-statistics}{0.8}
+Thus, it all sums down three implementations:
+\begin{itemize}
+    \item \cn{PrimitiveFieldValueCollection} for high-cardinality columns; object properties with many distinct values.
+    \item \cn{PrimitivePackedDictionaryFieldValueCollection} for low- and medium-cardinality columns; object properties with few distinct values.
+    \item \cn{FieldValueCollection} for object properties with types not supported in the primitive value columns.
+\end{itemize}
 
-To overcome the above challenge, we propose using database statistics to select the proper column. We have implemented a statistics provider that will, for a given data descriptor, return relevant statistics for a column, including number of values and number of unique values.
+\afigure{img/gap-statistics.png}{Using statistics to select the proper storage format. A statistics provider service will, for a given data descriptor, return relevant statistics, preferably the number of rows, number of unique values, and average data element size. The module might cache, restructure and calculate some of the statistics manually, as the different database providers have different interfaces.}{fig:gap-statistics}{0.8}
+
+To check whether a primitive type is supported is trivial, however deciding column cardinality is challenging. To overcome this challenge, we implement a database statistics module in \gap. This module will, for a given data descriptor, return relevant statistics for a column, including the number of rows, number of unique values, and average data element size. As seen in Figure \ref{fig:gap-statistics}, the module queries the database infrastructure for metadata, and caches them locally. For instance, \oracle~provides an SQL interface to enable clients to access statistics used by the query optimizer. The acquired data is then utilized by the column selector to pick between dictionary encoded or regular columns.
+
+%First, we observe that our column store has no negative impact on the application. Hence, we may safely assume that all Composition Objects may store their data using our new column Composition Value Collection. Second, we have not experienced any performance reduction by using native data types. We may, therefore, assume that we can use this implementation whenever we can. Third, there is no negative performance impact on the bitpacked dictionary versus the non-packed one.
+%
+%However, we have seen a significant space saving by choosing dictionary columns on low and medium-cardinality columns. However, for some columns with high cardinality, a dictionary column will not save space, since most values are stored in the dictionary nevertheless. Also, the load time of the columns (due to the linear dictionary lookup) has an exponential growth on such columns.
+
+
+%To overcome the above challenge, we propose using database statistics to select the proper column. We have implemented a statistics provider that will, for a given data descriptor, return relevant statistics for a column, including number of values and number of unique values.
 
 \subsection{Data Source Filters}
 \label{sub:Data Source Filters}
-One of the major limitations in our statistics provider is that it considers the entire dataset. However, it is quite common to add a filter on the data source for tasks or analyses. Typically, one would be interested in looking at sales for a given date range. In other words, decisions made about the storage format for the entire dataset might not be optimal for filtered subsets of the data.
+One of the major limitations in our statistics provider is that it provides statistics for all values for a given object class property. However, it is quite common to add a filter to the data source on tasks and analyses, for instance on an analysis of data for a given date range. What this means is that even though our statistics provider picks the correct storage format for all data in a column, the storage format might not be optimal for filtered subsets of the data.
 
-One solution to this problem would be to increase the granularity of the statistics. Instead of mapping a providing data descriptor to a statistics object, the provider should also accept a data source as an input. This would definitely increase the precision of the column selection algorithm. However, this approach does not come without challenges. First, the database backends have no support for this kind of statistics. Hence, the statistics would need to be calculated on-demand, either with custom queries (\texttt{COUNT} and \texttt{COUNT DISTINCT}) or by the application itself. Doing this before every data source load is time-consuming and would increase load time. 
+One solution to this problem would be to increase the granularity of the statistics. Instead of only using data descriptors, the statistics module should also accept a data source with corresponding filters as input. This extra input would increase the precision of the statistics, but it has certain challenges. For example, the database infrastructure does not provide statistics for data subsets. Thus, the statistics would need to be calculated on-demand by slow queries like \texttt{COUNT} and \texttt{COUNT DISTINCT}, which in turn increase load time.
 
-This problem can be overcome if \gap~gather data source statistics after the column has been loaded and store the result. On the first load, the first statistics will be used. After the data is loaded, a low-priority process is started to generate the statistics for a given data source. On consecutive loads, the statistics returned by the provider will reflect the previous load of the data source, and will on most occasions be more precise than considering the column as a whole.
+The problem from the above paragraph can be overcome if \gap~first loads the entire column into a non-compressed column and generate statistics for this column in a low-priority thread. Then, on consecutive loads, this statistics is used to make a qualified decision whether to use dictionary encoding or not. Although this might not be as accurate as using statistics from the database infrastructure directly, it is likely to be more precise than making decisions based on unfiltered data. 
 
-Another, but less precise way, is to extrapolate the statistics for a given filter. For instance:
+We can build on this idea even further. Instead of having a low-priority thread to calculate database statistics, we can have a low-priority thread to restructure the data into the most suitable format. In other words, we load data directly into regular columns. Then, we start a low-priority thread which will analyze the data and rebuild columns to dictionary encoding, but only if they have low- or medium-cardinality. Once rebuilt, the low-priority deallocates the regular columns and replace them with the dictionary encoded equivalents. This technique has the benefit of increased load performance, as loading values into a dictionary encoded column is more time consuming than a regular column, and it does not rely on statistic support in the underlying database infrastructure.
+
+Another, but less precise way to overcome the challenges with filtered data sources, is to utilize predictability in columns and extrapolate the statistics for a given filter. For instance:
 \begin{itemize}
-    \item Low-cardinality columns tend to have the same amount of unique values no matter how many more values are added (typically gender, age etc).
+    \item Low-cardinality columns tend to have the same amount of unique values no matter how many more values are added (typically gender, age, etc.).
     \item High-cardinality columns tend to have a linear relationship between the number of values and the number of unique values.
-    \item Some column types are more predictable than others. For instance, the number of distinct values in a code domain remains fixed, and some data types are ordered, like timestamps. 
+    \item Some column types are predictable. For instance, the number of distinct values in a code domain is constant, and some data, like timestamps, is ordered.
 \end{itemize}
-The results of this extrapolation could also be dependent on what kind of filter that is applied: Random, max or min values, or most occurrences of different values.
-
-\subsection{Other Use-Cases for Statistics}
-\label{sub:Other Use-Cases for Statistics}
-For obvious reasons, we may assume that the statistics are mere estimates. However, if we knew that the statistics were not only statistics but an exact measure of the column distribution, more optimizations could be applied. First and foremost, the exact buffer sizes, including dictionaries, could be allocated in the beginning, and not the doubling strategy explained in Section \ref{sub:FieldValueCollection growth strategy}. On every reallocation, there's a potential copy operation that copies the entire value buffer from one place to the other. Exact buffer sizes would reduce the risk of this. This is even more important for bit packed columns; on every dictionary overflow, the entire value buffer is rebuilt. 
+The challenge here is to exploit the predictability to make qualified decisions on column selection.
 
 \subsection{Special Cases}
 \label{sub:Special Cases}
-In a data mart, float arrays are used. Until data mart is redesigned to use dictionaries, which we saw in Section \ref{xx} could be beneficial, no float column that is used as a measure should be stored in a dictionary. 
+
+There are cases where storage format should completely disregard database statistics. For instance, \gd~uses an array of floating point numbers as a base unit for calculation. Hence, to avoid data duplication, a column used as a measure in an analysis should never be dictionary encoded, since \gd~does not yet work on dictionary encoded values.
+
+\subsection{Precision of Statistics}
+
+So far, we have assumed that statistics provided by the database infrastructure or by \gap~are only estimates. Let us imagine that they are not statistics, but exact numbers. First and foremost, the growth strategy from Section \ref{sub:Growth Strategy} would be surplus as we could allocate the correct size for the value buffers immediately. Thus, we avoid unnecessary reallocations and data movement. Second, bitpacked columns would benefit from these exact values: The number of bits needed to represent each value is known before populating the column, which means we avoid value buffer rebuilding.
+
 
 \subsection{Results}
 \label{sub:Results}
+
 \begin{table}
-    \begin{tabularx}{\textwidth}{X | X }
-        Property & Implementation \\
+    \centering
+    \begin{tabularx}{0.75\textwidth}{l | l }
+        Property & Column implementation \\
         \hline
         \hline
-        LINEITEMKEY & \cn{PrimitiveString} \\
-        LINESTATUS & \cn{PrimitiveDictionaryObjectHandle}\\
-        RETURNFLAG & \cn{PrimitiveDictionaryObjectHandle}\\
-        SHIPDATE & \cn{PrimitiveDictionaryCalendarTime}\\
-        QUANTITY & \cn{PrimitiveDictionaryInteger} \\
-        EXTENDEDPRICE & \cn{PrimitiveReal} \\
-        DISCOUNT &  \cn{PrimitiveReal} \\
-        TAX &\cn{PrimitiveReal}  
+        \texttt{LINEITEMKEY} & \cn{PrimitiveString} \\
+        \texttt{LINESTATUS} & \cn{PrimitiveDictionaryObjectHandle}\\
+        \texttt{RETURNFLAG} & \cn{PrimitiveDictionaryObjectHandle}\\
+        \texttt{SHIPDATE} & \cn{PrimitiveDictionaryCalendarTime}\\
+        \texttt{QUANTITY} & \cn{PrimitiveDictionaryInteger} \\
+        \texttt{EXTENDEDPRICE} & \cn{PrimitiveReal} \\
+        \texttt{DISCOUNT} &  \cn{PrimitiveReal} \\
+        \texttt{TAX} &\cn{PrimitiveReal}  
     \end{tabularx}
-    \caption{Column selection using statistics.}
+    \caption{Column selection for Benchmark \ref{bm:q1} using the statistics module.}
     \label{tab:statistics}
 \end{table}
-We tested the statistics module using Benchmark \ref{bm:q1}. Which implementation that was selected for the different columns is seen in Table \ref{tab:statistics}. They are the same as hand picked from section X, except for \texttt{DISCOUNT} and \texttt{TAX}, which are used as measures in the data mart.
+
+We test the statistics module with Benchmark \ref{bm:q1} and present the results in Table \ref{tab:statistics}. We observe that the column implementation is the same as the hand-picked implementations from Chapter \ref{chap:compression}, except for \texttt{DISCOUNT} and \texttt{TAX}. These two properties are used as measures in the benchmark and should not, according to the reasoning in Section \ref{sub:Special Cases}, not be put in a dictionary encoded column.
 
 \subsection{Discussion, Conclusion, and Future Work}
 \label{sub:Discussion, Conclusion, and Future Work}
-We see that there is definitively potential in using database statistics and other clever tricks to select the correct column. However, there are several challenges that must be overcome to fully utilize this potential: The problem that occurs if a data source has a filter, and also, to support multiple database backends, vendor-specific changes must be made to the database adapter for metadata queries. Which column implementations that is used should also depend on the use-cases; if columns are used as measures in a Genus Discovery analysis, it should not be dictionary encoded.
+We see a definitive potential in using database statistics and other clever tricks to select the correct column. However, several challenges must be overcome to utilize this potential fully. For instance, data sources with filters impose a challenge. Second, to support multiple database backends, vendor-specific changes must be made to the database adapter in \gap~to enable database queries. The column selection should not only rely on database statistics; what the data is used for should also be considered. For example, measures in \gd~should not be dictionary encoded.
 
-We believe this topic should be pursued further. The primary motivation behind \mde~is to close the gap between the problem and the implementation. Having the platform select the best-suited storage format without modeler intervention is a step towards closing the gap. Future work should also try to not only look at database statistics but also how the data is used in specific parts of \gap. For write-intensive operations, perhaps the original \cn{FieldValueCollection} from Chapter \ref{chap:column-store} is better suited than primary data types compressed in a dictionary.
+We believe this topic should be pursued further. The primary motivation behind \mde~is to close the gap between the problem and the implementation. Having the platform select the best-suited storage format without modeler intervention is a step towards closing the gap. Future work should not only focus on database statistics for correct data format selection but also see how the data is used in \gap. For write-intensive operations, perhaps the original \cn{FieldValueCollection} from Chapter \ref{chap:column-store} is better suited than a dictionary encoded, bitpacked column with primitive data types.
+
+%\begin{table}
+%    \begin{tabularx}{0.75\textwidth}{X | X X}
+%        & SF0.01 & SF0.1 \\ 
+%        \hline
+%        \hline
+%        Compressed & 226 bytes & 237 bytes \\
+%        Compressed w/ UTF-8 Store & 210 bytes & 221 bytes \\
+%        \% reduction & 7 \% & 7 \% \\
+%    \end{tabularx}
+%    \caption{UTF-8 test results for Benchmark \ref{bm:q1} for SF0.1 and SF0.01.}
+%    \label{tab:utf-8-bpl}
+%\end{table}
+%\begin{table}
+%    \begin{tabularx}{0.75\textwidth}{X | X X}
+%        & SF0.01 & SF0.1 \\ 
+%        \hline
+%        \hline
+%        Compressed & 1389 ms & 15584 ms \\
+%        Compressed w/ UTF-8 Store & 1749 ms & 17718 ms \\
+%    \end{tabularx}
+%    \caption{UTF-8 test results for Benchmark \ref{bm:q1}}
+%    \label{tab:utf-8-load}
+%\end{table}
