@@ -12,7 +12,7 @@ We run all benchmarks in \textit{Genus Desktop} in \delphi~debugger mode. Test o
 \label{bm:q1}
 In this benchmark, we measure analytical performance in \gap~using Q1 in the TPC-H Q1 benchmark. As we saw in \ref{sec:Testing}, the TPC-H benchmark is made for decision support workloads and consists of a suite of business oriented ad-hoc queries. The schema for the TPC-H benchmark consists of eight separate tables, as seen in Figure \ref{fig:tpc-h}. The table columns have a variety of different data types, including integers, floating points, variable and fixed width strings, identifiers, and booleans. 
 
-\afigure{img/tpc-h-q1.png}{TPC-H Q1 query. Courtesy of \cite{Transaction_Processing_Performance_Council_TPC2014-ux}.}{fig:tpc-h-q1}{0.75}
+\afigure{img/tpc-h-q1.png}{TPC-H Q1 query. (Adapted from \cite{Transaction_Processing_Performance_Council_TPC2014-ux})}{fig:tpc-h-q1}{0.75}
 Q1, or the \textit{Pricing Summary Report Query}, provides a summary of all items shipped within a date range \cite{Transaction_Processing_Performance_Council_TPC2014-ux}. It aggregates price with and without discount, and with and without tax, as well as average quantity, price, and discount. The results are grouped by \texttt{RETURNFLAG} and \texttt{LINESTATUS}. The original query is shown in Figure \ref{fig:tpc-h-q1}.
 
 \afigure{img/gap-data-mart.png}{Data mart for Q1 in \tpch.}{fig:gap-data-mart}{0.7}
@@ -50,7 +50,7 @@ We measure the total memory footprint of the TPC-H Q1 \gd~application by using t
 
 \section{Write Benchmark}
 \label{bm:write}
-\afigure{img/lineitem.png}{\texttt{LINEITEM} table layout. Courtesy of \cite{Transaction_Processing_Performance_Council_TPC2014-ux}.}{fig:lineitem}{0.8}
+\afigure{img/lineitem.png}{\texttt{LINEITEM} table layout. (Adapted from \cite{Transaction_Processing_Performance_Council_TPC2014-ux})}{fig:lineitem}{0.8}
 Since write performance might be sacrificed when optimizing for read performance, we establish a benchmark that measures this impact. For simplicity reasons, the benchmark is based on the \texttt{LINEITEM} table in the TPC-H benchmark. The main reason for using this table was availability of  different data types, which we see in Figure \ref{fig:lineitem}.
 
 The benchmark reads $N$ items into a data source, for all items, the following fields are modified:

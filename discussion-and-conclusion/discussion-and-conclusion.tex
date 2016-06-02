@@ -42,7 +42,7 @@ class Person:
 \end{pythoncode}
 We believe even traditional programming languages can benefit from the techniques we have studied in this research. For instance, the Python programming language implements the \textit{decorator pattern} which dynamically changes the source code of a function or attribute \cite{noauthor_undated-aq}. We believe decorators can be used to configure the underlying storage engine for class properties. Listing \ref{lst:python-decorator} exemplifies a \cn{Person} class where first and last name are stored in regular columns, while a dictionary encoded column stores the person's gender.
 
-In section \ref{sub:Null-Pointer Compression}, we saw how null-pointer compression significantly reduced the number of bytes needed to store a \cn{CompositionObject}. We believe traditional programming languages could leverage this technique by not allocating buffers for pointers before they are set.
+In Section \ref{compression:q1}, we saw how null pointer compression significantly reduced the number of bytes needed to store a \cn{CompositionObject}. We believe traditional programming languages could leverage this technique by not allocating buffers for pointers before they are set.
 
 \section{Limitations and Critics}
 \label{sec:Limitations and Critics}

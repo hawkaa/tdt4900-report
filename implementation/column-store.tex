@@ -1,7 +1,7 @@
 \chapter{Part I: Column Store}
 \label{chap:column-store}
 
-In this chapter, we modify how \gap~represents data internally by replacing the original row storage format with a column store. We see how it successfully reduces memory consumption and load times for the \textit{TPC-H Q1 Data Load Benchmark}. The work undertaken in this chapter lays some important groundwork for further optimization.
+In this chapter, we modify how \gap~represents data internally by replacing the original row storage format with a column store. We see how it successfully reduces memory consumption and load times for the \tpchdl. The work undertaken in this chapter lays some important groundwork for further optimization.
 
 This chapter makes up the first out of four main iterations in the design and experiment part of this research. As mentioned in the introduction, we aim to reduce memory consumption in the first iterations of the research. 
 
@@ -96,11 +96,11 @@ Some methods in \cn{CompositionObject} require a new implementation as a result 
 
 \section{Results}
 \label{sec:Results}
-We test the changes done in this iteration by using Benchmark \ref{bm:q1}, the \textit{TPC-H Q1 Data Load Benchmark}. We use this benchmark to see whether memory footprint has been reduced. We are also curious to see the performance impact on data load time, lookup index generation (join), and source measure lookup. To see whether our changes has caused negative effects on write performance, we also run Benchmark \ref{bm:write}, the \textit{Write Benchmark}. Full benchmark details are found in Appendix \ref{app:bm}.
+We test the changes done in this iteration by using Benchmark \ref{bm:q1}, the \tpchdl. We use this benchmark to see whether memory footprint has been reduced. We are also curious to see the performance impact on data load time, lookup index generation (join), and source measure lookup. To see whether our changes has caused negative effects on write performance, we also run Benchmark \ref{bm:write}, the \textit{Write Benchmark}. Full benchmark details are found in Appendix \ref{app:bm}.
 
 In this iteration, we test two different configurations: The original \gap~implementation and the new column store. Due to time constraints, we run our benchmarks only three times and report the mean. All measurements had low variance, within 15 \% of the average measurement.
 
-\subsection{TPC-H Q1 Data Load Benchmark}
+\subsection{Data Mart Load Benchmark}
 \label{column-store:q1}
 
 \afigure{img/column-store-bpl.png}{Bytes per \lineitem~used by the original and column store impelementations, Benchmark \ref{bm:q1} with scaling factors SF0.01 and SF0.1.}{fig:column-store-bpl}{0.9}
@@ -161,9 +161,9 @@ To see how the write speed is affected by our new implementation, we run Benchma
 \section{Discussion}
 \label{sec:Discussion}
 % How it impacts memory
-In Section \ref{sub:Excessive Amount Of Pointers}, we saw how a data source with objects with 15 properties each needed 32 pointers, or 256 bytes, per objects just for data and data access. Now, this number is reduced to 17 pointers and an integer, which is 140 bytes. Hence, we have the potential to save 45\% memory by using our new system.
+In Section \ref{sub:Excessive Amount of Pointers}, we saw how a data source with objects with 15 properties each needed 32 pointers, or 256 bytes, per objects just for data and data access. Now, this number is reduced to 17 pointers and an integer, which is 140 bytes. Hence, we have the potential to save 45\% memory by using our new system.
 
-We see that the memory used per object in the \textit{TPC-H Q1 Data Load Benchmark} is reduced by 30 \% and 38 \% for scaling factors 0.1 and 0.01 respectively. We attribute this observation to the column store, and how it reduces the number of pointers needed to represent data in a data source. 
+We see that the memory used per object in the \tpchdl~is reduced by 30 \% and 38 \% for scaling factors 0.1 and 0.01 respectively. We attribute this observation to the column store, and how it reduces the number of pointers needed to represent data in a data source. 
 
 We are observe that the data source load time is reduced as a consequence of our new \cn{CompositionValueCollection} and \cn{FieldValueCollection} classes. This observation strengthens our hypothesis that memory management is expensive: The original implementation allocated one row-structure per object, whereas the doubling strategy in our column store keeps the number of allocations at a minimum. Moreover, the reduced load time in Benchmark \ref{bm:q1}~might also imply that reduced memory usage is directly correlated with performance and that our new implementation has better memory locality and cache hit rate.
 
@@ -175,7 +175,7 @@ We are unsure why different scaling factors yielded a different number of bytes 
 
 \section{Iteration Conclusion}
 \label{sec:Iteration Conclusion}
-We conclude this iteration by stating that there is a large potential in column storage regarding memory footprint and load times. Memory used per \lineitem~in the \textit{TPC-H Q1 Data Load Benchmark} has been reduced by 30 - 38 \%, and the time it takes to load all data in this benchmark by 67 \%. Write performance, tested with Benchmark \ref{bm:write}, has not been affected by the new implementation.
+We conclude this iteration by stating that there is a large potential in column storage regarding memory footprint and load times. Memory used per \lineitem~in the \tpchdl~has been reduced by 30 - 38 \%, and the time it takes to load all data in this benchmark by 67 \%. Write performance, tested with Benchmark \ref{bm:write}, has not been affected by the new implementation.
 
 Still, both read-intense operations tested in Benchmark \ref{bm:q1} are slowed down, especially the source measure lookup operation. Here, the time it takes to generate an array of double precision numbers for a data descriptor is doubled with the column store. We believe these changes are caused by a \fn{GetValue} function less efficient than the original.
 

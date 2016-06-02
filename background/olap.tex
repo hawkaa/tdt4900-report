@@ -71,7 +71,7 @@ Although most systems do not sort values in the columns and instead accept value
 Most research agrees that row stores are most suitable for OLTP workloads, and column stores are most suitable for OLAP workloads. Abadi \ea~set out to investigate whether there is a fundamental difference between row and column stores \cite{Abadi2008-dd}. In their research, they used a row store with a vertically partitioned schema to mimic a column store. They also tried applying indexes to each column such that each column could be accessed independently. Their conclusion was that there \textit{is something fundamental about column stores} that makes them perform so well, and that changes must be done to both storage layer and query executor to obtain the benefits of a column-oriented approach. The main reasons why column storage is better suited for OLAP workloads are:
 \begin{itemize}
   \item \textit{Compression}, which we discuss in Section \ref{sec:Compression}.
-  \item \textit{Vectorized execution}, which we discuss in Section \ref{sec:Loop Pipelining and Vectorized Execution}. 
+  \item \textit{Vectorized execution}, which we discuss in Section \ref{sub:Vectorized Execution}.
   \item \textit{Late materialization}, which we discuss in Section \ref{sub:Late Materialization}. 
 \end{itemize}
 
@@ -221,7 +221,7 @@ One of the major drawbacks of \dele~is that values cannot be accessed in constan
 \label{sec:Bitmaps and Bitmap Indexes}
 We saw in Section \ref{sub:Compression Types and Light-Weight Compression} that \cstore~and \vertica~compress foreign-order, low cardinality columns using bitmaps. With this technique, each unique column value is represented as a bitmap where the 1s in the map indicate which rows that have that value. If there are few distinct values in a column, the size of the bitmaps will be smaller than storing the actual values, and compression will be achieved. Since these bitmaps are typically sparse, they can be compressed further with techniques like \rle.
 
-Queries can work directly on the compressed data by combining values using bitwise operations. For instance, all people from Norway, Sweden and Denmark can be found by \texttt{OR}ing together the three bitmaps corresponding to these three contries. This storage format is also known as a \textit{bitmap index}, which we study in Section \ref{sec:Bitmap Indexes}.
+Queries can work directly on the compressed data by combining values using bitwise operations. For instance, all people from Norway, Sweden and Denmark can be found by \texttt{OR}ing together the three bitmaps corresponding to these three contries. This storage format is also known as a \textit{bitmap index}.
 
 \todo{Above two paragraphs must be adjusted to fit in}
 
@@ -275,7 +275,7 @@ The best way to tackle this challenge is to design algorithms and data structure
   \item \textit{Coordinate temporal and spatial locality}. Data processed together should be stored at consecutive memory addresses. Code locality is also important \cite{Neumann2011-uq}.
   \item \textit{Avoid false sharing of cache lines}. Multiple cores in a processor should not write to data belonging to the same cache entry at the same time to avoid unecessary invalidations.
 \end{itemize}
-\textit{Compression}, which we described in Section \ref{sec:Compression}, and \textit{vectorized execution}, which we discuss in Section \ref{sec:Loop Pipelining and Vectorized Execution}, are two techniques used to improve cache performance \cite{Larson2013-mc, Lemke2010-is}.
+\textit{Compression}, which we described in Section \ref{sec:Compression}, and \textit{vectorized execution}, which we discuss in Section \ref{sub:Vectorized Execution}, are two techniques used to improve cache performance \cite{Larson2013-mc, Lemke2010-is}.
 
 \textit{Prefetching} is another method used to increase cache utilization. Prefetching proactively loads data into caches such that the data is available when an instruction needs it.
 
@@ -310,7 +310,7 @@ To avoid unnecessary subroutine invocation overhead and help the compiler identi
 Several systems studied our research use vectorized execution. \ibm~and \mssql~work on batches of thousands of row at a time \cite{Larson2013-mc, Raman2013-em}. \monetdb~and \monetx~use vectors instead of single values as their primary structure for storing data \cite{Boncz2005-wj, Boncz2002-yj}. Vectorized execution is also used by \cstore~and \blink~\cite{Johnson2008-cp, Stonebraker2005-qz}.
 
 % Explain how it works.
-\afigure{img/vectorized-execution.png}{\mssql~operators work on row batches. Each row batch contains thousands of rows stored as column vectors. Also, a bit vector indicates which rows that qualifies for a query. Courtesy of \cite{Larson2013-mc}.}{fig:vectorized-execution}{0.4}
+\afigure{img/vectorized-execution.png}{\mssql~operators work on row batches. Each row batch contains thousands of rows stored as column vectors. Also, a bit vector indicates which rows that qualifies for a query. (Adapted from \cite{Larson2013-mc})}{fig:vectorized-execution}{0.4}
 In vectorized execution, blocks of values from the same column are sent to an operator for evaluation \cite{Zukowski2006-oz}. Query operators in \mssql~work on row batches, batches that contain thousands of rows stored in a column format. In addition to the column vectors, an additional \textit{qualifying rows vector} is used to indicate which rows that have been logically purged from the batch when executing a query. Figure \ref{fig:vectorized-execution} shows this structure.
 
 Regarding the size of the vectors in vectorized execution, we have found that vectors should not be too small due to increased overhead and less parallelism, nor too big, as it should fit in CPU cache \cite{Boncz2005-wj}.
