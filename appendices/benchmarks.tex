@@ -61,26 +61,30 @@ We measure the total memory footprint of the \tpchdl~\gd~application by using th
 
 \section{Write Benchmark}
 \label{bm:write}
-\afigure{img/lineitem.png}{\texttt{LINEITEM} table layout. Courtesy of \cite{Transaction_Processing_Performance_Council_TPC2014-ux}.}{fig:lineitem}{0.8}
-Since write performance might be sacrificed when optimizing for read performance, we establish a benchmark that measures this impact. For simplicity reasons, the benchmark is based on the \texttt{LINEITEM} table in the TPC-H benchmark. The main reason for using this table was availability of  different data types, which we see in Figure \ref{fig:lineitem}.
 
-The benchmark reads $N$ items into a data source, for all items, the following fields are modified:
+\afigure{img/lineitem.png}{\texttt{LINEITEM} table layout. (Adapted from \cite{Transaction_Processing_Performance_Council_TPC2014-ux})}{fig:lineitem}{0.8}
+
+We test write performance in \gap~to see that it is not negatively affected by the changes we make in this research. We base our benchmark on the \lineitem~table in the TPC-H benchmark. The main reason for using this table is the availability of different data types, which we see in Figure \ref{fig:lineitem}.
+
+The benchmark reads $N$ items into a data source, for all the elements, the following fields are modified:
 \begin{itemize}
     \item \texttt{QUANTITY = QUANTITY + 1} to measure integer performance.
     \item \texttt{EXTENDEDPRICE = EXTENDEDPRICE + 1.0} to measure floating point performance.
     \item \texttt{COMMENT = COMMENT + "1"} to measure string performance.
     \item \texttt{SHIPDATE = SHIPDATE PLUS 1 DAYS} to measure date performance.
 \end{itemize}
+
 \afigure{img/write-test-definition.png}{The task definition for the Write Benchmark. There is one loop per attribute.}{fig:write-test-definition}{0.4}
-One property is modified per iteration, so there is a total of four iterations in this task. The full task definition is seen in Figure \ref{fig:write-test-definition}.
+
+We create one loop per property, such that there is a total of four loops in this task. The full task definition is seen in Figure \ref{fig:write-test-definition}.
 
 \subsection{Test Input}
 \label{sub:Test Input}
-The number of \texttt{LINEITEM}s loaded into the data source and modified. The number is specified before the task is run.
+The number of \texttt{LINEITEM}s loaded into the data source and modified, which is specified in a dialog box before the task is run. For all tests performed in this research, we use 1000 elements as input.
 
 \subsection{Test Output}
 \label{sub:Test Output}
-For each property modified, the time it took to enumerate the entire data source is measured. In addition to this, the average time per modification is listed.
+For each property modified, the task reports the time it takes to enumerate the entire data source and modify the property. In addition to total time, the average time per modification is listed as well.
 
 \section{Filter Benchmark}
 \label{bm:filter}
@@ -99,29 +103,38 @@ For each property modified, the time it took to enumerate the entire data source
         \texttt{SHIPDATE IN 1995} & 15,435 \\
         \texttt{SHIPINSTRUCT\_NULL HAS VALUE} & 74,991 \\
     \end{tabular}
-    \caption{Predicates Filter Benchmark. The second column indicated selectivity by showing the number of selected rows if an input size of 100,000 is used.}
+    \caption{Predicates in the \textit{Filter Benchmark}. The second column indicated selectivity by showing the number of selected rows (of 100,000 total).}
     \label{tab:Filter Test}
 \end{table}
-To test \gap's ability to move data from one data source to another based on a filter, we create a benchmark based on the \texttt{LINEITEM} table from the TPC-H benchmark. This table is used for the same reason as for Benchmark \ref{bm:write}; there are several different data types available. 
 
-The benchmark is composed by a list of predicates, where every object that satisfies the predicate are moved from the original data source to the filtered data source. The predicates are selected to span a variety of data types, selectivities, and operators. Since there are no null-columns in \texttt{LINEITEM}, a new column \texttt{SHIPINSTRUCT\_NULL} was created where all \texttt{NONE} values were set to \texttt{null}.
+To test \gap's ability to move data from one data source to another based on a filter, we establish a benchmark based on the \texttt{LINEITEM} table from the TPC-H benchmark. As for the \textit{Write Benchmark}, this test is used for the various data types available.
+
+A list of predicates which compose the benchmark, and objects that satisfy each predicate are moved from the original data source to a filtered data source. We select the predicates to span a variety of different data types, selectivities, and operators. Since there are no \null~columns in \texttt{LINEITEM}, we create a new column \texttt{SHIPINSTRUCT\_NULL} and assign \null~to all cells with the value \textit{NONE}. We list the different predicates and respective selectivities in Table \ref{tab:Filter Test}.
 
 \subsection{Test Input}
 \label{sub:Test Input}
-The number of \texttt{LINEITEM}s loaded into the original data source.
+The number of \texttt{LINEITEM}s loaded into the original data source. We only use 100,000 as input in this research.
 
 \subsection{Test Output}
 \label{sub:Test Output}
-The timing result for the filter operation for each predicate; the time it takes to move the objects from the original data source to the filtered data source. Reproted in milliseconds.
+The timing result for the filter operation for each predicate; the time it takes to move the objects from the original data source to the filtered data source. Reported in milliseconds.
 
-\section{Real Customer Data Benchmark I: Data Mart Load}
+\section{Data Mart Load Benchmark II}
 \label{bm:odin-load}
-The same benchmark as \ref{bm:q1} is run on real customer data.
 
-\section{Real Customer Data Benchmark II: Create, Update, and Delete}
-\label{bm:odin-crud}
+\afigure{img/odin-load.png}{Data mart for the \textit{Data Mart Load Benchmark II}.}{fig:odin-load}{1.0}
 
+We run the same benchmark as Benchmark \ref{bm:q1}, but with data from one of \genus' customers. The data mart for the \gd~analysis is composed of three tables; \texttt{FUND}, \texttt{CUSTOMER}, and \texttt{CUSTOMER BALANCE DAILY}, with 40, 442,715, and 203,519 elements respectively. \texttt{CUSTOMER BALANCE DAILY} links the two other tables by indicating how many shares each customer have in each fund. Figure \ref{fig:odin-load} shows the data mart definition for the benchmark.
 
+The reason why we choose to introduce another data mart load benchmark is that this benchmark contains a larger join than the \tpchdl. In this benchmark, the lookup index generation operation must create a lookup index between \texttt{CUSTOMER} and \texttt{CUSTOMER BALANCE DAILY}, which have 442,715 and 203,519 elements respectively.
+
+\subsection{Test Input}
+\label{sub:Test Input}
+None.
+
+\subsection{Test Output}
+\label{sub:Test Output}
+For each table, the bytes per element and load time is reported. In addition to this, the benchmark prints the time it takes to perform each of the two joins in the data mart.
 
 %\section{OLTP Test}
 %\label{sec:OLTP Test}
