@@ -93,7 +93,7 @@ We test the changes from this iteration with the \tpchdl, Benchmark \ref{bm:q1} 
         \texttt{DISCOUNT} & 11 & Yes \\
         \texttt{TAX} & 9 & Yes
     \end{tabularx}
-    \caption{Column selection for Benchmark \ref{bm:q1}. Low-cardinality columns are dictionary encoded, while the others are not. The numbers are based on Scaling Factor SF0.1, where there is a total of 600,000 \lineitem~rows.}
+    \caption{Column selection for Benchmark \ref{bm:q1}. Low-cardinality columns are dictionary encoded, while the others are not. The numbers are based on Scaling Factor SF10, where there is a total of 600,000 \lineitem~rows.}
     \label{tab:column-selection}
 \end{table}
 
@@ -111,13 +111,13 @@ Like the previous iterations, we run each benchmark three times and report the m
 
 \subsection{Data Mart Load Benchmark}
 \label{compression:q1}
-Benchmark \ref{bm:q1}, the \tpchdl, was run with all configurations enumerated above. We use both scaling factors, SF0.01 and SF0.1, but if we observe the same effects with both, we only report for SF0.1.
+Benchmark \ref{bm:q1}, the \tpchdl, was run with all configurations enumerated above. We use both scaling factors, SF1 and SF10, but if we observe the same effects with both, we only report for SF10.
 
-\afigure{img/compression-bpl.png}{Bytes per \lineitem~used by all configurations tested in this iteration of data compression, Benchmark \ref{bm:q1} with scaling factors SF0.01 and SF0.1.}{fig:compression-bpl}{0.9}
-We see in Figure \ref{fig:compression-bpl} that the \textit{dictionary} configuration reduce memory by 11 \% and 15 \% for scaling factors 0.01 and 0.1 respectively. Also, there is no longer a difference in memory footprint for original and raw XML value loading mechanism, something we saw in Section \ref{storage-format:q1}. Null pointer compression and property packing significantly reduce memory consumption, while bitpacking only reduces the bytes per \lineitem~by 5 \%. For SF0.1, the total reduction from \textit{primitive} to \textit{full compression} is 137 bytes, or 37 \%.
+\afigure{img/compression-bpl.png}{Bytes per \lineitem~used by all configurations tested in this iteration of data compression, Benchmark \ref{bm:q1} with scaling factors SF1 and SF10.}{fig:compression-bpl}{0.9}
+We see in Figure \ref{fig:compression-bpl} that the \textit{dictionary} configuration reduce memory by 11 \% and 15 \% for scaling factors SF1 and SF10 respectively. Also, there is no longer a difference in memory footprint for original and raw XML value loading mechanism, something we saw in Section \ref{storage-format:q1}. Null pointer compression and property packing significantly reduce memory consumption, while bitpacking only reduces the bytes per \lineitem~by 5 \%. For SF10, the total reduction from \textit{primitive} to \textit{full compression} is 137 bytes, or 37 \%.
 
-\afigure{img/compression-load.png}{Data source load time for all compression configurations tested in this iteration, Benchmark \ref{bm:q1}, SF0.1.}{fig:compression-load}{0.8}
-As we see in Figure \ref{fig:compression-load}, load times have increased as a result of compression. For SF0.1, dictionary encoding adds 1.2 seconds load time, bitpacking adds an additional 0.5 seconds, and null pointer compression and property packing adds 0.2 seconds more. Even though load time has been increased, it is still less than the original implementation. Loading raw values into the columns increases load time to 21.8 seconds for SF 0.1. 
+\afigure{img/compression-load.png}{Data source load time for all compression configurations tested in this iteration, Benchmark \ref{bm:q1}, SF10.}{fig:compression-load}{0.8}
+As we see in Figure \ref{fig:compression-load}, load times have increased as a result of compression. For SF10, dictionary encoding adds 1.2 seconds load time, bitpacking adds an additional 0.5 seconds, and null pointer compression and property packing adds 0.2 seconds more. Even though load time has been increased, it is still less than the original implementation. Loading raw values into the columns increases load time to 21.8 seconds for SF10.
 
 We benchmark the read-intense operations, lookup index generation and source measure lookup, for all configurations in this iteration. However, since the measurements are not significantly different from the previous iteration, we do not present them in this chapter. See Section \ref{storage-format:q1}.
 
@@ -128,7 +128,7 @@ Write performance has not been significantly changed compared to primitive colum
 
 \section{Discussion}
 \label{sec:compression-discussion}
-We see that dictionary encoding is successful for compressing data, and for SF0.1 in the \tpchdl, memory is reduced by 15 \% compared to the primitive column structure from the previous chapter. Bitpacking also contributes to reduced memory footprint, but not more than five percent. The increased compression rates come at the cost of higher load times and it now takes 15,4 seconds to load the full data mart into memory.
+We see that dictionary encoding is successful for compressing data, and for SF10 in the \tpchdl, memory is reduced by 15 \% compared to the primitive column structure from the previous chapter. Bitpacking also contributes to reduced memory footprint, but not more than five percent. The increased compression rates come at the cost of higher load times and it now takes 15,4 seconds to load the full data mart into memory.
 
 Null pointer compression and property packing contribute to large memory savings and reduces the storage per \lineitem~from 301 bytes to 237 bytes, or 64 bytes. Since we only removed six pointers, or 48 bytes, it means property packing contributes to saving 16 bytes per element. Neither of these two techniques increase load time significantly.
 
@@ -138,8 +138,8 @@ If we load raw XML string values directly into a dictionary encoded column, we o
 
 \section{Iteration Conclusion}
 \label{sec:Iteration Conclusion}
-\afigure{img/bytes.png}{The bytes used per \lineitem~for different configurations tested during the course of this research, Benchmark \ref{bm:q1}, SF0.1.}{fig:bytes}{0.8}
-\afigure{img/load.png}{The number of milliseconds used to load the \tpchdl~for different configurations tested during the course of this research, Benchmark \ref{bm:q1}, SF0.1.}{fig:load}{0.8}
+\afigure{img/bytes.png}{The bytes used per \lineitem~for different configurations tested during the course of this research, Benchmark \ref{bm:q1}, SF10.}{fig:bytes}{0.8}
+\afigure{img/load.png}{The number of milliseconds used to load the \tpchdl~for different configurations tested during the course of this research, Benchmark \ref{bm:q1}, SF10.}{fig:load}{0.8}
 In this iteration, we have reduced the memory required by Benchmark \ref{bm:q1} by 37 \%. This reduction is mainly caused by dictionary encoding and null pointer compression. Compared to the original \gap~implementation, the bytes per \lineitem~is reduced by 67 \%. The reduction in memory usage throughout the iterations of this research illustrated in Figure \ref{fig:bytes}. Although the introduction of primitive data types and compression has increased load time from the first \cn{FieldValueCollection} implementation, the time it takes to load the \tpchdl~is still reduced by 33 \% compared to the original implementation. This is illustrated in Figure \ref{fig:load}.
 
 Concluding this iteration, we are left with two major challenges. The first challenge was discovered in the previous iteration: Read-intensive operations must be adapted to utilize the new storage format. For instance, one of source measure lookup operations in Benchmark \ref{bm:q1}~now takes 6.9 seconds, an operation which previously took 0.3 seconds. We address this challenge in Chapter \ref{chap:operations}.
@@ -154,7 +154,7 @@ In our bitpacking implementation, cells are added one at a time to a column inst
 %\begin{table}
 %    \centering
 %    \begin{tabularx}{\textwidth}{X | X X}
-%        & SF0.01 & SF0.1 \\ 
+%        & SF1 & SF10 \\ 
 %        \hline
 %        \hline
 %        Primitive Column Store & 333 bytes & 374 bytes \\
@@ -170,7 +170,7 @@ In our bitpacking implementation, cells are added one at a time to a column inst
 %\begin{table}
 %    \centering
 %    \begin{tabularx}{\textwidth}{X | X X}
-%        & SF0.01 & SF0.1 \\ 
+%        & SF1 & SF10 \\ 
 %        \hline
 %        \hline
 %        Primitive Column Store & 1210 ms & 13585 ms \\

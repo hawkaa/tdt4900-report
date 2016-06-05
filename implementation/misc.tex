@@ -14,8 +14,8 @@ Our observation is that most strings used in \gap~only use these 128 ASCII chara
 
 \subsection{Test Results}
 \label{sub:Test Results}
-\afigure{img/utf8-bpl.png}{Bytes per \lineitem~used by with and without UTF-8 string encoding, Benchmark \ref{bm:q1} with scaling factors SF0.01 and SF0.1.}{fig:utf8-bpl}{0.9}
-\afigure{img/utf8-load.png}{Data source load time for full compression with and without UTF-8 string encoding, Benchmark \ref{bm:q1}, SF0.1.}{fig:utf8-load}{0.6}
+\afigure{img/utf8-bpl.png}{Bytes per \lineitem~used by with and without UTF-8 string encoding, Benchmark \ref{bm:q1} with scaling factors SF1 and SF10.}{fig:utf8-bpl}{0.9}
+\afigure{img/utf8-load.png}{Data source load time for full compression with and without UTF-8 string encoding, Benchmark \ref{bm:q1}, SF10.}{fig:utf8-load}{0.6}
 
 Figure \ref{fig:utf8-bpl} shows that the number of bytes used per \texttt{LINEITEM} is reduced by 7 \% for both scaling factors. However, as seen in Figure \ref{fig:utf8-load}, load times are increased by roughly 14 \%. 
 
@@ -111,19 +111,19 @@ We believe this topic should be pursued further. The primary motivation behind \
 
 %\begin{table}
 %    \begin{tabularx}{0.75\textwidth}{X | X X}
-%        & SF0.01 & SF0.1 \\ 
+%        & SF1 & SF10 \\ 
 %        \hline
 %        \hline
 %        Compressed & 226 bytes & 237 bytes \\
 %        Compressed w/ UTF-8 Store & 210 bytes & 221 bytes \\
 %        \% reduction & 7 \% & 7 \% \\
 %    \end{tabularx}
-%    \caption{UTF-8 test results for Benchmark \ref{bm:q1} for SF0.1 and SF0.01.}
+%    \caption{UTF-8 test results for Benchmark \ref{bm:q1} for SF10 and SF1.}
 %    \label{tab:utf-8-bpl}
 %\end{table}
 %\begin{table}
 %    \begin{tabularx}{0.75\textwidth}{X | X X}
-%        & SF0.01 & SF0.1 \\ 
+%        & SF1 & SF10 \\ 
 %        \hline
 %        \hline
 %        Compressed & 1389 ms & 15584 ms \\

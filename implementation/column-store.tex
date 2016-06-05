@@ -103,20 +103,20 @@ In this iteration, we test two different configurations: The original \gap~imple
 \subsection{Data Mart Load Benchmark}
 \label{column-store:q1}
 
-\afigure{img/column-store-bpl.png}{Bytes per \lineitem~used by the original and column store impelementations, Benchmark \ref{bm:q1} with scaling factors SF0.01 and SF0.1.}{fig:column-store-bpl}{0.9}
-In the \tpchdl, we found a significant memory reduction in the column store implementation. As we see in Figure \ref{fig:column-store-bpl}, for SF0.01 the memory used per \lineitem~is reduced with 38 \%, and for SF0.1 the reduction is 30 \%. The total application memory footprint for the analysis is reduced from 2685 MB to 1777 MB.
+\afigure{img/column-store-bpl.png}{Bytes per \lineitem~used by the original and column store impelementations, Benchmark \ref{bm:q1} with scaling factors SF1 and SF10.}{fig:column-store-bpl}{0.9}
+In the \tpchdl, we found a significant memory reduction in the column store implementation. As we see in Figure \ref{fig:column-store-bpl}, for SF1 the memory used per \lineitem~is reduced with 38 \%, and for SF10 the reduction is 30 \%. The total application memory footprint for the analysis is reduced from 2685 MB to 1777 MB.
 
 \begin{figure}
     \centering
     \begin{subfigure}{0.7\textwidth}
         \includegraphics[width=\textwidth]{img/column-store-load-sf001.png}
-        \caption{SF0.01}
+        \caption{SF1}
     \end{subfigure}
     \begin{subfigure}{0.7\textwidth}
         \includegraphics[width=\textwidth]{img/column-store-load-sf010.png}
-        \caption{SF0.1}
+        \caption{SF10}
     \end{subfigure}
-    \caption{Data source load time for for original and column store implementations, Benchmark \ref{bm:q1} with scaling factors SF0.01 and SF0.1.}
+    \caption{Data source load time for for original and column store implementations, Benchmark \ref{bm:q1} with scaling factors SF1 and SF10.}
     \label{fig:column-store-load}
 \end{figure}
 In Figure \ref{fig:column-store-load}, we see that the load time also is significantly reduced using the new \cn{CompositionValueCollection} class. For both scaling factors, the time it takes to populate the data source has been reduced by 63 \%. 
@@ -126,28 +126,28 @@ In Figure \ref{fig:column-store-load}, we see that the load time also is signifi
     \centering
     \begin{subfigure}{0.9\textwidth}
         \includegraphics[width=\textwidth]{img/column-store-lig-sf001.png}
-        \caption{SF0.01}
+        \caption{SF1}
     \end{subfigure}
     \begin{subfigure}{0.9\textwidth}
         \includegraphics[width=\textwidth]{img/column-store-lig.png}
-        \caption{SF0.1}
+        \caption{SF10}
     \end{subfigure}
-    \caption{Lookup index generation performance comparison for \texttt{LINESTATUS}, \texttt{RETURNFLAG}, and \texttt{SHIPDATE}, Benchmark \ref{bm:q1} with scaling factors SF0.01 and SF0.1.}
+    \caption{Lookup index generation performance comparison for \texttt{LINESTATUS}, \texttt{RETURNFLAG}, and \texttt{SHIPDATE}, Benchmark \ref{bm:q1} with scaling factors SF1 and SF10.}
     \label{fig:column-store-lig}
 \end{figure}
-We observe that lookup index generation, or the join operation, is slightly hurt performance-wise by the \cn{CompositionValueCollection} implementation. For SF0.01, the time it takes to perform a join between \texttt{RETURNFLAG} and \texttt{LINEITEM} tables is increased by approximately 30 \%. We measure similar changes for SF0.1, but the percentage difference is smaller.
+We observe that lookup index generation, or the join operation, is slightly hurt performance-wise by the \cn{CompositionValueCollection} implementation. For SF1, the time it takes to perform a join between \texttt{RETURNFLAG} and \texttt{LINEITEM} tables is increased by approximately 30 \%. We measure similar changes for SF10, but the percentage difference is smaller.
 
 \begin{figure}
     \centering
     \begin{subfigure}{1.0\textwidth}
         \includegraphics[width=\textwidth]{img/column-store-sml-sf001.png}
-        \caption{SF0.01}
+        \caption{SF1}
     \end{subfigure}
     \begin{subfigure}{1.0\textwidth}
         \includegraphics[width=\textwidth]{img/column-store-sml-sf010.png}
-        \caption{SF0.1}
+        \caption{SF10}
     \end{subfigure}
-    \caption{Source measure lookup operation performance comparison for \texttt{QUANTITY}, \texttt{EXTENDEDPRICE}, \texttt{DISCOUNT}, and \texttt{TAX}, Benchmark \ref{bm:q1} with scaling factors SF0.01 and SF0.1.}
+    \caption{Source measure lookup operation performance comparison for \texttt{QUANTITY}, \texttt{EXTENDEDPRICE}, \texttt{DISCOUNT}, and \texttt{TAX}, Benchmark \ref{bm:q1} with scaling factors SF1 and SF10.}
     \label{fig:column-store-sml}
 \end{figure}
 
@@ -163,7 +163,7 @@ To see how the write speed is affected by our new implementation, we run Benchma
 % How it impacts memory
 In Section \ref{sub:Excessive Amount of Pointers}, we saw how a data source with objects with 15 properties each needed 32 pointers, or 256 bytes, per objects just for data and data access. Now, this number is reduced to 17 pointers and an integer, which is 140 bytes. Hence, we have the potential to save 45\% memory by using our new system.
 
-We see that the memory used per object in the \tpchdl~is reduced by 30 \% and 38 \% for scaling factors 0.1 and 0.01 respectively. We attribute this observation to the column store, and how it reduces the number of pointers needed to represent data in a data source. 
+We see that the memory used per object in the \tpchdl~is reduced by 30 \% and 38 \% for scaling factors SF10 and SF1 respectively. We attribute this observation to the column store, and how it reduces the number of pointers needed to represent data in a data source. 
 
 We are observe that the data source load time is reduced as a consequence of our new \cn{CompositionValueCollection} and \cn{FieldValueCollection} classes. This observation strengthens our hypothesis that memory management is expensive: The original implementation allocated one row-structure per object, whereas the doubling strategy in our column store keeps the number of allocations at a minimum. Moreover, the reduced load time in Benchmark \ref{bm:q1}~might also imply that reduced memory usage is directly correlated with performance and that our new implementation has better memory locality and cache hit rate.
 
@@ -171,7 +171,7 @@ Both read operations, lookup index generation and source measure lookup, suffer 
 
 The fact that Benchmark \ref{bm:write}, the \textit{Write Benchmark}, shows that write performance is not affected by the column store, strengthens our hypothesis that the column overhead is negligible in such situations. Data modification is expensive in \gap. Modifying 1000 elements in the write benchmark takes roughly five times longer than generating a lookup index for 60,000 rows, which indicates that there is a severe overhead in object iteration and value modification unrelated to the data storage layout.
 
-We are unsure why different scaling factors yielded a different number of bytes per \lineitem. It might be caused by the caching and value reuse mechanisms used by the data load module in \gap. Data in SF0.1 might have a different data distribution than SF0.01. Either way, both the original and column store implementations are affected by this phenomenon, which makes it likely that it is unrelated to our work. The other measurements in \tpchdl~increase linearly, measurements from SF0.1 are roughly ten times higher than for SF00.1. 
+We are unsure why different scaling factors yielded a different number of bytes per \lineitem. It might be caused by the caching and value reuse mechanisms used by the data load module in \gap. Data in SF10 might have a different data distribution than SF1 Either way, both the original and column store implementations are affected by this phenomenon, which makes it likely that it is unrelated to our work. The other measurements in \tpchdl~increase linearly, measurements from SF10 are roughly ten times higher than for SF1. 
 
 \section{Iteration Conclusion}
 \label{sec:Iteration Conclusion}
@@ -183,7 +183,7 @@ This iteration lays the groundwork for further investigation and to check whethe
 
 Column storage comes with several benefits, like vectorized execution, late materialization, and the ability to be pipelined by a modern CPU. We have not yet utilized the full potential of the \cn{CompositionValueCollection} and \cn{FieldValueCollection} classes, so far we have only used them to reduce the number of pointers in \gap. We believe the mentioned techniques can be applied to the read-intense operations of Benchmark \ref{bm:q1}. We study this in Chapter \ref{chap:operations}.
 
-Since the measurements for different scaling factors in the \tpchdl~increase linearly, that is, measurements from SF0.1 are roughly ten times higher than for SF0.01; we will focus on SF0.1 from now. For the next iterations, we run tests with both SF0.01 and SF0.1, but we generally only report and discuss the results from SF0.1. An exception to this is the number of bytes per \lineitem, where we continue to report on both scaling factors.
+Since the measurements for different scaling factors in the \tpchdl~increase linearly, that is, measurements from SF10 are roughly ten times higher than for SF1; we will focus on SF1 from now. For the next iterations, we run tests with both SF1 and SF10, but we generally only report and discuss the results from SF10. An exception to this is the number of bytes per \lineitem, where we continue to report on both scaling factors.
 
 \subsection{Future Work}
 \label{sub:column-store:future-work}

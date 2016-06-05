@@ -1,8 +1,7 @@
 \chapter{Background Theory}
 \label{chap:background}
-This chapter introduce important background theory relevant to this research. First, we introduce \mde. Then, to introduce a use-case where handling and analyzis of large datasets is required, we give a brief introduction to \bi~and \bd. Last, we study \delphi, the programming language used in \gap~core.
+This chapter introduces important background theory relevant to this research. First, we introduce \mde. Then, to introduce a use-case where handling and analysis of large datasets is required, we give a brief introduction to \bi~and \bd. Last, we study \delphi, the programming language used in the \gap~core.
 
-\todo{Is this a good pitch on why we introduce bi and bd? Mention that gap needs bi?}
 \clearpage
 
 
@@ -10,7 +9,7 @@ This chapter introduce important background theory relevant to this research. Fi
 \label{sec:Model-Driven Engineering}
 Since the introduction of computers, researchers have been working to raise the abstraction level at which software developers create programs \cite{Atkinson2003-wr}. One example of this is compilers and how programmers no longer need to know assembly language for the different processor architectures. Now, object-oriented programming languages enable software developers to create own abstractions and solve more complex problems than ever. \mde~is a continuation of this trend, where the goal is to automate many of the complex, but routine, programming tasks. Such tasks include interoperability, distribution, and persistence. One of the key technological foundations of \mde~is support for visual modeling.
 
-\mde~research has identified that there is a gap between the problem domain and the software implementation domain \cite{France2007-ae}. Thus, most research focuses on bridging this gap. This process requires systematic experimentation and accumulation of experience, and new techniques should strive to reduce unecessary complexities.
+\mde~research has identified that there is a gap between the problem domain and the software implementation domain \cite{France2007-ae}. Thus, most research focuses on bridging this gap. This process requires systematic experimentation and accumulation of experience, and new techniques should strive to reduce unnecessary complexities.
 
 The ability to express models with concepts that are closer to the problem domain and less coupled to the underlying implementation is one of the main advantages with \mde~\cite{Selic2003-qa}. This makes programs easier to understand and maintain, as well as making program specification and requirements easier to communicate.  In addition, according to Atkinson \ea, \mde~has two more major advantages \cite{Atkinson2003-wr}:
 \begin{itemize}
@@ -18,7 +17,7 @@ The ability to express models with concepts that are closer to the problem domai
     \item In the long term, \mdd~supporting infrastructures are more maintainable, and it takes a longer time before the artifact becomes obsolete.
 \end{itemize}
 
-A common discussion topic in the field of \mde~is the efficiency of the modeled programs. Criticism has pointed out that machines cannot optimize code better than a creative human being with clever tricks \cite{Selic2003-qa}. However, it is widely known that modern compilers outperform most system developers, and it does so more reliably. The same observation can be done for most \mdd~supporting infrastructures. Current tools generate programs that are within 5 to 15 percent effective as hand-crafted systems, both regarding memory consumption and performance. However, there are still critical cases where manually written code significantly outperforms \mde, which has often been used as an excuse to discard an \mdd~approach altogether. \todo{We have identified such critical case}
+A common discussion topic in the field of \mde~is the efficiency of the modeled programs. Criticism has pointed out that machines cannot optimize code better than a creative human being with clever tricks \cite{Selic2003-qa}. However, it is widely known that modern compilers outperform most system developers, and it does so more reliably. The same observation can be done for most \mdd~supporting infrastructures. Current tools generate programs that are within 5 to 15 percent effective as hand-crafted systems, both regarding memory consumption and performance. However, there are still critical cases where manually written code significantly outperforms \mde, which has often been used as an excuse to discard a \mdd~approach altogether. 
 
 \subsection{Models and Model Levels}
 \label{sub:Models and Model Levels}
@@ -31,7 +30,7 @@ Depending on the research field and what is being represented, the four model le
 \begin{itemize}
     \item \textbf{Information System (IS) layer}, typically represents day-to-day information processing actions in an organization, like order processing or inventory control. This layer represents changes in an application.
     \item \textbf{Information System Development (ISD) layer}, which is the layer where information systems are analyzed, designed, implemented, and tested. This layer contains descriptions of a specific application.
-    \item \textbf{Method Engineering (ME) layer} is where techniques and procedures for the ISD layer are developed, selected, configured and customized. In this layer, new programming tools are created, for instance \mdd-architectures and new programming languages.
+    \item \textbf{Method Engineering (ME) layer} is where techniques and procedures for the ISD layer are developed, selected, configured and customized. In this layer, new programming tools are created, for instance \mdd-architectures and programming languages.
     \item \textbf{Research work (RW) layer}, involves research that aims to produce better methods and concepts for the method engineering layer.
 \end{itemize}
 
@@ -50,22 +49,23 @@ Applications in \mendix~are designed using three main models: An \textit{informa
 The \textit{information structure model} defines the main data structure in an application, and is designed in an UML-like class diagram. As seen in Figure \ref{fig:mendix-obj}, this model does not only suport class definitions with properties, but also relations between objects. This model may also define validation rules and events which trigger on object creation, modification, and deletion.
 
 \afigure{img/mendix-microflow.png}{A microflow in \mendix. (Adapted from \cite{Henkel2010-sy})}{fig:mendix-microflow}{0.8}
-In \mendix, the \textit{microflow model} define complex logic in an application and allows the designer to extend the system with custom behaviour. Microflows may change objects, control how and when forms are displayed, call custom Java code, or integrate with external web services. Microflows are designed in a visual editor which we see in Figure \ref{fig:mendix-microflow}. 
+In \mendix, the \textit{microflow model} define complex logic in an application and allows the designer to extend the system with custom behavior. Microflows may change objects, control how and when forms are displayed, call custom Java code, or integrate with external web services. Microflows are designed in a visual editor which we see in Figure \ref{fig:mendix-microflow}. 
 
 \afigure{img/mendix-form.png}{Form designer in \mendix. (Adapted from \cite{Henkel2010-sy})}{fig:mendix-form}{1.0}
 Forms and other graphical user elements are designed using a form editing tool, similar to those found in popular programming IDEs. The form editing tool is depicted in Figure \ref{fig:mendix-form}. \mendix~supports basic input fields, drop-down lists, tables, and more. A form can be associated with objects, other forms, and microflows. 
 
-When the application is deployed to the model repository, end users can access the system using a web browser. When a web page is requested from the server, the HTML and JavaScript required showing the page is created and sent to the model. This interpreted approach is different from other \mde~tools, like OptimalJ, which relies heavily on code generation. \todo{Important content, but rewrite paragaph}
+When the application is deployed to the model repository, end users can access the system using a web browser. When a user requests a web page from the server, the HTML and JavaScript required to show the page is created and sent to the browser. This interpreted approach is different from other \mde~tools, like \textit{OptimalJ}, which relies heavily on code generation.
+
 
 \gap~has many similarities with \mendix. We study \gap~in Chapter \ref{chap:gap}.
 
 \section{Business Intelligence}
 \label{sec:Business Intelligence}
-We introduce \bi~in this thesis to explain a common use-case where the ability to handle and analyze large datasets is required. \bi~reqirements in \gap~is one of the key motivations to this research. \todo{Should this pitch be used?}
+We introduce \bi~in this thesis to explain a common use-case where the ability to handle and analyze large datasets is required. \bi~reqirements in \gap~is one of the key motivations to this research. 
 
-\bi~is normally described as tools and techniques used to transform unstructured data into useful and meaningful information that can be used to support decisions \cite{Wikipedia_contributors2015-ag}. The goal is to allow for easy interpretation and gain insight in the data, such that businesses end up with a competitive market advantage. \bi~software can assist in making a wide range of business decisions, including strategic decisions as goals and product pricing or positioning, as well as operational decisions like priorities.
+\bi~is normally described as tools and techniques used to transform unstructured data into useful and meaningful information that can be used to support decisions \cite{Wikipedia_contributors2015-ag}. The goal is to allow for easy interpretation and gain insight into the data, such that businesses end up with a competitive market advantage. \bi~software can assist in making a wide range of business decisions, including strategic decisions as goals and product pricing or positioning, as well as operational decisions like priorities.
 
-A challenge in \bi~can be information overflow. To know which information is needed in a \bi~application, decision makers must be aware of which types of decisions they should make, and have a model for each \cite{Ackoff1999-wk}. Since managers rarely fulfil the latter requirement, they add a safety factor and asks the IT department to provide everything. The result is information overload, and the much of the data is irrelevant. 
+A challenge in \bi~can be information overflow. To know which information is needed in a \bi~application, decision makers must be aware of which types of decisions they should make, and have a model for each \cite{Ackoff1999-wk}. Since managers rarely fulfill the latter requirement, they add a safety factor and asks the IT department to provide everything. The result is information overload, and the much of the data is irrelevant. 
 
 \subsection{Data Warehouses}
 \label{sub:Data Warehouses}
@@ -74,7 +74,7 @@ Companies' need for \bi~has traditionally been solved by data warehouses. These 
 The challenges with data warehouses are many, among them, the lack of flexibility. Reports are usually preconfigured and implemented by the IT department, which can result in lengthy reporting backlogs. Besides, the \qlikview~developers have pointed out some other drawbacks of traditional query-based \bi~tools \cite{Qlik2010-ya}:
 \begin{itemize}
   \item Only small subsets of the main dataset are extracted at a time. These subsets are divorced from the data that was not included in the query.
-  \item Each query represents a single piece of information, and the information gathered from individual queries are hard to combine.
+  \item Each query represents a single piece of information, and the information gathered from individual queries is hard to combine.
   \item Traditional systems do not maintain relationships between queries. A query can be hard to formulate, and it is not always easy to know what to look for. Traditional \bi~applications do not let the user build queries step by step.
 \end{itemize}
 
@@ -82,18 +82,20 @@ The challenges with data warehouses are many, among them, the lack of flexibilit
 \label{sub:Star and Snowflake Schema}
 Many \bi~applications and data warehouses usually access data that is organized in a \textit{star or snowflake schema} \cite{Barber2012-xt}. Distinct for such schemas is that they have a huge fact table, which can have millions or billions of rows, and smaller dimension tables, each representing some aspect of the fact rows (e.g. category, region, time). The fact table is connected to the dimension tables using foreign keys. A snowflake schema is an extension of the star schema, where one or more dimension tables can have relationships that further describe a dimension.
 
-Star and snowflake schemas are normally used in \bi~applications because they are easier to optimize \cite{Lamb2012-kg}. The query optimizer creates efficient query plans by filtering and applying joins on the most highly selective dimensions first. Secondly, queries on star and snowflake schemas are easier to anticipate, such that indexes, materialized views, and/or denormalization can be applied to improve query efficiency \cite{Barber2012-xt}.
+Star and snowflake schemas are typically used in \bi~applications because they are easier to optimize \cite{Lamb2012-kg}. The query optimizer creates efficient query plans by filtering and applying joins on the most highly selective dimensions first. Secondly, queries on star and snowflake schemas are easier to anticipate, such that indexes, materialized views, and/or denormalization can be applied to improve query efficiency \cite{Barber2012-xt}.
 
 The disadvantage of using star and snowflake schemas for \bi~is the lack of flexibility. There are certain situations where there are more than one large fact table and situations where there is no clear distinction between fact and dimension tables.
 
 \section{Business Discovery}
 \label{sec:Business Discovery}
 
-To overcome the challenges with traditional \bi~systems, a new type of products have emerged. We call these for \bd~products, a notion that was introduced by \textit{Qlik}~\cite{Qlik2014-vd}. \bd~products normally build on in-memory technologies and are fast, elegant, and end user intuitive solutions to analyse business data. Examples of such products are \powerpivot, \tableau, and \qlikview. We have only studied \qlikview~and \tableau~in this thesis.
+To overcome the challenges with traditional \bi~systems, a new type of products have emerged. We call these for \bd~products, a notion that was introduced by \textit{Qlik}~\cite{Qlik2014-vd}. \bd~products normally build on in-memory technologies and are fast, elegant, and end user intuitive solutions to analyze business data. Examples of such products are \powerpivot, \tableau, and \qlikview. 
+
+%We have only studied \qlikview~and \tableau~in this thesis.
 
 \ffigure{img/qlik-hierarchy.png}{Comparison of a traditional reporting application and \qlikview. Traditional \bi~applications normally have predefined drill-down paths. \qlikview~allows the user decide where to start and end. (Adapted from \cite{Qlik2014-vd})}{fig:qlik-hierarchy}
 
-\bd~products allow users to follow their "information scent" or "train of thought" when navigating through the data \cite{Kamkolkar2015-iq, Qlik2014-vd}. As seen in Figure \ref{fig:qlik-hierarchy}, there are no prespecified drill-down patterns, and users decide where to start and end. In these applicaitons, grouping, joining, and calculations are performed on-the-fly. High-performance, in-memory technologies are used to enable such functionality. 
+\bd~products allow users to follow their "information scent" or "train of thought" when navigating through the data \cite{Kamkolkar2015-iq, Qlik2014-vd}. As seen in Figure \ref{fig:qlik-hierarchy}, there are no prespecified drill-down patterns, and users decide where to start and end. In these applications, grouping, joining, and calculations are performed on-the-fly. High-performance, in-memory technologies are used to enable such functionality. 
 
 In the next sections, we explain how a typical \bd~application works by using \qlikview~primarily as an example. \tableau~and \powerpivot~work similarly.
 
@@ -119,20 +121,20 @@ Users interact with the \bd~application through a reporting dashboard, as seen i
   \item Cycling through different chart types.
 \end{itemize}
 
-Users navigate through the data by making selections in the user interface. When a selection is made, the item is made green, as seen in Figure \ref{fig:qlik-panel}. The current selection is also known as the \term{application state}. Upon selection, the rest of the elements in the panel are updated based on the new application state; aggregations are recalculated, and graphs and lists are updated. \qlikview~colors matched elements white and unmatched elements gray. Dashboards are typically available from different devices, including desktop comptures, tablets, and mobile phones.
+Users navigate through the data by making selections in the user interface. When a selection is made, the item is made green, as seen in Figure \ref{fig:qlik-panel}. The current selection is also known as the \term{application state}. Upon selection, the rest of the elements in the panel are updated based on the new application state; aggregations are recalculated, and graphs and lists are updated. \qlikview~colors matched elements white and unmatched elements gray. Dashboards are typically available from different devices, including desktop computers, tablets, and mobile phones.
 
 \subsection{Business Discovery and Queries}
 \label{sub:Business Discovery and QueriesL}
 
 We see that \bd~products interact with the data using selections and filters in a reporting panel. This technique is different from database systems designed for OLAP workloads, which normally use a \textit{query-based} interface, usually SQL. Still, \bd~products need to provide most functionality that SQL databases do, like row listing, filtering, joining, grouping and aggregation, and sorting.
 
-Queries, or requests, in a \bd~application have certain characteristics. First of all, they cannot be anticipated, more specifically, they are \textit{ad-hoc}. Secondly, there is a limit to the number of returned rows. Users are interested in queries that can be analyzed quickly, so we do not expect a \bd~application to return thousands of rows as a result from a single table \cite{Ferrari2012-hm}. Also, the user interface has limitations in how much data that can be displayed at the same time. 
+Queries, or requests, in a \bd~application, have certain characteristics. First of all, they cannot be anticipated, more specifically, they are \textit{ad-hoc}. Secondly, there is a limit to the number of returned rows. Users are interested in queries that can be analyzed quickly, so we do not expect a \bd~application to return thousands of rows as a result from a single table \cite{Ferrari2012-hm}. Also, the user interface has limitations in how much data that can be displayed at the same time. 
 
 \section{Delphi Programming Language}
 \label{sec:Delphi Programming Language}
 The core of \gap~is written in \delphi. It is, therefore, important to understand how this language works. \delphi~is both a programming language and an integrated development environment \cite{Wikipedia_contributors2016-jk}, however, we will only consider the programming language in this section.
 
-\delphi~is a strongly typed, high-level, object oriented programming language \cite{noauthor_undated-cn, Wikipedia_contributors2016-jk}. The language supports polymorphism and interfaces, unicode, inline assembly, generic programming, pointer arithmetic, function overloading, and more. Simple preprocessing directives are allowed, but there is no support for macros. The \delphi~compiler is efficient and compiles source code into native binaries for wide variety of platforms, including \textit{Windows} 32- and 64-bit architectures and \textit{OSX} 32-bit architecture.
+\delphi~is a strongly typed, high-level, object-oriented programming language \cite{noauthor_undated-cn, Wikipedia_contributors2016-jk}. The language is based on \textit{Object Pascal}, a \textit{Pascal} dialect. \delphi~supports polymorphism and interfaces, Unicode, inline assembly, generic programming, pointer arithmetic, function overloading, and more. Simple preprocessing directives are allowed, but there is no support for macros. The \delphi~compiler is efficient and compiles source code into native binaries for a wide variety of platforms, including \textit{Windows} 32- and 64-bit architectures and \textit{OSX} 32-bit architecture.
 
 A program written in \delphi~is composed of different source code units, with two mandatory parts: The \textit{interface}, much like a header in \textit{C}, which declares constants, types, variables, and function signatures, and the \textit{implementation}, which contains the actual executable code \cite{noauthor_undated-pl}. Types, variables, and functions might also be declared in the implementation part. However, these will not be made accessible outside the unit. Each unit specifies its dependencies to other units, and the dependency graph is created automatically without using makefiles or similar mechanisms.
 
@@ -153,7 +155,7 @@ A real data type defines a set of numbers that can be represented with a floatin
 \afigure{img/delphi-strings.png}{String structure in \delphi. All strings are heap allocated, although string pointers may exist both in the stack and on the heap.}{fig:delphi-strings}{1.0}
 \delphi~has string support built into the language. Strings are reference counted and dynamically allocated on the heap by the compiler \cite{Wikipedia_contributors2016-jk}. A string variable is a pointer to a structure that contains a 32-bit length indicator, a 32-bit reference count, a 16-bit data length indicating the number of bytes per character, and a 16-bit code page \cite{noauthor_undated-cp}. This is depicted in Figure \ref{fig:delphi-strings}. There is copy-on-write semantics if one variable that references the string changes the contents of the string.
 
-There are two major string types in \delphi: \cn{AnsiString} and \cn{UnicodeString}. \cn{UnicodeString}, which is the default, supports both UTF-8 and UTF-16 encodings, where UTF-16 is default on the \textit{Windows} platform. UTF-16 stores each character with two or four bytes, while UTF-8 stores the first 128 ASCII characters with only one byte. Conversions between string types and encodings happen implicitly.
+There are two major string types in \delphi: \cn{AnsiString} and \cn{UnicodeString}. \cn{UnicodeString}, which is the default, supports both UTF-8 and UTF-16 encodings, where UTF-16 is default on the \textit{Windows} platform. UTF-16 stores each character with two or four bytes, while UTF-8 stores the 128 ASCII characters with only one byte. Conversions between string types and encodings happen implicitly.
 
 \subsubsection{Structured Types}
 \label{ssub:Structured Types}
@@ -163,8 +165,7 @@ For representing more complex data structures, \delphi~provides a type category 
 
 The \cn{record} type commonly represent a heterogeneous set of values. This type has value semantics, i.e. is not a boxed type, which means data is copied on assignment and passed by value as function arguments. Hence, records can both be allocated on the stack and the heap. Records are byte-aligned by default.
 
-Classes in \delphi~are dynamically allocated blocks of memory whose structure is determined by the class definition \cite{noauthor_undated-un}. Class instances are allocated and deallocated by the memory manager by calling the constructor and destructor respectively. Values are stored in the same order which they are declared in the source code. In addition to the variables, the first 8 bytes of an object points to a virtual method table. Variables of class types are 64-bit pointers and can hold the value \cn{nil}. \todo{Stakkato?}
-
+Classes in \delphi~are dynamically allocated blocks of memory whose structure is determined by the class definition \cite{noauthor_undated-un}. Class instances are allocated and deallocated by the memory manager by calling the constructor and destructor respectively. Values are stored in the same order which they are declared in the source code. In addition to the variables, the first 8 bytes of an object points to a virtual method table. Variables of class types are 64-bit pointers and can hold the value \cn{nil}. 
 
 \subsection{Memory Management}
 \label{sub:Memory Management}
@@ -176,7 +177,7 @@ In \delphi, parameters are transferred to functions in registers, on the program
 
 The default calling convention is the \textit{register} calling convention. This convention uses up to three registers to pass parameters to functions. The remaining parameters, if any, are passed on the program stack. This convention is the most efficient, as it usually avoids creating a new stack frame \cite{noauthor_undated-xi}. Access methods for class properties must use this convention for this reason.
 
-The \delphi~compiler supports function inlining, which is a measure that may result in faster code at the expense of space \cite{noauthor_undated-rx}. By using the \cn{inline} keyword in a method or function definition, the programmer gives the compiler a hint that the function body should insert directly instead of generating a function call. The keyword is suggestion and there are several conditions where inlining cannot happen. For instance, the compiler will not inline virtual methods or functions containing assembly code.
+The \delphi~compiler supports function inlining, which is a measure that may result in faster code at the expense of space \cite{noauthor_undated-rx}. By using the \cn{inline} keyword in a method or function definition, the programmer gives the compiler a hint that the function body should insert directly instead of generating a function call. The keyword is a suggestion, and there are several conditions where inlining cannot happen. For instance, the compiler will not inline virtual methods or functions containing assembly code.
 
 \subsection{Standard library}
 \label{sub:Standard library}

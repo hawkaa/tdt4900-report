@@ -99,17 +99,17 @@ Full benchmark details are found in Appendix \ref{app:bm}.
 \subsection{Data Mart Load Benchmark}
 \label{storage-format:q1}
 
-Benchmark \ref{bm:q1} was run with the new primitive value column implementation, with and without the new loading scheme. We run both scaling factors SF0.01 and SF0.1, but if we observe the same effects on both scaling factors, we only report for SF0.1.
+Benchmark \ref{bm:q1} was run with the new primitive value column implementation, with and without the new loading scheme. We run both scaling factors SF1 and SF10, but if we observe the same effects on both scaling factors, we only report for SF10.
 
-\afigure{img/storage-format-bpl.png}{Bytes per \lineitem~used by the \cn{FieldValueCollection} implementation from Chapter \ref{chap:column-store}, primitive value columns, and primitive value columns with raw XML data load, Benchmark \ref{bm:q1} with scaling factors SF0.01 and SF0.1.}{fig:storage-format-bpl}{0.9}
-As seen in Figure \ref{fig:storage-format-bpl}, primitive value columns reduce memory consumption per \lineitem~from 419 to 333 bytes and from 501 to 374 bytes for scaling factors SF0.01 and SF0.1 respectively. This corresponds to 21 \% and 25 \% reduction in memory footprint. However, the \textit{primitive w/ raw load} configuration does not reduce the bytes per \lineitem~as much as the \textit{primitive} configuration, although it is still lower than the original column store.
+\afigure{img/storage-format-bpl.png}{Bytes per \lineitem~used by the \cn{FieldValueCollection} implementation from Chapter \ref{chap:column-store}, primitive value columns, and primitive value columns with raw XML data load, Benchmark \ref{bm:q1} with scaling factors SF1 and SF10.}{fig:storage-format-bpl}{0.9}
+As seen in Figure \ref{fig:storage-format-bpl}, primitive value columns reduce memory consumption per \lineitem~from 419 to 333 bytes and from 501 to 374 bytes for scaling factors SF1 and SF10 respectively. This corresponds to 21 \% and 25 \% reduction in memory footprint. However, the \textit{primitive w/ raw load} configuration does not reduce the bytes per \lineitem~as much as the \textit{primitive} configuration, although it is still lower than the original column store.
 
-\afigure{img/storage-format-load.png}{Data source load time for the \cn{FieldValueCollection} from Chapter \ref{chap:column-store}, primitive value columns, and primitive value columns with raw XML data load, Benchmark \ref{bm:q1}, SF0.1.}{fig:storage-format-load}{0.7}
+\afigure{img/storage-format-load.png}{Data source load time for the \cn{FieldValueCollection} from Chapter \ref{chap:column-store}, primitive value columns, and primitive value columns with raw XML data load, Benchmark \ref{bm:q1}, SF10.}{fig:storage-format-load}{0.7}
 
 Load times are increased by the primitive column store, but it is still lower than the original \gap~row storage implementation. However, with our raw XML loading mechanisms, the load time has increased even more, and is comparable original implementation. The results are presented in Figure \ref{fig:storage-format-load}. 
 
-\afigure{img/storage-format-lig.png}{Lookup index generation performance for the \cn{FieldValueCollection} from Chapter \ref{chap:column-store} and primitive value columns, Benchmark \ref{bm:q1}, SF0.1.}{fig:storage-format-lig}{0.9}
-\afigure{img/storage-format-sml.png}{Source measure lookup performance for the \cn{FieldValueCollection} from Chapter \ref{chap:column-store} and primitive value columns, Benchmark \ref{bm:q1}, SF0.1.}{fig:storage-format-sml}{1.0}
+\afigure{img/storage-format-lig.png}{Lookup index generation performance for the \cn{FieldValueCollection} from Chapter \ref{chap:column-store} and primitive value columns, Benchmark \ref{bm:q1}, SF10.}{fig:storage-format-lig}{0.9}
+\afigure{img/storage-format-sml.png}{Source measure lookup performance for the \cn{FieldValueCollection} from Chapter \ref{chap:column-store} and primitive value columns, Benchmark \ref{bm:q1}, SF10.}{fig:storage-format-sml}{1.0}
 
 Both read-intense operations in \tpchdl~are drastically slowed down by the new primitive value storage format. As seen in Figure \ref{fig:storage-format-lig}, lookup index generation performs 3-4 times worse than the \cn{FieldValueCollection} implementation. Sorce measure lookup sees an even higher performance impact, and is, according to Figure \ref{fig:storage-format-sml}, ten times slower as the implementation of the previous chapter, and almost 20 times slower as the original \gap.
 
@@ -121,7 +121,7 @@ Write performance has, as Figure \ref{fig:storage-format-write} shows, degraded 
 \section{Discussion}
 \label{sec:part2-discussion}
 
-We see that the memory used per \lineitem~for scaling factor SF0.1 has been reduced by an additional 25 \% compared to the \cn{FieldValueCollection} implementation. This observation confirms our hypothesis that the overhead associated with \cn{GValue}s is significant.
+We see that the memory used per \lineitem~for scaling factor SF10 has been reduced by an additional 25 \% compared to the \cn{FieldValueCollection} implementation. This observation confirms our hypothesis that the overhead associated with \cn{GValue}s is significant.
 
 We observe an increased load time for Benchmark \ref{bm:q1}, where the time it takes to populate the data source is increased from 8.5 seconds to 13.6 seconds. We believe the extra steps needed to extract raw values from \cn{GValue} instances causes this. Still, the load time is lower than the original \gap~implementation.
 
@@ -165,7 +165,7 @@ We are still keen to investigate the potential of loading XML values directly, b
 %\begin{table}
 %    \centering
 %    \begin{tabularx}{\textwidth}{X | X X}
-%        & SF0.01 & SF0.1 \\ 
+%        & SF1 & SF10 \\ 
 %        \hline
 %        \hline
 %        Column Store & 419 bytes & 501 bytes \\
@@ -179,7 +179,7 @@ We are still keen to investigate the potential of loading XML values directly, b
 %\begin{table}
 %    \centering
 %    \begin{tabularx}{0.75\textwidth}{X | X X}
-%        & SF0.01 & SF0.1 \\ 
+%        & SF1 & SF10 \\ 
 %        \hline
 %        \hline
 %        Column Store & 842 ms & 8539 ms \\
