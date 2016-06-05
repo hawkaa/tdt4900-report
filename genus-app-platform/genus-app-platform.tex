@@ -1,9 +1,9 @@
 \chapter{Genus App Platform}
 \label{chap:gap}
 
-This chapter contains a top-down analysis of \gap, containing platform architecture, how applications are developed using the platform, concepts, and source code. The last part of this chapter identifies challenges in Genus App Platform, which motivates the second and primary part of this thesis, which is the design and experiment research.
+This chapter contains a top-down analysis of \gap, with platform architecture, how applications are developed using the platform, concepts, and source code. The last part of this chapter identifies challenges in Genus App Platform, which motivates the second and primary part of this thesis, which is the design and experiment research.
 
-We obtained information for this chapter by reading technical briefs, attending platform courses, engaging discussions with \genus' employees, and source code analysis.
+We obtained information for this chapter by reading technical briefs, attending platform courses, engaging discussions with \genus' employees, and analyzing source code.
 
 
 \clearpage
@@ -79,9 +79,10 @@ Effects are created through \textit{Action Orchestration}, which lets the system
 \subsection{User Interface Layer}
 \label{sub:User Interface Layer}
 \afigure{img/gap-user-interface-layer.png}{The user interface layer in \gap. In this layer, forms and tables are specified, with a wide variety of available GUI elements. (Adapted from \cite{Genus_AS2016-kt})}{fig:gap-user-interface-layer}{1.0}
-In the \textit{user interface layer}, the UI made available to the end users are specified. The main components in this layer are the form and table views. Form views allow the modeler to specify custom layouts and include a wide variety of different GUI elements. Supported elements, which is seen in Figure \ref{fig:gap-user-interface-layer}, include text boxes, buttons, calendars, maps, and more. A form is designed for either \textit{Genus Desktop} or \textit{Genus Apps}. 
 
-The user interface layer fetches data from the data layer through a data source. The data sources defined for a form or table specifies which data that are available in the user interface. The GUI may interact with the logic layer through user interaction, such as button clicks. \todo{Horrible quality on this section}
+The GUI made available to the end users are modeled in the \textit{user interface layer}. The main components in this layer are the table and form views, where the latter can be designed for either \textit{Genus Desktop} or \textit{Genus Apps}. Form views allow the modeler to specify custom layouts and include a wide variety of different GUI elements. Supported elements, which is seen in Figure \ref{fig:gap-user-interface-layer}, include text boxes, buttons, calendars, maps, and more.
+
+Components in the user interface layer fetch data from a data source, which specifies which data that should be made available to the users. The user intreface may interact with the logic layer through user interaction, such as button clicks.
 
 \section{Concepts}
 \label{sec:Concepts}
@@ -132,7 +133,7 @@ Tasks in \gap~are similar to a procedure or a function in a programming language
 
 \section{Source Code and Classes}
 \label{sec:Source Code and Classes}
-\afigure{img/gap-original-class-diagram.png}{A class diagram containing the most important classes to understand how data is stored and accessed in \gap.}{fig:gap-original-class-diagram}{0.8}
+\afigure{img/gap-original-class-diagram.png}{A class diagram containing the most important classes to understand how data is stored and accessed in \gap.}{fig:gap-original-class-diagram}{0.9}
 This section aims to give an overview over the classes in \gap~source code that are used to represent object classes, object class properties, object instances, and data elements. A class diagram for the classes we discuss is presented in Figure \ref{fig:gap-original-class-diagram}.
 
 The source code of \gap~core is written in \delphi, which we studied in Section \ref{sec:Delphi Programming Language}.
@@ -150,17 +151,17 @@ A \cn{GValue} is a class type and not a record type, hence is allocated by the m
 \label{sub:CompositionDescriptor}
 The object class, or composition, which we discussed in Section \ref{sub:Object Classes}, is represented by the \cn{CompositionDescriptor} class. Conceptually, this class is the same as a class in a programming language. A \cn{CompositionDescriptor} contains all information needed to describe an object class, for instance which properties, or \cn{FieldDescriptor}, that belongs to to the composition.
 
-Since \cn{CompositionDescriptor} instances is a part of the application model, it belongs to the ISD layer, which we discussed in Section \ref{sub:Models and Model Levels}. In the linguistic meta modeling framework, this construct makes up the left part of Figure \ref{fig:linguistic-metamodeling}, which is the "Class" and "Collie" entities.
+Since \cn{CompositionDescriptor} instances is a part of the application model, they belong to the ISD layer, which we discussed in Section \ref{sub:Models and Model Levels}. In the linguistic meta modeling framework, this construct makes up the left part of Figure \ref{fig:linguistic-metamodeling}, which is the "Class" and "Collie" entities.
 
 \subsection{CompositionObject}
 \label{sub:CompositionObject}
-Whereas the \cn{CompositionDescriptor} class represents an object class definition, the \cn{CompositionObject} class represent particular instances of that object class. Conceptually, this class is the same as an object, or class instance, in a standard object oriented programming language. A \cn{CompositionObject} stores all data beloning to the particular instance in a \cn{CompositionObjectValueCollection}, as well as other object state variables.
+Whereas the \cn{CompositionDescriptor} class represents an object class definition, the \cn{CompositionObject} class represents particular instances of that object class. Conceptually, this class is the same as an object, or class instance, in a standard object oriented programming language. A \cn{CompositionObject} stores all data beloning to the particular instance in a \cn{CompositionObjectValueCollection}, as well as other object state variables.
 
 Instances of \cn{CompositionObject}s make up the data in the applicaiton, and is, therefore, associated with the IS layer in \mde. In the linguistic meta modeling framework, this class is depicted on the right part of Figure \ref{fig:linguistic-metamodeling}. \cn{CompositionObject} has an ontological \textit{instance-of} relationship with \cn{CompositionDescriptor}.
 
 \subsection{FieldDescriptor}
 \label{sub:FieldDescriptor}
-The \cn{FieldDescriptor} class describes an attribute in a composition, which is the object class property we studied in Section \ref{sub:Object Class Properties}. It holds all relevant data about a property, mainly type and representation, but also constraints and formatting rules. Like \cn{CompositionDescriptor}, instances of the \cn{DataDescriptor} class exist in the ISD layer.
+The \cn{FieldDescriptor} class describes an attribute in a composition, which is the object class property we studied in Section \ref{sub:Object Class Properties}. It holds all relevant data about a property, mainly type and representation, but also constraints and formatting rules. Like \cn{CompositionDescriptor}, instances of the \cn{FieldDescriptor} class exist in the ISD layer.
 
 \subsection{CompositionObjectValueCollection}
 \label{sub:CompositionObjectValueCollection}
@@ -179,7 +180,7 @@ There are several challenges in the current \gap~design. For years, the main are
 
 \subsection{Excessive Amount of Pointers}
 \label{sub:Excessive Amount of Pointers}
-\afigure{img/gap-original-instantiation.png}{A data source with with composition objects. For each object, there is not only value pointers, but also pointers to the corresponding data descriptors.}{fig:gap-original-instantiation}{0.8}
+\afigure{img/gap-original-instantiation.png}{A data source with with composition objects. For each object, there are pointers to both data values and field descriptors.}{fig:gap-original-instantiation}{0.8}
 
 One of the main challenges in \gap~is that a significant amount of pointers is needed to store object data. As we saw in Section \ref{sub:CompositionObjectValueCollection}, each \cn{CompositionObjectValueCollection} not only stores \cn{GValue}s containing the data, but also pointers to all data descriptors. Although this implementation is flexible because every value collection is self-contained and objects can have a variable number of fields loaded, the overhead for storing all these pointers is substantial, especially on a 64-bit architecture where all pointers are 8 bytes. Figure \ref{fig:gap-original-instantiation} illustrates all pointers in play when a data source is filled with data. 
 
@@ -196,18 +197,18 @@ We study the storage overhead caused by pointers using a simple example. In our 
         \item \textbf{15 pointers}, for all values in the value collection.
     \end{itemize}
 \end{itemize}
-The example results in 32,000,018 pointers, which is roughly 244 MB on a 64-bit architecture. Moreover, this is only the overhead caused by pointers, not the actual data. If all values are 32-bit integers, the memory needed store these 15 million numbers is 57 MB, which in this example is 20 \% of the space needed by pointers. For 1 byte booleans, the percentage would be even less.
+The example results in 32,000,018 pointers, which is roughly 244 MB on a 64-bit architecture. Moreover, this is only the overhead caused by pointers, not the actual data. If all values are 32-bit integers, the memory needed store these 15 million numbers is 57 MB, which in this example is 20 \% of the space used by pointers. For 1 byte booleans, the percentage is even less.
 
 \subsection{Inefficient Data Access and Poor Memory Locality}
 \label{sub:Inefficient Data Access and Poor Memory Locality}
-Several operations in \gap~work access many values in tight loops, and it is not uncommon they use all values for a given data descriptor in a data source. Examples of such operations are filter and join operations. However, accessing values in the current implementation comes with a substantial overhead. The following steps are performed for every data access:
+Several operations in \gap~access many values in tight loops, and it is not uncommon they read all values for a given data descriptor in a data source. Examples of such operations are filter and join operations. However, accessing values in the current implementation comes with a substantial overhead. The following steps are performed for every data access:
 \begin{itemize}
     \item The \cn{CompositionObjectValueCollection} is scanned linearly for the correct data descriptor.
     \item The corresponding \cn{GValue} is found, and the accessor method (i.e. \fn{GetAsInteger}) is looked up in the dispatch table.
     \item A new stack frame is put on the stack to run the \fn{GetAsInteger} method.
 \end{itemize}
 
-The compiler might be able to optimize some of the steps above. For instance, if the \textit{register} calling convention is used, values may be accessed without creating a new stack frame. However, the process of getting a value is far from ideal. As we saw in Section \ref{sec:Hardware Utilization}, the difference between minimal and maximal CPU utilization can easily be one order of magnitude, where branches and new stack frames may severely hurt performance. Last, the linear search through data descriptors hurt performance.
+The compiler might be able to optimize some of the steps above. For instance, if the \textit{register} calling convention is used, values may be accessed without creating a new stack frame. However, the process of getting a value is far from ideal. As we saw in Section \ref{sec:Hardware Utilization}, the difference between minimal and maximal CPU utilization can easily be one order of magnitude, where branches and new stack frames may severely hurt performance. Last, the linear search through data descriptors hurt throughput.
 
 Not only are there many steps required to access data in \gap, but there is also poor memory locality on the data elements. Since \cn{GValue} is a class type, thus allocated on the heap by the memory manager, we no longer have control over where values are located in main memory. We must assume the location is arbitrary, and that \cn{GValue}s with temporal locality are not located next to each other in memory. We read in Chapter \ref{chap:olap} how important cache locality is for performance.
 
@@ -221,7 +222,7 @@ We saw in Chapter \ref{chap:olap} that small storage overhead and compression ar
 
 \section{Research Motivation}
 \label{sec:Research Motivation}
-This chapter concludes the literature review part of our research. We have studied background theory on \mde~and \bi, elaborated on techniques used by read-optimized databases, and provided an analysis of \gap. The literature review has given us sufficient insight to proceed with the design and experiment part of this research. 
+This chapter concludes the related work part of our research. We have studied background theory on \mde~and \bi, elaborated on techniques used by read-optimized databases, and provided an analysis of \gap. The literature review has given us sufficient insight to proceed with the evaluation part of this research. 
 
 We observe that \gap~is in fact a sophisticated in-memory database. Data sources used in various parts of the platform query the underlying database infrastructure and loads the data into main memory. We also see \gap~source code has several challenges with pointer and storage overhead and data locality. We repeat our research goals:
 
@@ -243,4 +244,4 @@ We are motivated to apply techniques used in read-optimized databases to \gap. W
 
 By answering \textbf{RQ1}, we hope to address \textbf{G1} directly by making changes in \gap~that increase the platform's ability to handle large datasets. However, by using our changes in \gap~as a proof-of-concept, we plan to address \textbf{G2} by drawing general conclusions on the combination of \mde~and database technology.
 
-We plan to optimize \gap~in the method engineering layer, such that the information system development layer is affected as little as possible. Much like a compiler is better at optimizing code than a human programmer, we believe \gap~has the potential to optimize storage format without modeler intervention. This way, \gap~expert users may focus on the business problem and not on the underlying implementation. \todo{Should this be in introduction?}
+We plan to optimize \gap~in the method engineering layer, such that the information system development layer is affected as little as possible. Much like a compiler is better at optimizing code than a human programmer, we believe \gap~has the potential to optimize storage format without modeler intervention. This way, \gap~expert users may focus on the business problem and not on the underlying implementation. 

@@ -1,4 +1,4 @@
-\chapter{Part I: Column Store}
+\chapter{Iteration I: Column Store}
 \label{chap:column-store}
 
 In this chapter, we modify how \gap~represents data internally by replacing the original row storage format with a column store. We see how it successfully reduces memory consumption and load times for the \tpchdl. The work undertaken in this chapter lays some important groundwork for further optimization.
@@ -13,10 +13,10 @@ This chapter makes up the first out of four main iterations in the design and ex
 Starting our main part of the research, we aim to reduce memory footprint in \gap. As we saw in Section \ref{sec:Compression}, lower memory usage are likely to increase performance because most database processes are memory-bound. Moreover, we hypothesize that memory management is expensive and that the number of allocations, as well as the size of the allocated memory chunks, should be reduced. Inspired by the techniques used by read-optimized databases in Chapter \ref{chap:olap} and motivated by the challenges in \gap, we change how data is represented internally within the platform.
 
 % tell why we picked a column store
-We choose to implement a column store, which we read about in Section \ref{sec:Column Storage}. The reason for this is two-fold. First, as we saw in the literature study, columns are inherently more compressible. Hence, a column store is better suited to reduce memory consumption and to test our hypothesis about the costs of memory management. Second, the cases where \genus~has experienced performance issues are in situations where a column store is better suited than a row store, for instance the read-intense join and filter operations.
+We choose to implement a column store, which we read about in Section \ref{sec:Column Storage}. The reason for this is two-fold. First, as we saw in the literature study, columns are inherently more compressible. Hence, a column store is better suited to reduce memory consumption and to test our hypothesis about the costs of memory management. Second, the cases where \genus~has experienced performance issues are in situations where a column store is better suited than a row store, for example the read-intense join and filter operations.
 
 % Tell why we did not pick a row store
-We believe that conventional transactional processing in \gap, where a row store might be better suited, will not suffer from using a column store. In \gap, there is much overhead on object create, update, and delete, like constraint checks, data validation, and memory allocations. Thus, we hypothesize that tuple materialization costs and the effects of decreased memory locality are neglible. Also, a row store might require index structures to accommodate certain operations; indexes which, as we have seen in Section \ref{sub:Row Stores vs Column Stores}, are costly to maintain.
+We believe that conventional transactional processing in \gap, where a row store might be better suited, will not suffer from using a column store. In \gap, there is much overhead on object create, update, and delete, like constraint checks, data validation, and memory allocations. Thus, we hypothesize that tuple materialization costs and the effects of decreased memory locality are negligible. Also, a row store might require index structures to accommodate certain operations; indexes which, as we have seen in Section \ref{sub:Row Stores vs Column Stores}, are costly to maintain.
 
 \section{Implementation}
 \label{sec:Implementation}
@@ -48,8 +48,7 @@ To reduce the number of pointers, and to create a column store, we replace insta
     \label{fig:gap-storage-comparison}
 \end{figure}
 
-Our modifications imply that composition objects in a data source no longer queries its own data collection, or \cn{CompositionObjectValueCollection}, for values, but instead request values from one shared \cn{CompositionValueCollection}. To access values in the column store, objects must pass their data source index and a field descriptor to indicate row and column respectively. A comparison between the original and the new implementation is seen in Figure \ref{fig:gap-storage-comparison}. Even though the original \cn{CompositionObjectValueCollection} was discarded as the main data source storage structure, the structure is still in use and can created by the objects. \gap~uses \cn{CompositionObjectValueCollection} extensively in various parts of the application, for instance object cloning and data transfer. \todo{Correct?}
-
+Our modifications imply that composition objects in a data source no longer queries its own data collection, or \cn{CompositionObjectValueCollection}, for values, but instead request values from one shared \cn{CompositionValueCollection}. To access values in the column store, objects must pass their data source index and a field descriptor to indicate row and column respectively. A comparison between the original and the new implementation is seen in Figure \ref{fig:gap-storage-comparison}. Even though the original \cn{CompositionObjectValueCollection} is discarded as the main data source storage structure, the structure may still be created by the object. \gap~uses \cn{CompositionObjectValueCollection} extensively in various parts of the application, for instance for object cloning and data transfer. 
 
 % class diagram
 % explain the dictionary and the list of data descriptors
@@ -64,7 +63,7 @@ Data source indexes are assigned by passing composition objects to the \fn{Regis
 
 %Datasource indexes are assigned by passing composition objects to the  \fn{registerObject} function. A private variable \vn{maxDatasourceIndex} is used to keep track on the maximum index handed out so far. When an object is received, this variable is incremented, and the object is assigned that value. In addition to this, a bitmap \fn{assignedIndexes} is kept to bookkeep which indexes has objects connected to them. When \fn{removeObject} is called, the bit for that index is unset in \fn{assignedIndexes}. Also, all values corresponding to that object are unassigned. Currently, the \fn{assignedIndexes} bitmap is not used to lookup the first available bit, since this triggers a linear search on every insertion. We discuss this further in the chapter conclusion.
 
-%In addition to the above methods, a \cn{CompositionValueCollection} has the ability to unassign an entire row or column by passing in a \cn{CompositionObject} or \cn{DataDescriptor} respectively. We see later in this research where such methods are used.
+%In addition to the above methods, a \cn{CompositionValueCollection} has the ability to un-assign an entire row or column by passing in a \cn{CompositionObject} or \cn{DataDescriptor} respectively. We see later in this research where such methods are used.
 
 
 
@@ -74,14 +73,14 @@ Data source indexes are assigned by passing composition objects to the \fn{Regis
 
 We implement columns as a class we denote as \cn{FieldValueCollection}. This class represents an index based list structure that automatically handles memory allocation. Internally, values are stored in a \cn{TArray<GValue>} type. We chose that structure based on the performance benchmark in Appendix \ref{app:array-performance}. A class diagram is found in Figure \ref{fig:FieldValueCollection}. 
 
-Besides from the value array and corresponding \fn{GetValue} and \fn{SetValue} methods, \cn{FieldValueCollection} contains bitmaps for indicating null values and unassigned values. Keeping track of null values is strictly not needed, since \cn{GValue}s are boxed and can be set to \nil, but it becomes appearent why we need this bookkeeping in Chapter \ref{chap:storage-format}. Unassigned values have a special semantic in \gap: It means that a value exist, but has been unassigned for performance reasons. 
+Besides from the value array and corresponding \fn{GetValue} and \fn{SetValue} methods, \cn{FieldValueCollection} contains bitmaps for indicating null values and unassigned values. Keeping track of null values is strictly not needed, since \cn{GValue}s are boxed and can be set to \nil, but it becomes apparent why we need this bookkeeping in Chapter \ref{chap:storage-format}. Unassigned values have a special semantic in \gap: It means that a value exists, but has been unassigned for performance reasons. 
 
 \subsection{Growth Strategy}
 \label{sub:Growth Strategy}
 
 In \cn{FieldValueCollection} we use \delphi~dynamic arrays for data and are, therefore, in control over array allocation size. Since objects arrive in a data stream, we are not sure how large our buffers should be until we receive all objects. Hence, we must find an efficient growth strategy for the column store.
 
-For every array resize, we run the risk that all data in the array must be copied from one smaller memory chunk to a larger one. Since this is a costly operation, one should be generous when resizing arrays. Commonly used in such problems is a doubling strategy, where array buffer size double each time an index outside of array bounds appear. We implement this behaviour in \cn{CompositionValueCollection} too, in the \fn{EnsureCapacity} method. This function is called to avoid index-out-of-range exceptions by all methods that access the data array or bitmaps.
+For every array resize, we run the risk that all data in the array must be copied from one smaller memory chunk to a larger one. Since this is a costly operation, one should be generous when resizing arrays. Commonly used in such problems is a doubling strategy, where array buffer size double each time an index outside of array bounds appear. We implement this behaviour in \cn{FieldValueCollection} too, in the \fn{EnsureCapacity} method. This function is called to avoid index-out-of-range exceptions by all methods that access the data array or bitmaps.
 
 \afigure{img/gap-growth-strategy.png}{Growth strategy for value buffers and bitmaps. In the load phase, the buffers double every time more space is needed. After the load phase, a consolidation is performed which reduces buffer size to the exact size of the data source.}{fig:gap-growth-strategy}{0.6}
 Using the doubling strategy for column growth, we run the risk of allocating twice as much memory needed for a data source. We, therefore, implement a \cn{Consolidate} method which resizes all value buffers and bitmaps to the exact size of the data source. The full growth strategy in depicted in Figure \ref{fig:gap-growth-strategy}
@@ -155,7 +154,9 @@ We observe a larger reduction in performance looking at the source measure looku
 
 \subsection{Write Benchmark}
 \label{sub:Write Benchmark}
-\afigure{img/column-store-write.png}{Write performance results for Benchmark \ref{bm:write}, 1000 elements..}{fig:column-store-write}{1.0}
+
+\afigure{img/column-store-write.png}{Write performance results for Benchmark \ref{bm:write}, 1000 elements.}{fig:column-store-write}{1.0}
+
 To see how the write speed is affected by our new implementation, we run Benchmark \ref{bm:write}, the \textit{Write Benchmark} on the original implementation and the column store implementation. Each run modified 1000 elements, which is the default for this benchmark. The results are presented in Figure \ref{fig:column-store-write}. There are no significant differences between the two implementations.
 
 \section{Discussion}
@@ -163,7 +164,7 @@ To see how the write speed is affected by our new implementation, we run Benchma
 % How it impacts memory
 In Section \ref{sub:Excessive Amount of Pointers}, we saw how a data source with objects with 15 properties each needed 32 pointers, or 256 bytes, per objects just for data and data access. Now, this number is reduced to 17 pointers and an integer, which is 140 bytes. Hence, we have the potential to save 45\% memory by using our new system.
 
-We see that the memory used per object in the \tpchdl~is reduced by 30 \% and 38 \% for scaling factors SF10 and SF1 respectively. We attribute this observation to the column store, and how it reduces the number of pointers needed to represent data in a data source. 
+We see that the memory used per object in the \tpchdl~is reduced by 38 \% and 30 \% for scaling factors SF1 and SF10 respectively. We attribute this observation to the column store, and how it reduces the number of pointers needed to represent data in a data source. 
 
 We are observe that the data source load time is reduced as a consequence of our new \cn{CompositionValueCollection} and \cn{FieldValueCollection} classes. This observation strengthens our hypothesis that memory management is expensive: The original implementation allocated one row-structure per object, whereas the doubling strategy in our column store keeps the number of allocations at a minimum. Moreover, the reduced load time in Benchmark \ref{bm:q1}~might also imply that reduced memory usage is directly correlated with performance and that our new implementation has better memory locality and cache hit rate.
 
@@ -171,7 +172,7 @@ Both read operations, lookup index generation and source measure lookup, suffer 
 
 The fact that Benchmark \ref{bm:write}, the \textit{Write Benchmark}, shows that write performance is not affected by the column store, strengthens our hypothesis that the column overhead is negligible in such situations. Data modification is expensive in \gap. Modifying 1000 elements in the write benchmark takes roughly five times longer than generating a lookup index for 60,000 rows, which indicates that there is a severe overhead in object iteration and value modification unrelated to the data storage layout.
 
-We are unsure why different scaling factors yielded a different number of bytes per \lineitem. It might be caused by the caching and value reuse mechanisms used by the data load module in \gap. Data in SF10 might have a different data distribution than SF1 Either way, both the original and column store implementations are affected by this phenomenon, which makes it likely that it is unrelated to our work. The other measurements in \tpchdl~increase linearly, measurements from SF10 are roughly ten times higher than for SF1. 
+We are unsure why different scaling factors yielded a different number of bytes per \lineitem. It might be caused by the caching and value reuse mechanisms used by the data load module in \gap. Data in SF10 might have a different data distribution than SF1. Either way, both the original and column store implementations are affected by this phenomenon, which makes it likely that it is unrelated to our work. The other measurements in \tpchdl~increase linearly; measurements from SF10 are roughly ten times higher than for SF1. 
 
 \section{Iteration Conclusion}
 \label{sec:Iteration Conclusion}
@@ -183,7 +184,7 @@ This iteration lays the groundwork for further investigation and to check whethe
 
 Column storage comes with several benefits, like vectorized execution, late materialization, and the ability to be pipelined by a modern CPU. We have not yet utilized the full potential of the \cn{CompositionValueCollection} and \cn{FieldValueCollection} classes, so far we have only used them to reduce the number of pointers in \gap. We believe the mentioned techniques can be applied to the read-intense operations of Benchmark \ref{bm:q1}. We study this in Chapter \ref{chap:operations}.
 
-Since the measurements for different scaling factors in the \tpchdl~increase linearly, that is, measurements from SF10 are roughly ten times higher than for SF1; we will focus on SF1 from now. For the next iterations, we run tests with both SF1 and SF10, but we generally only report and discuss the results from SF10. An exception to this is the number of bytes per \lineitem, where we continue to report on both scaling factors.
+Since the measurements for different scaling factors in the \tpchdl~increase linearly, that is, measurements from SF10 are roughly ten times higher than for SF1; we will focus on SF10 from now. For the next iterations, we run tests with both SF1 and SF10, but we generally only report and discuss the results from SF10. An exception to this is the number of bytes per \lineitem, where we continue to report on both scaling factors.
 
 \subsection{Future Work}
 \label{sub:column-store:future-work}

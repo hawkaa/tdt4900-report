@@ -1,21 +1,21 @@
-\chapter{Part II: Storage Format Enhancement}
+\chapter{Iteration II: Storage Format Enhancement}
 \label{chap:storage-format}
 In the previous chapter, we concluded that there was potential in column storage in \gap, but that more memory could be saved by enhancing the data storage format. In this chapter, we show how memory usage is reduced and memory locality improved by replacing \cn{GValue}s with primitive data types. We also study the effect of loading raw string values from XML directly into the columns.
 
-This chapter forms the second iteration of our design and experiment part of the research. In this iteration, we are mainly pursuing reduced memory footprint, but the modifications from the storage format enhancements serve as an important foundation for column operations, which we discuss in Chapter \ref{chap:operations}.  
+This chapter forms the second iteration of our design and experiment part of the research. In this iteration, we are mainly pursuing reduced memory footprint, but the modifications from the storage format enhancements serve as an essential foundation for column operations, which we discuss in Chapter \ref{chap:operations}.  
 \clearpage
 
 \section{Introduction}
 \label{sec:Introduction}
-In Section \ref{sec:Challenges in Genus App Platform}, we saw that two of the challenges in the original \gap~data representation are poor memory locality and inefficient storage usage. Both challenges are caused by the \cn{GValue} class. In this structure, data is stored inefficiently due to overhead of pointers and reference counting. For example, it takes 24 bytes to store a 4 byte integer. Secondly, since \cn{GValue} is a class type, it is heap allocated by the memory manager, and we have no control over where the values reside in memory. In Chapter \ref{chap:olap}, we saw that spatial and temporal locality is paramount for performance.
+In Section \ref{sec:Challenges in Genus App Platform}, we saw that two of the challenges in the original \gap~data representation are poor memory locality and inefficient storage usage. Both challenges are caused by the \cn{GValue} class. In this structure, data is stored inefficiently due to the overhead of pointers and reference counting. For example, it takes 24 bytes to store a 4-byte integer. Secondly, since \cn{GValue} is a class type, it is heap allocated by the memory manager, and we have no control over where the values reside in memory. In Chapter \ref{chap:olap}, we saw that spatial and temporal locality is paramount for performance.
 
 One might think that memory locality and cache hit rate have been improved by the introduction of \cn{FieldValueCollection} in the previous chapter. This is only partially true; we store value pointers consecutively in memory with the \cn{TArray} type, but the structures containing the data itself reside in arbitrary memory locations.
 
-Section \ref{sub:Delphi Types} explained that \delphi~supports a wide range of simple, or primitive, data types. These include integer, character, Boolean, real, and more. Common for these data types is that they are value types and a variable with one such type stores the data directly, and not as a pointer to the heap. This is also the case for the \delphi~\cn{record} type.
+Section \ref{sub:Delphi Types} explained that \delphi~supports a broad range of simple, or primitive, data types. These include integer, character, Boolean, real, and more. Common for these data types is that they are value types and a variable with one such type stores the data directly, and not as a pointer to the heap. This is also the case for the \delphi~\cn{record} type.
 
 We observe that if we change the value buffers in \cn{FieldValueCollection} from holding \cn{GValue} references to storing primitive value types directly, we overcome the above challenges. First, we reduce memory consumption by transitioning to primitive data types, since these values have no pointer or reference counting overhead. Second, since we plan to store the values directly in \delphi~array structures, we improve memory locality.
 
-The data source loading mechanism in \gap~operates with \cn{GValue}s, but since we plan to no longer use this class to represent data in a data source, we are curious to see whether \cn{GValue}s can be eliminated from the data load process. We believe data load time can be reduced by loading the database values directly from XML instead of using \cn{GValue}s to load values into columns.
+The data source loading mechanism in \gap~operates with \cn{GValue}s, but since we plan to use this class no longer to represent data in a data source, we are curious to see whether \cn{GValue}s can be eliminated from the data load process. We believe data load time can be reduced by loading the database values directly from XML instead of using \cn{GValue}s to load values into columns.
 
 Motivated by the memory reduction and the ability to regain control over memory, we create a new structure based on the \cn{FieldValueCollection} interface, which we denote as \cn{PrimitiveFieldValueCollection}. We also circumvent \cn{GValue} creation in the \gap~load module and pass raw XML values directly to the columns. We hypothesize that these changes will reduce memory consumption and decrease load time.
 
@@ -45,13 +45,13 @@ end;
 
 \cn{PrimitiveFieldValueCollection} holds all data in a \cn{TArray} of the primitive data type of choice. However, \fn{GetValue} and \fn{SetValue} methods still use \cn{GValue} as return and input types respectively. To help isolate all code related to value conversion and avoid code duplication, we create a value helper class which we instantiate in all primitive column subclasses. This class contains methods for extracting primitive data values from a \cn{GValue}, creating \cn{GValue}s based using primitive data types as input, as well as some simple comparison operators. We have provided an example of how it is used in Listing \ref{lst:primitive-get-value}. Like \cn{PrimitiveFieldValueCollection}, the class is generic, with subclasses for every supported data type.
 
-In the last iteration, we introduced the \vn{nilFlags} bitmap. Whereas \cn{FieldValueCollection} could store \null~pointers in the value buffers instead of pointers to \cn{GValue}s, we no longer have this opportunity, as simple value types in \delphi~are not nullable. Hence, \vn{nilFlags} bitmap is used to indicate which values are null. As seen in Listing \ref{lst:primitive-get-value}, the flags are checked before creating a value.
+In the last iteration, we introduced the \vn{nilFlags} bitmap. Whereas \cn{FieldValueCollection} could store \nil~in the value buffers instead of pointers to \cn{GValue}s, we no longer have this opportunity, as simple value types in \delphi~are not nullable. Hence, \vn{nilFlags} bitmap is used to indicate which values are null. As seen in Listing \ref{lst:primitive-get-value}, the flags are checked before creating a value.
 
 Even though they are not considered as simple data types in \delphi, we apply the same techniques for strings and records. Record types, like \vn{TGuid}, have value semantics and work similarly as simple data types, which means they are allocated consecutively in memory using the \cn{TArray} type. Strings, however, are pointer types, which means pointers are stored consecutively in the columns, but not the data itself. Hence, we do not get the benefit from explicit memory control on strings, but we remove an extra layer of indirection to access a value and avoid the overhead related to \cn{GValue}.
 
 \subsection{Column Selection}
 \label{sub:Column Selection}
-To make the new \cn{PrimitiveFieldValueCollection} class work, we must pick the correct primitive type subclass for the different data descriptors in a data source. This is the responsibility of the column store. We extend \cn{CompositionValueCollection} with a \fn{GetFieldValueCollection} which takes a data descriptor as an input and returns the correct column. In this method, the data descriptor is queried for its data type, and it picks the correct \cn{PrimitiveFieldValueCollection} subclass. If no matching primitive data type column is found, the method falls back on the original \cn{FieldValueCollection} from Chapter \ref{chap:column-store}.
+To make the new \cn{PrimitiveFieldValueCollection} class work, we must pick the correct primitive type subclass for the different data descriptors in a data source. This is the responsibility of the column store. We extend \cn{CompositionValueCollection} with a \fn{GetFieldValueCollection} method which takes a data descriptor as an input and returns the correct column. In this method, the data descriptor is queried for its data type, and it picks the correct \cn{PrimitiveFieldValueCollection} subclass. If no matching primitive data type column is found, the method falls back on the original \cn{FieldValueCollection} from Chapter \ref{chap:column-store}.
 
 \subsection{Loading Raw XML Values Directly}
 \label{storage-format:raw-xml}
@@ -83,9 +83,9 @@ begin
   assignedFlags[index] := TRUE;
 end;
 \end{delphicode}
-Hence, we extend the \cn{FieldValueCollectionBase} interface with a new method, \fn{LoadXMLValue}, which accepts a data source index as well as a string XML value as inputs. The value helper class is also extended accordingly. For the different primitive data types, this method is overridden and implemented with high performance standard library functions, like \fn{StrToInt} and \fn{StrToFloat}. For more advanced data types, like date, the correct \gap~parser functions are used. We see the \fn{SetXMLValue} implementation in Listing \ref{lst:primitive-set-xml-value}.
+Hence, we extend the \cn{FieldValueCollectionBase} interface with a new method, \fn{SetXMLValue}, which accepts a data source index as well as a string XML value as inputs. The value helper class is also extended accordingly. For the different primitive data types, this method is overridden and implemented with high performance standard library functions, like \fn{StrToInt} and \fn{StrToFloat}. For more advanced data types, like date, the correct \gap~parser functions are used. We see the \fn{SetXMLValue} implementation in Listing \ref{lst:primitive-set-xml-value}.
 
-As a result of our changes, the loading process has been simplified and memory allocations reduced. See Figure \ref{fig:gap-load-raw}.
+As a result of our changes, the loading process has been simplified and the number of memory allocations reduced. See Figure \ref{fig:gap-load-raw}.
 \section{Results}
 \label{sec:storage-format-test-results}
 Like the previous iteration, we assess our modifications by using Benchmark \ref{bm:q1}, the \tpchdl. We use this benchmark to test our hypothesis that primitive value storage and direct value load contribute to reduced memory footprint and improved load time. 
@@ -135,7 +135,7 @@ We see the consequences of having a \cn{GValue} interface on the columns, which 
 \label{sec:Iteration Conclusion}
 We conclude that primitive value column storage successfully reduces memory consumption in \gap. Compared to the original implementation, the bytes used per \lineitem~are reduced from 715 bytes to 374 bytes. Our changes have affected write performance negatively, but not by more than 15 \%. We argue that the significant reduction in memory usage outweighs the slightly negative impact on write performance, and concludes that storing values as primitive data types and using a \cn{GValue} interface is feasible. 
 
-In this iteration, we have laid an important foundation for optimizing the read-intensive operations in the \tpchdl by increasing data locality. More specifically, we have replaced the \cn{GValue} pointers and now store values directly in the columns. Until we exploit this storage structure, source measure lookup and lookup index generation suffer severely due to memory allocation operations on each access. We investigate column operations in Chapter \ref{chap:operations}.
+In this iteration, we have laid an important foundation for optimizing the read-intensive operations in the \tpchdl~by increasing data locality. More specifically, we have replaced the \cn{GValue} pointers and now store values directly in the columns. Until we exploit this storage structure, source measure lookup and lookup index generation suffer severely due to memory allocation operations on each access. We investigate column operations in Chapter \ref{chap:operations}.
 
 Our hypothesis that loading data as raw XML values into the column would reduce load time was wrong, at least for now. Circumventing \cn{GValue}s also circumvents the built-in caching mechanism in \gap~and results in higher memory usage and slower load times.  
 
@@ -143,7 +143,7 @@ We have cut the application memory requirements in half without applying any for
 
 \subsection{Future Work}
 \label{sub:Future Work}
-We are still keen to investigate the potential of loading XML values directly, but due to time constraints, we are unable to pursue this topic further. Future work should aim to replicate the existing caching mechanisms in \gap, but within the column store and without creation of \cn{GValue}s. Caching could, for instance, only be enabled if the data source is in a feeding state. Building on the idea of horizontal partitioning from Section \ref{sub:column-store:future-work}, caching could also be used in newly created partitions, and once a partition is full, all caching structures are discarded and the partition is optimized for read-only workloads.
+We are still keen to investigate the potential of loading XML values directly, but due to time constraints, we are unable to pursue this topic further. Future work should aim to replicate the existing caching mechanisms in \gap, but within the column store and without the creation of \cn{GValue}s. Caching could, for instance, only be enabled if the data source is in a feeding state. Building on the idea of horizontal partitioning from Section \ref{sub:column-store:future-work}, caching could also be used in newly created partitions, and once a partition is full, all caching structures are discarded, and the partition is optimized for read-only workloads.
 
 %\begin{table}
 %    \begin{tabularx}{\textwidth}{X | X X X X}
