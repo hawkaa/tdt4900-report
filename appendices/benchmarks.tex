@@ -18,11 +18,11 @@ In this benchmark, we measure analytical performance in \gap~using using a bench
 
 Q1, or the \textit{Pricing Summary Report Query}, provides a summary of all items shipped within a date range \cite{Transaction_Processing_Performance_Council_TPC2014-ux}. It aggregates price with and without discount, and with and without tax, as well as average quantity, price, and discount. The results are grouped by \texttt{RETURNFLAG} and \texttt{LINESTATUS}. The original query is shown in Figure \ref{fig:tpc-h-q1}.
 
-\afigure{img/gap-data-mart.png}{Data mart for the \textit{Data Mart Load Benchmark}.}{fig:gap-data-mart}{0.7}
+\afigure{img/gap-data-mart.png}{Data mart for the \textit{Data Mart Load Benchmark}.}{fig:gap-data-mart-bm}{0.7}
 
 \afigure{img/tpc-h-q1-ui.png}{\textit{Data Mart Load Benchmark} user interface in \gd.}{fig:tpc-h-q1-ui}{1.0}
 
-To accommodate our needs for this research, as well as adapt the query to fit \gap~and \gd, we perform some modifications. First, \texttt{RETURNFLAG}, \texttt{LINESTATUS}, and \texttt{SHIPDATE} are extracted as code domains such that they can be used as dimensions in the data mart. Also, we remove unnecessary table columns irrelevant to the query from the mart. The resulting data mart is shown in Figure \ref{fig:gap-data-mart}. Second, since \gd~does not work with an SQL interface, but rather with a user interface with graphs and boxes, we translated the query to a reporting dashboard with bar charts and selection boxes. The resulting user interface is shown in Figure \ref{fig:tpc-h-q1-ui}. 
+To accommodate our needs for this research, as well as adapt the query to fit \gap~and \gd, we perform some modifications. First, \texttt{RETURNFLAG}, \texttt{LINESTATUS}, and \texttt{SHIPDATE} are extracted as code domains such that they can be used as dimensions in the data mart. Also, we remove unnecessary table columns irrelevant to the query from the mart. The resulting data mart is shown in Figure \ref{fig:gap-data-mart-bm}. Second, since \gd~does not work with an SQL interface, but rather with a user interface with graphs and boxes, we translated the query to a reporting dashboard with bar charts and selection boxes. The resulting user interface is shown in Figure \ref{fig:tpc-h-q1-ui}. 
 
 We populate the database with the \texttt{dbgen} tool provided by the \name{Transaction Processing Performance Council}. However, since the default scaling factor for the TPC-H benchmark is too large for \gap, we created two new dataset sizes, SF1 and SF10, with 1 \% and 10 \% of the original data respectively. The data was downscaled by keeping every 10th or 100th row in \texttt{LINEITEM} and removing all orders, suppliers, customers, and parts that no longer were connected to any elements in this table. 
 

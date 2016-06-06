@@ -1,0 +1,2 @@
+Where Database Technology Meets Model-Driven Engineering
+Rethinking internal data representation in Genus App Platform

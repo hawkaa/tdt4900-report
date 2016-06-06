@@ -131,14 +131,14 @@ In this section, we test the performance impact of the column operations we intr
 
 \subsection{Source Measure Lookup}
 \label{sub:Source Measure Lookup}
-\afigure{img/operations-get-double-array.png}{Source measure lookup time for original, compressed column store, and compressed column store with \fn{GetDoubleArray} column operation, Benchmark \ref{bm:q1}, SF10. Logarithmic scale.}{fig:operations-get-double-array}{1.0}
+\afigure{img/operations-get-double-array.png}{Source measure lookup time for original, compressed column store, and compressed column store with \fn{GetDoubleArray} column operation, Benchmark \ref{bm:q1}, scaling factor SF10. Logarithmic scale.}{fig:operations-get-double-array}{1.0}
 
 We use Benchmark \ref{bm:q1} with scaling factor SF10 to measure the performance impact of using \fn{GetDoubleArray} in the source measure lookup operation. As seen in Figure \ref{fig:operations-get-double-array}, the time it takes to perform the operation is reduced by more than one order of magnitude from the original implementation, and more than two orders of magnitude from the compressed implementation. The non-compressed \texttt{EXTENDEDPRICE} column yields the best performance result, where the source measure lookup operation now takes 8 ms for 600,000 elements.
 
 \subsection{Lookup Index}
 \label{sub:Lookup Index}
 
-\afigure{img/operations-get-lookup-index.png}{Lookup index generation time for original, compressed column store, and compressed column store with \fn{GetLookupIndex} column operation, Benchmark \ref{bm:q1}, SF10. Logarithmic scale.}{fig:operations-get-lookup-index}{1.0}
+\afigure{img/operations-get-lookup-index.png}{Lookup index generation time for original, compressed column store, and compressed column store with \fn{GetLookupIndex} column operation, Benchmark \ref{bm:q1}, scaling factor SF10. Logarithmic scale.}{fig:operations-get-lookup-index}{1.0}
 
 Like as for source measure lookup, we used the \tpchdl~SF10 to investigate the performance benefits of the \fn{GetLookupIndex} operation. Figure \ref{fig:operations-get-lookup-index} shows the result of this benchmark. The time it takes to perform the join operation is reduced by two orders of magnitude compared to the original implementation, and almost three orders of magnitude compared to the compressed implementation.
 
