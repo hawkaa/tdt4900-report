@@ -5,14 +5,14 @@ In this appendix, we elaborate on the benchmarks run to measure performance in t
 
 We measure memory usage for various states in the program by querying the built-in \name{FastMM} memory manager. To measure the entire \gap~memory footprint, including the .NET layer and the graphical user interface, we use the built-in memory manager in the \name{Windows} operating system. 
 
-We run all benchmarks in \textit{Genus Desktop} in \delphi~debugger mode. Test output and debugging statements are extracted through \textit{Trace Loge}, a logging tool developed by \genus~for their applications. Before running any benchmark, \textit{Genus Desktop} and the debugger was restarted such that the effects of caching are minimized.
+We run all benchmarks in \textit{Genus Desktop} in \delphi~debugger mode. Test output and debugging statements are extracted through \textit{Trace Log}, a logging tool developed by \genus~for their applications. Before running any benchmark, \textit{Genus Desktop} and the debugger was restarted such that the effects of caching are minimized.
 
 All tests are run on a Windows 10 Dell workstation with a 64-bit, 2.40 GHz Intel\textregistered Xeon\textregistered E5620 processor, and 8.00 GB RAM. The \delphi~version used is 23.0.21418.4207. 
 
 
 \section{Data Mart Load Benchmark}
 \label{bm:q1}
-In this benchmark, we measure analytical performance in \gap~using using a benchmark inspired by and based on the Q1 in the TPC-H Benchmark. As we saw in \ref{sec:Testing OLAP Databases}, the TPC-H benchmark is made for decision support workloads and consists of a suite of business oriented ad-hoc queries. The schema consists of eight separate tables, as seen in Figure \ref{fig:tpc-h}. The table columns have a variety of different data types, including integers, floating point numbers, variable and fixed width string, identifiers, and booleans.
+In this benchmark, we measure analytical performance in \gap~using using a benchmark inspired by and based on the Q1 in the TPC-H Benchmark. As we saw in Section \ref{sec:Testing OLAP Databases}, the TPC-H benchmark is made for decision support workloads and consists of a suite of business oriented ad-hoc queries. The schema is composed of eight separate tables, as seen in Figure \ref{fig:tpc-h}. The table columns have a variety of different data types, including integers, floating point numbers, variable and fixed width string, identifiers, and booleans.
 
 \afigure{img/tpc-h-q1.png}{TPC-H Q1 query. (Adapted from \cite{Transaction_Processing_Performance_Council_TPC2014-ux})}{fig:tpc-h-q1}{0.75}
 
@@ -24,7 +24,7 @@ Q1, or the \textit{Pricing Summary Report Query}, provides a summary of all item
 
 To accommodate our needs for this research, as well as adapt the query to fit \gap~and \gd, we perform some modifications. First, \texttt{RETURNFLAG}, \texttt{LINESTATUS}, and \texttt{SHIPDATE} are extracted as code domains such that they can be used as dimensions in the data mart. Also, we remove unnecessary table columns irrelevant to the query from the mart. The resulting data mart is shown in Figure \ref{fig:gap-data-mart}. Second, since \gd~does not work with an SQL interface, but rather with a user interface with graphs and boxes, we translated the query to a reporting dashboard with bar charts and selection boxes. The resulting user interface is shown in Figure \ref{fig:tpc-h-q1-ui}. 
 
-We populated the database with the \texttt{dbgen} tool provided by the \name{Transaction Processing Performance Council}. However, since the default scaling factor for the TPC-H benchmark is too large for \gap, we created two new dataset sizes, SF1 and SF10, with 1 \% and 10 \% of the original data respectively. The data was downscaled by keeping every 10th or 100th row in \texttt{LINEITEM} and removing all orders, suppliers, customers, and parts that no longer were connected to any elements in this table. 
+We populate the database with the \texttt{dbgen} tool provided by the \name{Transaction Processing Performance Council}. However, since the default scaling factor for the TPC-H benchmark is too large for \gap, we created two new dataset sizes, SF1 and SF10, with 1 \% and 10 \% of the original data respectively. The data was downscaled by keeping every 10th or 100th row in \texttt{LINEITEM} and removing all orders, suppliers, customers, and parts that no longer were connected to any elements in this table. 
 
 We focus our testing on time and memory footprint using to load this data mart and corresponding GUI into \gd~rather than measuring the time it takes to answer each query. The reason for this is that we have not looked at \gd~specific optimizations in this research, only modifications that this component can use reduce memory footprint and decrease load time. Loading a data mart takes the majority of the time anyway, and once the data mart is loaded, the application answers queries efficiently.
 
@@ -36,9 +36,9 @@ Two different scaling factors: SF1 with 60,000 \texttt{LINEITEM} rows, and SF10 
 \subsection{Test Output}
 \label{sub:Test Output}
 
-We list the benchmark's output below. The output is recorded in the time between the shortcut button for the \gd~instance is pressed until the user interface (Figure \ref{fig:tcp-h-q1-ui}) is displayed on the screen.
+We list the benchmark's output below. The output is recorded in the time between the shortcut button for the \gd~instance is pressed until the user interface (Figure \ref{fig:tpc-h-q1-ui}) is displayed on the screen.
 
-\paragraph{Bytes Per \texttt{LINEITEM}}
+\paragraph{Bytes Per LINEITEM}
 
 The number of bytes allocated per \texttt{LINEITEM} in the memory manager is reported. We measure memory usage before and after the \texttt{LINEITEM} data source load and then divide by the number of loaded items in the data source.
 
@@ -57,7 +57,7 @@ In \gd, all calculations and aggregations are performed on arrays of double prec
 \paragraph{Total Memory Footprint}
 \label{par:Total Memory Footprint}
 
-We measure the total memory footprint of the \tpchdl~\gd~application by using the Windows 10 memory manager such that all overhead in the .NET and user interface layers is included. The \textit{In Use} memory metric is recorded before the \gd~instance is loaded and when the UI is shown to the user. Since the measurement includes more than our application and are affected by background tasks and other running program, the total memory footprint output is not very accurate. However, it serves as a confirmation on other memory measurements, as well as an indication that total application memory consumption is reduced.
+We measure the total memory footprint of the \tpchdl~\gd~application by using the Windows 10 memory manager such that all overhead in the .NET and user interface layers is included. The \textit{In Use} memory metric is recorded before the \gd~instance is loaded and when the UI is shown to the user. Since the measurement includes more than our application and is affected by background tasks and other running program, the total memory footprint output is not very accurate. However, it serves as a confirmation on other memory measurements, as well as an indication that total application memory consumption is reduced.
 
 \section{Write Benchmark}
 \label{bm:write}
@@ -109,7 +109,7 @@ For each property modified, the task reports the time it takes to enumerate the 
 
 To test \gap's ability to move data from one data source to another based on a filter, we establish a benchmark based on the \texttt{LINEITEM} table from the TPC-H benchmark. As for the \textit{Write Benchmark}, this test is used for the various data types available.
 
-A list of predicates which compose the benchmark, and objects that satisfy each predicate are moved from the original data source to a filtered data source. We select the predicates to span a variety of different data types, selectivities, and operators. Since there are no \null~columns in \texttt{LINEITEM}, we create a new column \texttt{SHIPINSTRUCT\_NULL} and assign \null~to all cells with the value \textit{NONE}. We list the different predicates and respective selectivities in Table \ref{tab:Filter Test}.
+A list of predicates which compose the benchmark, and objects that satisfy each predicate are moved from the original data source to a filtered data source. We select the predicates to span a variety of different data types, selectivities, and operators. Since there are no \nul~columns in \texttt{LINEITEM}, we create a new column \texttt{SHIPINSTRUCT\_NULL} and assign \nul~to all cells with the value \textit{NONE}. We list the different predicates and respective selectivities in Table \ref{tab:Filter Test}.
 
 \subsection{Test Input}
 \label{sub:Test Input}
@@ -124,9 +124,9 @@ The timing result for the filter operation for each predicate; the time it takes
 
 \afigure{img/odin-load.png}{Data mart for the \textit{Data Mart Load Benchmark II}.}{fig:odin-load}{1.0}
 
-We run the same benchmark as Benchmark \ref{bm:q1}, but with a subset of data from one of \genus' customers. The data mart for the \gd~analysis is composed of three tables; \texttt{FUND}, \texttt{CUSTOMER}, and \texttt{CUSTOMER BALANCE DAILY}, with 40, 442,715, and 203,519 elements respectively. \texttt{CUSTOMER BALANCE DAILY} links the two other tables by indicating how many shares each customer have in each fund. Figure \ref{fig:odin-load} shows the data mart definition for the benchmark.
+We run the same benchmark as Benchmark \ref{bm:q1}, but with a subset of data from one of \genus' customers. The data mart for the \gd~analysis is composed of three tables; \texttt{FUND}, \texttt{CUSTOMER}, and \texttt{CUSTOMER BALANCE DAILY}, with 40, 442,715, and 203,519 elements respectively. \texttt{CUSTOMER BALANCE DAILY} links the two other tables by indicating how many shares each customer has in each fund. Figure \ref{fig:odin-load} shows the data mart definition for the benchmark.
 
-The reason why we choose to introduce another data mart load benchmark is that this benchmark contains a larger join than the \tpchdl. In this benchmark, the lookup index generation operation must create a lookup index between \texttt{CUSTOMER} and \texttt{CUSTOMER BALANCE DAILY}, which have 442,715 and 203,519 elements respectively.
+The reason why we choose to introduce another data mart load benchmark is that this benchmark contains a larger join than the \tpchdl. In \textit{Data Mart Load Benchmark II}, the lookup index generation operation must create a lookup index between \texttt{CUSTOMER} and \texttt{CUSTOMER BALANCE DAILY}, which have 442,715 and 203,519 elements respectively.
 
 \subsection{Test Input}
 \label{sub:Test Input}

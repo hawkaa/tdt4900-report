@@ -1,16 +1,18 @@
 \chapter{Discussion}
-\label{chap:Discussion }
-In this chapter, we discuss our findings in a broader perspective. We study the implications of our research for \gap, \mde~in general, and for traditional programming languages. We also provide a section on limitations and critics. \todo{fix}
+\label{chap:Discussion}
+
+In this chapter, we discuss our findings in a broader perspective. We study the implications of our research for \gap, \mde~in general, and for traditional programming languages. We also provide a section on limitations and critics. 
 
 \clearpage
 
 \section{Discussion}
 \label{sec:Discussion}
-In this section, we discuss the implications of our research for \gap, \mde~in general, and for traditional programming languages.
+
+In this section, we discuss the implications of the findings in Part II in a broader perspective.
 
 \subsection{Implications for Genus App Platform}
 \label{sub:Implications for Genus App Platform}
-So far in this research, we have reduced memory consumption, improved load time, and increased operation performance for our benchmarks. Even though these benchmarks only test a small subset of \gap~functionality, we believe the advantages will appear throughout the platform. Even without dictionary compression and the column selector functionality discussed in Section \ref{sec:Column Selection}, storing data in columns, either as \cn{GValue}s or primitive data types, is a good idea. However, we also expect to see functionality in \gap~slowed down by our column store implementation. This is likely to happen on operations that are not adapted to the new storage format; operations that heavily rely on \cn{GValue}s and row storage, like the filter operation in Benchmark \ref{bm:filter}.
+So far in this research, we have reduced memory consumption, improved load time, and increased operation performance for our benchmarks. Even though these benchmarks only test a small subset of \gap~functionality, we believe the advantages will appear throughout the platform. Even without dictionary compression and the column selector functionality discussed in Section \ref{sec:Column Selection}, storing data in columns, either as \cn{GValue}s or primitive data types, is a good idea. However, we also expect to see functionality in \gap~slowed down by our column store implementation. Reduced performance is likely to be observed on operations that are not adapted to the new storage format; operations that heavily rely on \cn{GValue}s and row storage, like the filter operation in Benchmark \ref{bm:filter}.
 
 In the thesis introduction, we said \genus~have focused on keeping the source code readable and maintainable. However, as we have seen, this emphasis have also resulted in performance issues in \gap. With the introduction of \cn{CompositionValueCollection}, the code is more slightly complicated and less readable. Still, the \cn{CompositionObject} class is intact and works exactly as before, and it has a \cn{GValue} interface. In other words, the application works like before, the \cn{GetValue} and \cn{SetValue} on \cn{CompositionObject} have only got a new implementation. In addition, the interface to the column store, or \cn{CompositionValueCollection}, is clean, and requires \cn{CompositionFieldDescriptor} or data source index, or both, to access data.
 
@@ -18,12 +20,13 @@ We believe further development in \gap~may proceeds as before. However, two thin
 
 \subsection{Implications for Model-Driven Engineering}
 \label{sub:Implications for Model-Driven Engineering}
-This research does not provide an extensive overview of \mdd-tools and their particular challenges, but we believe that their ability to handle and analyze large datasets is commonly outperformed by hand-made, traditional programs. Our research shows that by applying database technology used in read-optimized databases, \mde-tools can gain this ability. We have shown that internal data representation is key for low memory usage and high performance, also in \mdd. Clever data structures increase \mde~versatility and enable new functionality, for instance \bd.
+This research does not provide an extensive overview of \mdd~tools and their particular challenges, but we believe that their ability to handle and analyze large datasets is commonly outperformed by hand-made, traditional programs. Our research shows that by applying database technology used in read-optimized databases, \mde~tools can gain this ability. We have shown that internal data representation is key for low memory usage and high performance, also in \mdd. Clever data structures increase \mde~versatility and enable new functionality, for instance \bi~and \bd.
 
-We have also discovered that changing internal data representation only affects the method engineering layer in \mde. Modelers in the information system development layer do not need to be affected by the underlying storage technology. In other words, object classes and other data models are still expressed such that they are close to the business domain, while the underlying \mde~infrastructure optimizes data representation. This decoupling is different from a traditional programming language, where class definitions serve as both business problem abstractions and data containers.
+We have also discovered that changing internal data representation only affects the method engineering layer in \mde if implemented correctly. By using database statistics or other tricks, modelers in the information system development layer do not need to be affected by the underlying storage technology. In other words, object classes and other data models are still expressed such that they are close to the business domain, while the underlying \mde~infrastructure optimizes data representation. This decoupling is different from a traditional programming language, where class definitions serve as both business problem abstractions and data containers.
 
 \ffigure{img/oracle-dual.png}{The \oracle~dual format. Data is stored as both rows for transactional performance, and columns for analytical performance. (Adapted from \cite{Oracle2015-fs})}{fig:oracle-dual}
-There exist many different \mdd-tools with various approaches. Some are simple code-generation tools, while other provides an entire infrastructure. For layered systems that loads and process data in-memory, like \gap, there is much potential in data structure optimization: Different tasks in the platform should use whichever format is better-suited for that particular task. In Section \ref{sec:Mixed Workloads}, we read abut mixed workloads and that consistency, correctness, and data freshness can be sacrificed for performance. We also know that row-wise storage normally outperforms columns on transactional workloads. \mde~tools may have it all. For instance, \bd~funcionality should load data as immutable, read-optimized, and compressed columns while write-intense should use structures that store data in rows. This is similar to the \oracle~dual format, depicted in Figure \ref{fig:oracle-dual}.
+
+There exist many different \mdd~tools with various approaches to the \mdd~methodology. Some are simple code-generation tools, while other provides an entire infrastructure. For layered systems that loads and process data in-memory, like \gap, there is much potential in data structure optimization: Different tasks in the platform should use whichever format is better-suited for that particular task. In Section \ref{sec:Mixed Workloads}, we read abut mixed workloads and that consistency, correctness, and data freshness can be sacrificed for performance. We also know that row-wise storage normally outperforms columns on transactional workloads. \mde~tools may have it all. For instance, \bd~funcionality should load data as immutable, read-optimized, and compressed columns while write-intense should use structures that store data in rows. This is similar to the \oracle~dual format, depicted in Figure \ref{fig:oracle-dual}.
 
 \subsection{Implications for Traditional Programming Languages}
 \label{sub:Implications for Traditional Programming Languages}
@@ -32,13 +35,13 @@ In \mde, we have changed the internal data representation without affecting the 
 \begin{pythoncode}{Decorators in Python that specifies storage engine.}{lst:python-decorator}
 class Person:
     @storage(type='column')
-    first_name = null
+    first_name = None
 
     @storage(type='column')
-    last_name = null
+    last_name = None
 
     @storage(type='dictionary')
-    gender = null
+    gender = None
 \end{pythoncode}
 We believe even traditional programming languages can benefit from the techniques we have studied in this research. For instance, the Python programming language implements the \textit{decorator pattern} which dynamically changes the source code of a function or attribute \cite{noauthor_undated-aq}. We believe decorators can be used to configure the underlying storage engine for class properties. Listing \ref{lst:python-decorator} exemplifies a \cn{Person} class where first and last name are stored in regular columns, while a dictionary encoded column stores the person's gender.
 
@@ -46,16 +49,19 @@ In Section \ref{compression:q1}, we saw how null pointer compression significant
 
 \section{Limitations and Critics}
 \label{sec:Limitations and Critics}
-There are several limitations in our benchmarks. First of all, we only tested a limited subset of \gap. There might exist other parts of the platform with unexpected effects, both regarding performance and correctness. We tested write performance using Benchmark \ref{bm:write} but this benchmark is simple and does not test all edge cases. Neither did we test any benchmarks for correctness. However, the column store implementation are already in use internally in \genus, and so far no correctness or performance issues have been reported. We are, therefore, confident that most parts of \gap~work as before, and only a few components are affected negatively by our changes.
+Our research has several limitations, one of them is benchmark coverage. We only tested a limited subset of \gap. There might exist other parts of the platform with unexpected effects, both regarding performance and correctness. We tested write performance with Benchmark \ref{bm:write} but this benchmark is simple and does not test all edge cases. Neither did we use any benchmarks to test for correctness. However, the column store implementation is already in use internally in \genus, and so far no correctness or performance issues have been reported. We are, therefore, confident that most parts of \gap~work as before, and only a few components are affected negatively by our changes.
 
-Secondly, due to time constraints, we run all benchmarks only three times. Ideally, the tests should have been run more time to obtain a statistical foundation in our results. Secondly, all benchmarks were run with the compiler set to debug mode. We are unaware of the differences between debug and production mode in the \delphi~compiler, but we believe it is likely that production mode applies more optimizations, like loop unrolling and function inlining. However, we would like to point out three things: 
+Another limitation is how we executed the benchmarks. Due to time constraints, we run all benchmarks only three times. Ideally, the tests should have been run more times to obtain a statistical foundation in our results. Also, all benchmarks were run with the compiler set to debug mode. We are unaware of the differences between debug and production mode in the \delphi~compiler, but we believe it is likely that production mode applies more optimizations, like loop unrolling and function inlining. However, we would like to point out three things: 
+
 \begin{enumerate}
     \item All changes have been tested in debug mode, so we expect the relative changes to be the same in production.
-    \item All measurements had low variance
-    \item The relative changes we have measured have been significant; up to three orders of magnitude at the most.
+    \item All measurements had low variance.
+    \item The relative changes we have measured have been substantial; up to three orders of magnitude at the most.
 \end{enumerate}
-In other words, despite poor statistical foundation and benchmarks run in debug mode, we believe our results can be used to draw conclusions.
 
-One major limitation is that we have based our entire research on \gap, but many \mde~supporting infrastructures are fundamentally different from this platform. Thus, our changes might not apply to all \mdd-tools. There might exist systems which solve the problem of handling large datasets using other techniques, and systems that do not require this functionality at all. Nevertheless, we believe our modifications to \gap~serves as a proof-of-concept for \mdd-tools challenged with these issues, by showing the importance of internal data representation.
+In other words, despite poor statistical foundation and benchmarks run in debug mode, we believe conclusions can be drawn from the benchmark results.
+
+One major limitation is that we have based our entire research on \gap, but many \mde~supporting infrastructures are fundamentally different from this platform. Thus, our changes might not apply to all \mdd~tools. There might exist systems which solve the problem of handling large datasets using other techniques, and systems that do not require this functionality at all. Nevertheless, we believe our modifications to \gap~serves as a proof-of-concept for \mdd~tools challenged with these issues by showing the importance of internal data representation.
 
 This research has focused on read-optimized databases because it was for read-intense operations and analytical workloads \gap~had the largest performance issues. Thus, we disregarded technologies used in write-optimized OLTP databases, like row-storage and indexes. We are confident that \gap~could benefit from technology used in these databases as well. Still, \genus~experiences no performance issues on transactional workloads. Also, data update operations are dominated by integrity and validity checks, formula calculation, and more, which makes such operations less sensitive to the underlying data representation.
+
